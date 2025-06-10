@@ -34,5 +34,6 @@ namespace mem {
 
 		void suspend();
 		bool is_suspended() { return m_bIsSuspended; }
+		void resume();
 	};
 }

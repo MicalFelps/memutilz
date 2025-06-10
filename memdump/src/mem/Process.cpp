@@ -132,4 +132,17 @@ namespace mem {
 		}
 		m_bIsSuspended = true;
 	}
+	void Process::resume() {
+		Handle hMainThread{ OpenThread(THREAD_SUSPEND_RESUME, FALSE, m_mainThread) };
+		if (ResumeThread(hMainThread.get()) == -1)
+			throw mem::Exception("ResumeThread Failed");
+		for (const auto& t : m_threads) {
+			if (t == m_mainThread)
+				continue;
+			Handle hThread{ OpenThread(THREAD_SUSPEND_RESUME, FALSE, t) };
+			if (ResumeThread(hThread.get()) == -1)
+				throw mem::Exception("ResumeThread Failed");
+		}
+		m_bIsSuspended = false;
+	}
 }

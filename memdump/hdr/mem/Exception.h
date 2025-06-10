@@ -16,7 +16,7 @@ namespace mem {
 		DWORD code() const noexcept { return m_err; }
 		std::string full_msg() const {
 			std::ostringstream oss;
-			oss << "[ERR - " << code() << "]" << "\n |--" << what() << "\n |--"  << describe();
+			oss << "[ERR - " << code() << "]" << "\n |--" << what() << "\n"  << describe();
 			return oss.str();
 		}
 		

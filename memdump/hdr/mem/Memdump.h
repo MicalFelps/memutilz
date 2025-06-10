@@ -7,7 +7,7 @@
 #include "mem/Exception.h"
 
 #define PAGE_READ_FLAGS\
-	(PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_READONLY, PAGE_READWRITE)
+	(PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
 
 namespace mem {
 	struct BufferChunk {
@@ -15,6 +15,28 @@ namespace mem {
 		size_t m_size;
 
 		BufferChunk() = delete;
+		BufferChunk(const BufferChunk& other) = delete;
+		BufferChunk& operator=(const BufferChunk& other) = delete;
+
+		BufferChunk(BufferChunk&& other) noexcept
+			: m_address(other.m_address)
+			, m_size(other.m_size)
+		{
+			other.m_address = nullptr;
+			other.m_size = 0;
+		}
+		BufferChunk& operator=(BufferChunk&& other) noexcept {
+			if (this == &other)
+				return *this;
+			if (m_address) {
+				VirtualFree(m_address, 0, MEM_RELEASE);
+			}
+			m_address = other.m_address;
+			m_size = other.m_size;
+			other.m_address = nullptr;
+			other.m_size = 0;
+		}
+
 		explicit BufferChunk(size_t size)
 			: m_size{ size }
 		{
@@ -60,9 +82,9 @@ namespace mem {
 		void compute_thread_count();
 
 		void init() {
-			void update_memory_layout();
-			void make_snapshot_buffers();
-			void compute_thread_count();
+			update_memory_layout();
+			make_snapshot_buffers();
+			compute_thread_count();
 		}
 	public:
 		Memdump() = delete;
