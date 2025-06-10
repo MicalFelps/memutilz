@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "common.h"
 #include "mem/Memdump.h"
 #include "mem/Exception.h"
 
@@ -113,8 +113,13 @@ namespace mem {
 		m_meminfo->m_targetProcess->suspend();
 		if (m_meminfo->m_targetProcess->is_suspended()) {
 			if (m_threadCount == 1) {
-
-
+				/*
+				For efficient reading, you'll have to hook 
+				 - VirtualProtect/VirtualProtectEx
+				 - WriteProcessMemory
+				 - MapViewOfFile/UnmapViewOfFile
+				And avoid reading pages that aren't writeable too.
+				*/
 
 				/*
 				for (const auto& mbi : m_meminfo->pages) {

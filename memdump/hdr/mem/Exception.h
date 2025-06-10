@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pch.h"
+#include "common.h"
 
 namespace mem {
 	class Exception : public std::runtime_error {

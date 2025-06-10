@@ -29,7 +29,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="hdr\pch.h">
+    <ClInclude Include="hdr\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hdr\mem\Process.h">

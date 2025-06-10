@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pch.h"
+#include "common.h"
 
 #include "mem/Process.h"
 #include "mem/Meminfo.h"
