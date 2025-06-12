@@ -1,4 +1,4 @@
-#include "common.h"
+#include "mem/common.h"
 #include "mem/Memdump.h"
 #include "mem/Exception.h"
 
@@ -149,7 +149,7 @@ namespace mem {
 				}
 				//
 				// Async stuff
-				// 
+				//
 			}
 		}
 		m_meminfo->m_targetProcess->resume();

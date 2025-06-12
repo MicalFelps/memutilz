@@ -1,4 +1,4 @@
-#include "common.h"
+#include "mem/common.h"
 #include "mem/Meminfo.h"
 #include "mem/Exception.h"
 
