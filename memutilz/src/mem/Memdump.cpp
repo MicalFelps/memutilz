@@ -50,13 +50,13 @@ namespace mem {
 						throw mem::Exception("[ERR] Not enough buffers allocated for snapshot");
 				}
 
-				m_regions.emplace_back(MemoryRegion{
+				m_regions.try_emplace(mbi.BaseAddress,
 					mbi.BaseAddress,
 					mbi.RegionSize,
 					bufferIndex,
 					offset,
 					mbi.Protect
-				});
+				);
 
 				offset += mbi.RegionSize;
 			}
@@ -104,6 +104,24 @@ namespace mem {
 		m_threadCount = 8;
 	}
 
+	const MemoryRegion* Memdump::findRegionForAddress(LPCVOID address) const {
+		if (m_regions.empty()) return nullptr;
+
+		auto it = m_regions.upper_bound(address);
+
+		if (it != m_regions.begin()) {
+			--it;
+			const MemoryRegion& region = it->second;
+			uintptr_t regionStart = (uintptr_t)region.m_original_addr;
+			uintptr_t regionEnd = regionStart + region.m_size;
+			uintptr_t addr = (uintptr_t)address;
+
+			if (addr >= regionStart && addr < regionEnd)
+				return &region;
+		}
+		return nullptr;
+	}
+
 	void Memdump::dump() {
 		try {
 			init();
@@ -118,9 +136,9 @@ namespace mem {
 		m_meminfo->m_targetProcess->suspend();
 		if (m_meminfo->m_targetProcess->is_suspended()) {
 			if (m_threadCount == 1) {
-				for (const auto& region : m_regions) {
+				for (const auto& [originalAddress, region] : m_regions) {
 					SIZE_T total_read = 0;
-					uintptr_t src = (uintptr_t)region.m_original_addr;
+					uintptr_t src = (uintptr_t)originalAddress;
 					LPVOID dst = m_snapshotBuffers[region.m_buffer_chunk_idx].m_address;
 					SIZE_T size = region.m_size;
 

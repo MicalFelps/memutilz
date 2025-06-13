@@ -5,6 +5,7 @@
 #include "mem/Process.h"
 #include "mem/Meminfo.h"
 #include "mem/Exception.h"
+#include <map>
 
 #define PAGE_READ_FLAGS\
 	(PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
@@ -71,7 +72,7 @@ namespace mem {
 		std::vector<BufferChunk> m_snapshotBuffers{};
 		size_t m_oldSnapshotSize{ 0 };
 		size_t m_newSnapshotSize{ 0 };
-		std::vector<MemoryRegion> m_regions{};
+		std::map<LPCVOID, MemoryRegion> m_regions{};
 		//std::vector<std::future<size_t>> futures{};
 
 		bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi);
@@ -92,6 +93,7 @@ namespace mem {
 			: m_meminfo{meminfo}
 		{}
 
+		const MemoryRegion* findRegionForAddress(LPCVOID address) const;
 		void dump();
 	};
 }

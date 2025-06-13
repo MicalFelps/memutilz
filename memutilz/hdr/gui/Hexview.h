@@ -1,5 +1,13 @@
 #pragma once
 
+#include <QAbstractScrollArea>
+#include <QScrollBar>
+#include <QPainter>
+#include <QFontMetrics>
+#include <QWheelEvent>
+#include <map>
+#include <unordered_map>
+
 #include "gui/common.h"
 
 #include "mem/Memdump.h"
@@ -71,14 +79,17 @@ namespace gui {
 		DisplayMetrics m_metrics;
 		QFont m_font;
 
-		LPCVOID m_topAddress{ nullptr }; // address at the top of view
+		uintptr_t m_topAddress{ 0 }; // address at the top of view
 		size_t m_visibleLines{ 0 };
+
+		// Caching
+		std::unordered_map<uintptr_t, QString> m_lineCache;
+		QString m_unknownPattern;
 
 		void getMetrics();
 		void updateScrollbars();
-		QString formatLine(const BYTE* data, size_t length, uintptr_t baseAddress) const;
-		BYTE* readBytesAt(LPCVOID addr) const;
-		const mem::MemoryRegion* findRegionForAddress(LPCVOID address) const;
-
+		void buildUnknownPattern();
+		QString formatLine(LPCVOID addr, bool bIsUnknown);
+		std::vector<BYTE> readBytesAt(LPCVOID addr, size_t amount) const;
 	};
 }
