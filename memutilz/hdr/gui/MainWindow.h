@@ -13,7 +13,14 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = Q_NULLPTR);
     ~MainWindow();
-
+    void initialize();
 private:
     Ui::MainWindowClass* ui;
+
+    std::unique_ptr<mem::Process> proc;
+    std::unique_ptr<mem::Meminfo> meminfo;
+    std::unique_ptr<mem::Memdump> memdump;
+
+    void printError(const std::wstring& err);
+    void printError(const std::string& err);
 };

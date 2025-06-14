@@ -7,6 +7,7 @@
 #include <QWheelEvent>
 #include <map>
 #include <unordered_map>
+#include <algorithm>
 
 #include "gui/common.h"
 
@@ -18,7 +19,7 @@ namespace gui {
 
 	public:
 		struct DisplayConfig {
-			size_t bytesPerLine = 16;
+			size_t bytesPerLine = 0x08;
 			bool bShowAddress = true;
 			bool bShowAscii = true;
 			bool bShowRegionBoundaries = true;
@@ -27,7 +28,7 @@ namespace gui {
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
 		void setMemdump(const mem::Memdump* memdump);
-		void setDisplayConfig(const DisplayConfig& config);
+		void setDisplayConfig(DisplayConfig& config);
 		void goToAddress(LPCVOID address);
 		void clear();
 
@@ -37,6 +38,7 @@ namespace gui {
 		void wheelEvent(QWheelEvent* event) override;	// For converting wheel movement to scroll bar movement
 
 	private:
+		static constexpr size_t MAX_UNKNOWN_PATTERN_SIZE = 128;
 		static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
 		static constexpr bool IS_PRINTABLE[256] = {
 			// 0–31: control chars
@@ -71,9 +73,11 @@ namespace gui {
 			int hexWidth{ 0 };
 			int asciiWidth{ 0 };
 			int totalWidth{ 0 };
+			int totalLines{ 0 };
 		};
 
 		const mem::Memdump* m_memdump{ nullptr };
+		bool m_bIs64Bit{ true };
 
 		DisplayConfig m_config;
 		DisplayMetrics m_metrics;
@@ -84,12 +88,12 @@ namespace gui {
 
 		// Caching
 		std::unordered_map<uintptr_t, QString> m_lineCache;
-		QString m_unknownPattern;
+		char m_unknownPattern[MAX_UNKNOWN_PATTERN_SIZE];
+		size_t m_unknownPatternLength{ 0 };
 
 		void getMetrics();
 		void updateScrollbars();
 		void buildUnknownPattern();
 		QString formatLine(LPCVOID addr, bool bIsUnknown);
-		std::vector<BYTE> readBytesAt(LPCVOID addr, size_t amount) const;
 	};
 }

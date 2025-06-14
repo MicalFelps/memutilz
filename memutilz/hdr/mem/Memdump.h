@@ -11,6 +11,11 @@
 	(PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
 
 namespace mem {
+	struct MemoryView {
+		const BYTE* data{ nullptr };
+		size_t size{ 0 };
+	};
+
 	struct BufferChunk {
 		LPVOID m_address;
 		size_t m_size;
@@ -58,6 +63,11 @@ namespace mem {
 		size_t m_buffer_offset;
 		DWORD m_protection;
 	};
+	struct RegionContext {
+		const MemoryRegion* curr{ nullptr };	// nullptr if not applicable
+		const MemoryRegion* prev{ nullptr };
+		const MemoryRegion* next{ nullptr };
+	};
 	struct ThreadConfig {
 		size_t max_size_mb;
 		size_t thread_count;
@@ -93,7 +103,9 @@ namespace mem {
 			: m_meminfo{meminfo}
 		{}
 
-		const MemoryRegion* findRegionForAddress(LPCVOID address) const;
+		const RegionContext getRegionContext(LPCVOID address) const;
+		MemoryView readBytesAt(LPCVOID address, size_t amount) const;
+		Meminfo* getMeminfo() const { return m_meminfo; }
 		void dump();
 	};
 }

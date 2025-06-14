@@ -94,6 +94,8 @@ namespace mem {
 		distribute_regions();
 	}
 	void Memdump::compute_thread_count() {
+		m_threadCount = 1;
+		return;
 		size_t size_mb = m_newSnapshotSize / (1024 * 1024);
 		for (const auto& config : configs) {
 			if (size_mb <= config.max_size_mb) {
@@ -104,10 +106,14 @@ namespace mem {
 		m_threadCount = 8;
 	}
 
-	const MemoryRegion* Memdump::findRegionForAddress(LPCVOID address) const {
-		if (m_regions.empty()) return nullptr;
+	const RegionContext Memdump::getRegionContext(LPCVOID address) const {
+		if (m_regions.empty()) return {};
+
+		RegionContext ct;
 
 		auto it = m_regions.upper_bound(address);
+		if (it != m_regions.end())
+			ct.next = &it->second;
 
 		if (it != m_regions.begin()) {
 			--it;
@@ -116,10 +122,35 @@ namespace mem {
 			uintptr_t regionEnd = regionStart + region.m_size;
 			uintptr_t addr = (uintptr_t)address;
 
-			if (addr >= regionStart && addr < regionEnd)
-				return &region;
+			if (addr >= regionStart && addr < regionEnd) {
+				ct.curr = &region;
+				
+				if (it != m_regions.begin()) {
+					--it;
+					ct.prev = &it->second;
+				}
+			} else {
+				ct.prev = &region;
+			}
 		}
-		return nullptr;
+		return ct;
+	}
+	MemoryView Memdump::readBytesAt(LPCVOID address, size_t amount) const {
+		const RegionContext ct = getRegionContext(address);
+		if(!ct.curr)
+			return MemoryView();
+
+		uintptr_t addr = reinterpret_cast<uintptr_t>(address);
+		uintptr_t regionStart = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr);
+		uintptr_t regionEnd = regionStart + ct.curr->m_size;
+
+		size_t offset = addr - regionStart;
+
+		size_t availableBytes = regionEnd - addr;
+		size_t returnedAmount = (((amount) < (availableBytes)) ? (amount) : (availableBytes));
+
+		const BufferChunk& c = m_snapshotBuffers[ct.curr->m_buffer_chunk_idx];
+		return MemoryView{(reinterpret_cast<BYTE*>(c.m_address) + ct.curr->m_buffer_offset + offset), returnedAmount};
 	}
 
 	void Memdump::dump() {

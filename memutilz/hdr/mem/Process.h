@@ -5,6 +5,7 @@
 
 namespace mem {
 	class Process {
+		std::wstring m_name;
 		std::vector<DWORD> m_pids{};
 		std::vector<DWORD> m_threads{};
 		DWORD m_pid{ 0 };
@@ -15,10 +16,12 @@ namespace mem {
 
 		std::vector<DWORD> find_pids_by_name(std::wstring_view name);
 	public:
-		explicit Process(std::wstring_view name) noexcept
-			: m_pids{ find_pids_by_name(name) } {
-		}
+		explicit Process(std::wstring_view name)
+			: m_pids{ find_pids_by_name(name) }
+			, m_name{ name }
+		{}
 
+		const std::wstring& getName() const noexcept { return m_name; }
 		DWORD get_pid(size_t idx = 0) const;
 		std::vector<DWORD> get_all_pids() const { return m_pids; }
 		void set_pid(DWORD pid);
@@ -26,7 +29,8 @@ namespace mem {
 		void set_handle(HANDLE handle) { m_handle.reset(handle); }
 
 		void open_process(DWORD dwDesiredAccess, size_t idx = 0) { m_handle.reset(OpenProcess(dwDesiredAccess, FALSE, get_pid(idx))); }
-		uintptr_t get_module_base(std::wstring_view name, size_t idx = 0);
+		uintptr_t get_module_base(std::wstring_view name, size_t idx);
+		uintptr_t get_program_base(size_t idx = 0) { return get_module_base(m_name, idx); }
 		bool isWoW64();
 
 		DWORD find_main_thread();
