@@ -95,8 +95,9 @@ namespace gui {
 				}
 				isUnknown = true;
 			}
-			else {
-				boundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size;
+			else if (ct.next) { // if we're in readable memory
+				if(ct.next->m_original_addr != reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size))
+					boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
 			}
 
 			for (int line = firstLine; line <= lastLine; ++line) {

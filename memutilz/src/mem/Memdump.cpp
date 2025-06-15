@@ -167,17 +167,18 @@ namespace mem {
 		m_meminfo->m_targetProcess->suspend();
 		if (m_meminfo->m_targetProcess->is_suspended()) {
 			if (m_threadCount == 1) {
+				SIZE_T total_read = 0;
 				for (const auto& [originalAddress, region] : m_regions) {
-					SIZE_T total_read = 0;
+					SIZE_T region_read = 0;
 					uintptr_t src = (uintptr_t)originalAddress;
 					LPVOID dst = m_snapshotBuffers[region.m_buffer_chunk_idx].m_address;
 					SIZE_T size = region.m_size;
 
-					while (total_read < region.m_size) {
+					while (region_read < region.m_size) {
 						SIZE_T bytes_read = 0;
 						if (!ReadProcessMemory(m_meminfo->m_targetProcess->get_handle(),
 							(LPCVOID)src,
-							(LPVOID)((uintptr_t)dst + total_read),
+							(LPVOID)((uintptr_t)dst + total_read + region_read),
 							size,
 							&bytes_read
 						)) {
@@ -192,6 +193,7 @@ namespace mem {
 							break;
 
 						total_read += bytes_read;
+						region_read += bytes_read;
 						src += bytes_read;
 						size -= bytes_read;
 					}
