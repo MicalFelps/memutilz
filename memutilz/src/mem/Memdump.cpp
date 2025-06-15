@@ -76,7 +76,7 @@ namespace mem {
 			m_snapshotBuffers.clear();
 			size_t buffers_needed = (m_newSnapshotSize + optimalBufferSize - 1) / optimalBufferSize;
 
-			for (int i = 0; i < buffers_needed; ++i) {
+			for (size_t i = 0; i < buffers_needed; ++i) {
 				m_snapshotBuffers.emplace_back(BufferChunk{ optimalBufferSize });
 			}
 		}

@@ -1,11 +1,5 @@
 #include "gui/Hexview.h"
 
-namespace mem {
-	inline constexpr SIZE_T USERSPACE_START_ADDR = 0x0;
-	inline constexpr SIZE_T USERSPACE_END_32BIT = 0x7FFFFFFF;
-	inline constexpr SIZE_T USERSPACE_END_64BIT = 0x00007FFFFFFFFFFF;
-}
-
 namespace gui {
 	Hexview::Hexview(QWidget* parent) 
 		: QAbstractScrollArea(parent)
@@ -22,35 +16,39 @@ namespace gui {
 		m_font.setFixedPitch(true);
 		setFont(m_font);
 
-		buildUnknownPattern();
-		getMetrics();
-		updateScrollbars();
+		connect(verticalScrollBar(), &QScrollBar::valueChanged,
+				this, &Hexview::onVerticalScrollChange);
 	}
 	void Hexview::setMemdump(const mem::Memdump* memdump) {
 		m_memdump = memdump;
 
 		if (m_memdump) {
-			m_bIs64Bit = !m_memdump->getMeminfo()->m_targetProcess->isWoW64();
+			m_bIs64Bit = (!m_memdump->getMeminfo()->m_targetProcess->isWoW64());
+			(m_bIs64Bit)
+				? m_maxDisplayAddress = mem::USERSPACE_END_64BIT
+				: m_maxDisplayAddress = mem::USERSPACE_END_32BIT;
+			m_metrics.totalLines = (m_maxDisplayAddress + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
 			m_topAddress = m_memdump->getMeminfo()->m_targetProcess->get_program_base();
+			updateScrollbars();
 		}
 
-		m_lineCache.clear();
-
-		updateScrollbars();
 		viewport()->update();
 	}
 	void Hexview::setDisplayConfig(DisplayConfig& config) {
 		config.bytesPerLine = (config.bytesPerLine + 7) & ~0x7;
 		m_config = config;
-		m_lineCache.clear();
-		buildUnknownPattern();
 		getMetrics();
 		updateScrollbars();
 		viewport()->update();
 	}
 	void Hexview::goToAddress(LPCVOID address) {
 		uintptr_t alignedAddr = reinterpret_cast<uintptr_t>(address);
+
+		if (alignedAddr > m_maxDisplayAddress)
+			alignedAddr = m_maxDisplayAddress;
+
 		alignedAddr &= ~(m_config.bytesPerLine - 1);
+
 		m_topAddress = alignedAddr;
 
 		updateScrollbars();
@@ -58,7 +56,6 @@ namespace gui {
 	}
 	void Hexview::clear() {
 		m_memdump = nullptr;
-		m_lineCache.clear();
 		viewport()->update();
 	}
 
@@ -69,91 +66,112 @@ namespace gui {
 		int firstLine = event->rect().top() / m_metrics.lineHeight;
 		int lastLine = (event->rect().bottom() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 		lastLine = (((lastLine) < (static_cast<int>(m_visibleLines) - 1)) ? (lastLine) : (static_cast<int>(m_visibleLines) - 1));
-		int hScrollOffset = horizontalScrollBar()->value();
 
-		uintptr_t maxAddress = m_bIs64Bit ? mem::USERSPACE_END_64BIT : mem::USERSPACE_END_32BIT;
-
-		if (m_unknownPatternLength)
-			buildUnknownPattern();
+		int hScrollOffset = horizontalScrollBar() ? horizontalScrollBar()->value() : 0;
 
 		if (!m_memdump) {
 			for (int line = firstLine; line <= lastLine; ++line) {
 				int y = line * m_metrics.lineHeight + m_metrics.charHeight;
 				uintptr_t lineAddress = m_topAddress + (line * m_config.bytesPerLine);
 
-				if (lineAddress >= maxAddress)
+				if (lineAddress >= m_maxDisplayAddress)
 					break;
 
-				QString formattedLine;
-				formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), true);
-
+				QString formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), true);
 				painter.drawText(-hScrollOffset, y, formattedLine);
 			}
-		} else {
-			const mem::RegionContext ct = m_memdump->getRegionContext(reinterpret_cast<LPCVOID>(m_topAddress));
-			uintptr_t boundary{ maxAddress };
-			size_t linesBeforeBoundary;
+		} 
+		else { // If process attached
+			mem::RegionContext ct = m_memdump->getRegionContext(reinterpret_cast<LPCVOID>(m_topAddress));
+			uintptr_t boundary{ m_maxDisplayAddress };
 			bool isUnknown{ false };
 
 			if (!ct.curr) { // If we're in unreadable memory
-				uintptr_t boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
+				if (ct.next) {
+					boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
+				}
+				else {
+					boundary = m_maxDisplayAddress;
+				}
 				isUnknown = true;
 			}
-			else
-				uintptr_t boundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size;
-
-			if ((m_topAddress + (m_visibleLines * m_config.bytesPerLine)) > boundary)
-				linesBeforeBoundary = ((m_topAddress + (m_visibleLines * m_config.bytesPerLine)) - boundary) / m_config.bytesPerLine;
+			else {
+				boundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size;
+			}
 
 			for (int line = firstLine; line <= lastLine; ++line) {
 				int y = line * m_metrics.lineHeight + m_metrics.charHeight;
 				uintptr_t lineAddress = m_topAddress + (line * m_config.bytesPerLine);
 
-				if (lineAddress >= maxAddress)
+				if (lineAddress >= m_maxDisplayAddress)
 					break;
 
-				QString formattedLine;
-				if (m_lineCache.contains(lineAddress))
-					formattedLine = m_lineCache[lineAddress];
-				else {
-					if (lineAddress >= boundary)
-						isUnknown = !isUnknown;
-					formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), isUnknown);
-					m_lineCache[lineAddress] = formattedLine;
+				// Recalc new boundary
+				if (lineAddress >= boundary) {
+					ct = m_memdump->getRegionContext(reinterpret_cast<LPCVOID>(lineAddress));
+					isUnknown = !isUnknown;
+
+					if (!ct.curr) { // Now in unreadable memory
+						if (ct.next)
+							boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
+						else
+							boundary = m_maxDisplayAddress;
+					}
+					else { // Now in readable memory
+						boundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size;
+					}
 				}
+
+				QString formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), isUnknown);
 				painter.drawText(-hScrollOffset, y, formattedLine);
 			}
 		}
-
 		// Draw Lines
 		if (m_config.bShowAddress && m_config.bShowAscii) {
 			painter.setPen(QPen(palette().mid().color(), 1));
+			const int lineOffsetX = 2 * m_metrics.charWidth;
 
 			// Line after address
 			int addressEndX = m_metrics.addressWidth - hScrollOffset;
 			if (addressEndX > 0 && addressEndX < viewport()->width()) {
-				painter.drawLine(addressEndX - 20, event->rect().top(),
-								addressEndX - 20, event->rect().bottom());
+				painter.drawLine(addressEndX - lineOffsetX, event->rect().top(),
+								addressEndX - lineOffsetX, event->rect().bottom());
 			}
 
 			// Line after hex
 			int hexEndX = m_metrics.addressWidth + m_metrics.hexWidth - hScrollOffset;
 			if (hexEndX > 0 && hexEndX < viewport()->width()) {
-				painter.drawLine(hexEndX - 60, event->rect().top(),
-								hexEndX - 60, event->rect().bottom());
+				painter.drawLine(hexEndX - lineOffsetX, event->rect().top(),
+								hexEndX - lineOffsetX, event->rect().bottom());
 			}
+		}
+	}
+	void Hexview::showEvent(QShowEvent* event) {
+		QAbstractScrollArea::showEvent(event);
+		if (!initialized) {
+			getMetrics();
+			m_visibleLines = viewport()->height() / m_metrics.lineHeight;
+			updateScrollbars();
+			initialized = true;
 		}
 	}
 	void Hexview::resizeEvent(QResizeEvent* event) {
 		QAbstractScrollArea::resizeEvent(event);
-		m_visibleLines = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
-		updateScrollbars();
+		if (initialized) {
+			m_visibleLines = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
+			updateScrollbars();
+		}
 	}
 	void Hexview::wheelEvent(QWheelEvent* event) {
 		int degrees = event->angleDelta().y() / 8;
 		int steps = degrees / 15;
 
-		verticalScrollBar()->setValue(verticalScrollBar()->value() - steps);
+		int newScrollValue = verticalScrollBar()->value() - steps;
+		verticalScrollBar()->setValue(newScrollValue);
+
+		m_topAddress = static_cast<uintptr_t>(newScrollValue) * m_config.bytesPerLine;
+
+		viewport()->update();
 		event->accept();
 	}
 
@@ -178,27 +196,37 @@ namespace gui {
 		} else m_metrics.asciiWidth = 0;
 
 		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
-		m_visibleLines = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
-
-		// Height
-		size_t totalBytes = m_bIs64Bit
-			? mem::USERSPACE_END_64BIT
-			: mem::USERSPACE_END_32BIT;
-
-		m_metrics.totalLines = (totalBytes + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
 	}
 	void Hexview::updateScrollbars() {
-		int maxScroll = m_metrics.totalLines - static_cast<int>(m_visibleLines);
-		verticalScrollBar()->setRange(0, maxScroll);
+		disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
+			this, &Hexview::onVerticalScrollChange);
+
+		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
+		int maxLines = m_maxDisplayAddress / m_config.bytesPerLine;
+		int currentLine = m_topAddress / m_config.bytesPerLine;
+		int minScrollLine, maxScrollLine;
+
+		if (currentLine < scrollRangeLines / 2) {
+			minScrollLine = 0;
+			maxScrollLine = scrollRangeLines;
+		}
+		else if (currentLine + scrollRangeLines / 2 > maxLines) {
+			maxScrollLine = maxLines;
+			minScrollLine = maxLines - scrollRangeLines;
+		}
+		else {
+			minScrollLine = currentLine - scrollRangeLines / 2;
+			maxScrollLine = currentLine + scrollRangeLines / 2;
+		}
+
+		// size_t maxScroll = m_metrics.totalLines - static_cast<int>(m_visibleLines);
+		verticalScrollBar()->setRange(minScrollLine, maxScrollLine);
+		verticalScrollBar()->setValue(currentLine);
 		verticalScrollBar()->setPageStep(m_visibleLines);
 		verticalScrollBar()->setSingleStep(1);
 
-		size_t currentLine = verticalScrollBar()->value();
-		uintptr_t maxAddress = m_bIs64Bit ? mem::USERSPACE_END_64BIT : mem::USERSPACE_END_32BIT;
-		if (currentLine > maxAddress / m_config.bytesPerLine) {
-			currentLine = maxAddress / m_config.bytesPerLine;
-		}
-		m_topAddress = currentLine * m_config.bytesPerLine;
+		connect(verticalScrollBar(), &QScrollBar::valueChanged,
+			this, &Hexview::onVerticalScrollChange);
 
 		int viewportWidth = viewport()->width();
 		if (m_metrics.totalWidth > viewportWidth) {
@@ -210,69 +238,100 @@ namespace gui {
 		}
 		viewport()->update();
 	}
-	void Hexview::buildUnknownPattern() {
-		char* ptr = m_unknownPattern;
-		char* end = m_unknownPattern + MAX_UNKNOWN_PATTERN_SIZE - 1;
+	void Hexview::onVerticalScrollChange(int value) {
+		m_topAddress = static_cast<uintptr_t>(value) * m_config.bytesPerLine;
 
-		for(int i = 0; i < m_config.bytesPerLine - 1 && ptr < end - 2; ++i)
-			*ptr++ = '?'; *ptr++ = '?'; *ptr++ = ' ';
+		// Check if we need to recalculate the window
+		int minScrollLine = verticalScrollBar()->minimum();
+		int maxScrollLine = verticalScrollBar()->maximum();
+		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
 
-		if (m_config.bShowAscii && ptr < end - m_config.bytesPerLine) {
-			for (int i = 0; i < m_config.bytesPerLine && ptr < end; ++i)
-				*ptr++ = '.';
+		// If we're getting close to the edges, recalculate the window
+		int edgeThreshold = scrollRangeLines / 4; // Recalculate when within 1/4 of edge
+
+		bool needsRecalc = false;
+		if (value - minScrollLine < edgeThreshold) {
+			// Near the bottom edge, need to expand downward
+			needsRecalc = true;
 		}
-		m_unknownPatternLength = ptr - m_unknownPattern;
+		else if (maxScrollLine - value < edgeThreshold) {
+			// Near the top edge, need to expand upward  
+			needsRecalc = true;
+		}
+
+		if (needsRecalc) {
+			// Temporarily disconnect to prevent recursion
+			disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
+				this, &Hexview::onVerticalScrollChange);
+
+			updateScrollbars(); // This will recalculate the window around new position
+
+			// Reconnect
+			connect(verticalScrollBar(), &QScrollBar::valueChanged,
+				this, &Hexview::onVerticalScrollChange);
+		}
+
+		viewport()->update();
 	}
 	QString Hexview::formatLine(LPCVOID addr, bool bIsUnknown) {
-		char buffer[256];
-		char* ptr{ buffer };
-
 		uintptr_t address = reinterpret_cast<uintptr_t>(addr);
 
+		size_t capacity = 0;
 		if (m_config.bShowAddress) {
-			size_t addrDigits = m_bIs64Bit ? 12 : 8;
-			*ptr++ = '0'; *ptr++ = 'x';
-			int j = 0;
-			for (int i = addrDigits - 1; i >= 0; --i, ++j) {
-				ptr[i] = HEX_DIGITS[(address >> (4 * j)) & 0x0F];
-			}
-			ptr += addrDigits;
-			*ptr++ = ':'; *ptr++ = ' ';
+			capacity += m_bIs64Bit ? 16 : 12;
 		}
-		if (bIsUnknown) {
-			memcpy(ptr, m_unknownPattern, m_unknownPatternLength);
-			ptr += m_unknownPatternLength;
-			return QString::fromLatin1(buffer, ptr - buffer);
-		}
-		if (m_memdump) {
-			mem::MemoryView mv = m_memdump->readBytesAt(addr, m_config.bytesPerLine);
 
-			// Hex
+		capacity += m_config.bytesPerLine * 3;
+
+		if (m_config.bShowAscii)
+			capacity += m_config.bytesPerLine;
+
+		QString formattedLine;
+		formattedLine.reserve(capacity);
+
+		if (m_config.bShowAddress) {
+			m_bIs64Bit 
+				? formattedLine.append(QStringLiteral("0x%1: ").arg(address, 12, 16, QLatin1Char('0')))
+				: formattedLine.append(QStringLiteral("0x%1: ").arg(static_cast<uint32_t>(address), 8, 16, QLatin1Char('0')));
+		}
+
+		if (bIsUnknown) {
+			for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+				formattedLine.append("?? ");
+			}
+
+			if (m_config.bShowAscii)
+				formattedLine.append(QString('.').repeated(m_config.bytesPerLine));
+
+			return formattedLine;
+		}
+		
+		if (!m_memdump)
+			return formattedLine;
+
+		mem::MemoryView mv = m_memdump->readBytesAt(addr, m_config.bytesPerLine);
+
+		for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+			if (i < mv.size) {
+				BYTE b = mv.data[i];
+				formattedLine.append(HEX_DIGITS[b >> 4]);
+				formattedLine.append(HEX_DIGITS[b & 0x0F]);
+			} else {
+				formattedLine.append("??");
+			}
+			formattedLine.append(" ");
+		}
+
+		if (m_config.bShowAscii) {
 			for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
 				if (i < mv.size) {
-					BYTE b = mv.data[i];
-					*ptr++ = HEX_DIGITS[b >> 4];
-					*ptr++ = HEX_DIGITS[b & 0x0F];
-				}
-				else {
-					*ptr++ = '?'; *ptr++ = '?';
-				}
-				*ptr++ = ' ';
+					const BYTE b = mv.data[i];
+					formattedLine.append(IS_PRINTABLE[b] ? static_cast<char>(b) : '.');
+				} else {
+					formattedLine.append(".");
+				} 
 			}
-
-			if (m_config.bShowAscii) {
-				for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
-					if (i < mv.size) {
-						BYTE b = mv.data[i];
-						*ptr++ = IS_PRINTABLE[b] ? static_cast<char>(b) : '.';
-					}
-					else {
-						*ptr++ = '.';
-					}
-				}
-			}
-			return QString::fromLatin1(buffer, ptr - buffer);
 		}
-		return QString::fromLatin1("");
+		return formattedLine;
 	}
 }

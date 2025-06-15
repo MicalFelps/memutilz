@@ -13,16 +13,22 @@
 
 #include "mem/Memdump.h"
 
+namespace mem {
+	inline constexpr uintptr_t USERSPACE_START_ADDR = 0x0;
+	inline constexpr uintptr_t USERSPACE_END_32BIT = 0x7FFFFFFF;
+	inline constexpr uintptr_t USERSPACE_END_64BIT = 0x00007FFFFFFFFFFF;
+}
+
 namespace gui {
 	class Hexview : public QAbstractScrollArea {
 		Q_OBJECT
 
 	public:
 		struct DisplayConfig {
-			size_t bytesPerLine = 0x08;
+			int bytesPerLine = 0x20;
 			bool bShowAddress = true;
 			bool bShowAscii = true;
-			bool bShowRegionBoundaries = true;
+			bool bShowRegionBoundaries = false;
 		};
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
@@ -30,21 +36,27 @@ namespace gui {
 		void setMemdump(const mem::Memdump* memdump);
 		void setDisplayConfig(DisplayConfig& config);
 		void goToAddress(LPCVOID address);
-		void clear();
+		void clear(); // detach from process
 
+		virtual ~Hexview() = default;
 	protected:
 		void paintEvent(QPaintEvent* event) override;	// This does the actual printing to the screen
+		void showEvent(QShowEvent* event) override;
 		void resizeEvent(QResizeEvent* event) override; // To figure out how many lines fit in the new size
 		void wheelEvent(QWheelEvent* event) override;	// For converting wheel movement to scroll bar movement
-
+	private slots:
+		void onVerticalScrollChange(int value);
 	private:
-		static constexpr size_t MAX_UNKNOWN_PATTERN_SIZE = 128;
+		void getMetrics();
+		void updateScrollbars();
+		QString formatLine(LPCVOID addr, bool bIsUnknown);
+
 		static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
 		static constexpr bool IS_PRINTABLE[256] = {
-			// 0–31: control chars
+			// 0-31: control chars
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			// 32–126: printable ASCII
+			// 32-126: printable ASCII
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -53,7 +65,7 @@ namespace gui {
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			// 127: DEL (non-printable)
 			0,
-			// 128–255: extended ASCII (usually non-printable in plain ASCII)
+			// 128-255: extended ASCII (usually non-printable in plain ASCII)
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -64,6 +76,8 @@ namespace gui {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		};
 
+		static constexpr int SCROLL_RANGE = 0x100000;
+		static constexpr int SCROLL_RANGE_HALF = SCROLL_RANGE / 2;
 
 		struct DisplayMetrics {
 			int lineHeight{ 0 };
@@ -73,27 +87,19 @@ namespace gui {
 			int hexWidth{ 0 };
 			int asciiWidth{ 0 };
 			int totalWidth{ 0 };
-			int totalLines{ 0 };
+			uintptr_t totalLines{ 1 };
 		};
 
 		const mem::Memdump* m_memdump{ nullptr };
+		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT };
 		bool m_bIs64Bit{ true };
 
 		DisplayConfig m_config;
 		DisplayMetrics m_metrics;
 		QFont m_font;
+		bool initialized = false;
 
 		uintptr_t m_topAddress{ 0 }; // address at the top of view
-		size_t m_visibleLines{ 0 };
-
-		// Caching
-		std::unordered_map<uintptr_t, QString> m_lineCache;
-		char m_unknownPattern[MAX_UNKNOWN_PATTERN_SIZE];
-		size_t m_unknownPatternLength{ 0 };
-
-		void getMetrics();
-		void updateScrollbars();
-		void buildUnknownPattern();
-		QString formatLine(LPCVOID addr, bool bIsUnknown);
+		int m_visibleLines{ 1 };
 	};
 }

@@ -23,6 +23,7 @@ namespace mem {
 				m_pid = pids[0];
 			return pids;
 		}
+		throw mem::Exception("Failed to get process snapshot");
 	}
 	uintptr_t Process::get_module_base(std::wstring_view name, size_t idx) {
 		uintptr_t ret{};
@@ -43,6 +44,7 @@ namespace mem {
 			if (!ret)
 				throw mem::Exception("Failed to get module base address");
 		}
+		throw mem::Exception("Failed to get module snapshot");
 	}
 
 	bool Process::isWoW64() {
