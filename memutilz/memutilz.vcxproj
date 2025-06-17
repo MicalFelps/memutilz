@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClInclude Include="hdr\gui\common.h" />
     <ClInclude Include="hdr\mem\common.h" />
+    <ClInclude Include="hdr\mem\constants.h" />
     <ClInclude Include="hdr\mem\Exception.h" />
     <ClInclude Include="hdr\mem\Handle.h" />
     <ClInclude Include="hdr\mem\Memdump.h" />

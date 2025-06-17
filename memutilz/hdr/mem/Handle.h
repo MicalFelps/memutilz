@@ -1,18 +1,16 @@
 #pragma once
 
 namespace mem {
+	// The sole purpose of this class is just to avoid having to call CloseHandle()
 	class Handle {
 		HANDLE m_handle{ nullptr };
 	public:
 		Handle() = delete;
 		explicit Handle(HANDLE handle) noexcept
 			: m_handle{handle} {}
-		explicit Handle(DWORD pid, DWORD dwDesiredAccess = PROCESS_ALL_ACCESS)
-			: m_handle{ OpenProcess(dwDesiredAccess, false, pid) } {}
 
 		Handle(Handle&& other) noexcept
 			: m_handle{ std::exchange(other.m_handle, nullptr) } {}
-
 		Handle& operator=(Handle&& other) noexcept {
 			if (this == &other)
 				return *this;
@@ -39,11 +37,5 @@ namespace mem {
 				CloseHandle(m_handle);
 			m_handle = handle;
 		}
-		HANDLE release() {
-			HANDLE tmp = m_handle;
-			m_handle = nullptr;
-			return tmp;
-		}
-		bool operator!() const { return (m_handle == nullptr); }
 	};
 }

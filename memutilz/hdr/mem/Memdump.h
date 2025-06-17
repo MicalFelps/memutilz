@@ -7,55 +7,7 @@
 #include "mem/Exception.h"
 #include <map>
 
-#define PAGE_READ_FLAGS\
-	(PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
-
 namespace mem {
-	struct MemoryView {
-		const BYTE* data{ nullptr };
-		size_t size{ 0 };
-	};
-
-	struct BufferChunk {
-		LPVOID m_address;
-		size_t m_size;
-
-		BufferChunk() = delete;
-		BufferChunk(const BufferChunk& other) = delete;
-		BufferChunk& operator=(const BufferChunk& other) = delete;
-
-		BufferChunk(BufferChunk&& other) noexcept
-			: m_address(other.m_address)
-			, m_size(other.m_size)
-		{
-			other.m_address = nullptr;
-			other.m_size = 0;
-		}
-		BufferChunk& operator=(BufferChunk&& other) noexcept {
-			if (this == &other)
-				return *this;
-			if (m_address) {
-				VirtualFree(m_address, 0, MEM_RELEASE);
-			}
-			m_address = other.m_address;
-			m_size = other.m_size;
-			other.m_address = nullptr;
-			other.m_size = 0;
-		}
-
-		explicit BufferChunk(size_t size)
-			: m_size{ size }
-		{
-			m_address = VirtualAlloc(nullptr, m_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			if (!m_address)
-				throw mem::Exception("VirtualAlloc Failed");
-		}
-		~BufferChunk() {
-			if (m_address)
-				VirtualFree(m_address, 0, MEM_RELEASE);
-		}
-
-	};
 	struct MemoryRegion {
 		LPCVOID m_original_addr;
 		SIZE_T m_size;
@@ -64,28 +16,77 @@ namespace mem {
 		DWORD m_protection;
 	};
 	struct RegionContext {
-		const MemoryRegion* curr{ nullptr };	// nullptr if not applicable
-		const MemoryRegion* prev{ nullptr };
+		const MemoryRegion* curr{ nullptr };// nullptr if not applicable
 		const MemoryRegion* next{ nullptr };
+		const MemoryRegion* nnext{ nullptr };
 	};
-	struct ThreadConfig {
-		size_t max_size_mb;
-		size_t thread_count;
-	};
-	static constexpr ThreadConfig configs[] = {
-	{50, 1}, {500, 4}, {UINT64_MAX, 8}
+	struct MemoryView {
+		const BYTE* data{ nullptr };
+		size_t size{ 0 };
 	};
 
 	class Memdump {
+		struct ThreadConfig {
+			size_t max_size_mb;
+			size_t thread_count;
+		};
+		static constexpr ThreadConfig configs[] = {
+			{50, 1},
+			{500, 4},
+			{UINT64_MAX, 8}
+		};
+
+		struct BufferChunk {
+			LPVOID m_address;
+			size_t m_size;
+
+			BufferChunk() = delete;
+			BufferChunk(const BufferChunk& other) = delete;
+			BufferChunk& operator=(const BufferChunk& other) = delete;
+
+			BufferChunk(BufferChunk&& other) noexcept
+				: m_address(other.m_address)
+				, m_size(other.m_size)
+			{
+				other.m_address = nullptr;
+				other.m_size = 0;
+			}
+			BufferChunk& operator=(BufferChunk&& other) noexcept {
+				if (this == &other)
+					return *this;
+				if (m_address) {
+					VirtualFree(m_address, 0, MEM_RELEASE);
+				}
+				m_address = other.m_address;
+				m_size = other.m_size;
+				other.m_address = nullptr;
+				other.m_size = 0;
+			}
+
+			explicit BufferChunk(size_t size)
+				: m_size{ size }
+			{
+				m_address = VirtualAlloc(nullptr, m_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+				if (!m_address)
+					throw mem::Exception("VirtualAlloc Failed");
+			}
+			~BufferChunk() {
+				if (m_address)
+					VirtualFree(m_address, 0, MEM_RELEASE);
+			}
+
+		};
+
 		Meminfo* m_meminfo{ nullptr };
+		Process* m_targetProcess{ nullptr };
+
 		size_t m_threadCount{ 1 };
+
 		std::vector<BufferChunk> m_snapshotBuffers{};
-		size_t m_oldSnapshotSize{ 0 };
-		size_t m_newSnapshotSize{ 0 };
+		size_t m_SnapshotSize{ 0 };
 		std::map<LPCVOID, MemoryRegion> m_regions{};
 		//std::vector<std::future<size_t>> futures{};
 
-		bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi);
 		void update_memory_layout();
 		void make_snapshot_buffers();
 		size_t get_optimal_buffer_size() const;
@@ -101,11 +102,13 @@ namespace mem {
 		Memdump() = delete;
 		explicit Memdump(Meminfo* meminfo) noexcept
 			: m_meminfo{meminfo}
+			, m_targetProcess{ m_meminfo->get_process() }
 		{}
 
 		const RegionContext getRegionContext(LPCVOID address) const;
 		MemoryView readBytesAt(LPCVOID address, size_t amount) const;
 		Meminfo* getMeminfo() const { return m_meminfo; }
+		Process* getProcess() const { return m_targetProcess; }
 		void dump();
 	};
 }

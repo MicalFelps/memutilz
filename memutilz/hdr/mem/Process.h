@@ -6,35 +6,24 @@
 namespace mem {
 	class Process {
 		std::wstring m_name;
-		std::vector<DWORD> m_pids{};
-		std::vector<DWORD> m_threads{};
 		DWORD m_pid{ 0 };
 		DWORD m_mainThread{ 0 };
-		Handle m_handle{ nullptr };
-		bool m_bIsWoW64{ false };
+		std::vector<DWORD> m_threadIDs{};
 		bool m_bIsSuspended{ false };
 
-		std::vector<DWORD> find_pids_by_name(std::wstring_view name);
+		DWORD find_pid_by_name(std::wstring_view name);
 	public:
 		explicit Process(std::wstring_view name)
-			: m_pids{ find_pids_by_name(name) }
+			: m_pid{ find_pid_by_name(name) }
 			, m_name{ name }
 		{}
 
-		const std::wstring& getName() const noexcept { return m_name; }
-		DWORD get_pid(size_t idx = 0) const;
-		std::vector<DWORD> get_all_pids() const { return m_pids; }
-		void set_pid(DWORD pid);
-		HANDLE get_handle() const { return m_handle.get(); }
-		void set_handle(HANDLE handle) { m_handle.reset(handle); }
+		const std::wstring& get_name() const noexcept { return m_name; }
+		DWORD get_pid() const { return m_pid; }
+		void set_pid(DWORD pid) { m_pid = pid; }
 
-		void open_process(DWORD dwDesiredAccess, size_t idx = 0) { m_handle.reset(OpenProcess(dwDesiredAccess, FALSE, get_pid(idx))); }
-		uintptr_t get_module_base(std::wstring_view name, size_t idx);
-		uintptr_t get_program_base(size_t idx = 0) { return get_module_base(m_name, idx); }
-		bool isWoW64();
-
+		void find_thread_ids();
 		DWORD find_main_thread();
-		void get_thread_ids();
 
 		void suspend();
 		bool is_suspended() { return m_bIsSuspended; }

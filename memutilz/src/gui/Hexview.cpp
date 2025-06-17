@@ -23,12 +23,12 @@ namespace gui {
 		m_memdump = memdump;
 
 		if (m_memdump) {
-			m_bIs64Bit = (!m_memdump->getMeminfo()->m_targetProcess->isWoW64());
+			m_bIs64Bit = (!m_memdump->getMeminfo()->is32Bit());
 			(m_bIs64Bit)
 				? m_maxDisplayAddress = mem::USERSPACE_END_64BIT
 				: m_maxDisplayAddress = mem::USERSPACE_END_32BIT;
 			m_metrics.totalLines = (m_maxDisplayAddress + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
-			m_topAddress = m_memdump->getMeminfo()->m_targetProcess->get_program_base();
+			m_topAddress = m_memdump->getMeminfo()->get_program_base();
 			updateScrollbars();
 		}
 

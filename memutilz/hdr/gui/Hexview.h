@@ -12,12 +12,7 @@
 #include "gui/common.h"
 
 #include "mem/Memdump.h"
-
-namespace mem {
-	inline constexpr uintptr_t USERSPACE_START_ADDR = 0x0;
-	inline constexpr uintptr_t USERSPACE_END_32BIT = 0x7FFFFFFF;
-	inline constexpr uintptr_t USERSPACE_END_64BIT = 0x00007FFFFFFFFFFF;
-}
+#include "mem/constants.h"
 
 namespace gui {
 	class Hexview : public QAbstractScrollArea {
