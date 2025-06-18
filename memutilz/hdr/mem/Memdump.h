@@ -6,13 +6,14 @@
 #include "mem/Meminfo.h"
 #include "mem/Exception.h"
 #include <map>
+#include <future>
 
 namespace mem {
 	struct MemoryRegion {
 		LPCVOID m_original_addr;
 		SIZE_T m_size;
-		size_t m_buffer_chunk_idx;
-		size_t m_buffer_offset;
+		SIZE_T m_buffer_chunk_idx;
+		SIZE_T m_buffer_offset;
 		DWORD m_protection;
 	};
 	struct RegionContext {
@@ -22,13 +23,21 @@ namespace mem {
 	};
 	struct MemoryView {
 		const BYTE* data{ nullptr };
-		size_t size{ 0 };
+		SIZE_T size{ 0 };
+	};
+	struct RegionView {
+		std::map<LPCVOID, MemoryRegion>::const_iterator m_begin;
+		std::map<LPCVOID, MemoryRegion>::const_iterator m_end;
+
+		RegionView(auto b, auto e) : m_begin{ b }, m_end{ e } {}
+		auto begin() const { return m_begin; }
+		auto end() const { return m_end; }
 	};
 
 	class Memdump {
 		struct ThreadConfig {
-			size_t max_size_mb;
-			size_t thread_count;
+			SIZE_T max_size_mb;
+			SIZE_T thread_count;
 		};
 		static constexpr ThreadConfig configs[] = {
 			{50, 1},
@@ -38,7 +47,7 @@ namespace mem {
 
 		struct BufferChunk {
 			LPVOID m_address;
-			size_t m_size;
+			SIZE_T m_size;
 
 			BufferChunk() = delete;
 			BufferChunk(const BufferChunk& other) = delete;
@@ -63,7 +72,7 @@ namespace mem {
 				other.m_size = 0;
 			}
 
-			explicit BufferChunk(size_t size)
+			explicit BufferChunk(SIZE_T size)
 				: m_size{ size }
 			{
 				m_address = VirtualAlloc(nullptr, m_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -84,24 +93,26 @@ namespace mem {
 		std::vector<BYTE> m_liveBuffer;
 		Handle hRead{ nullptr };
 
-		size_t m_threadCount{ 1 };
+		SIZE_T m_threadCount{ 1 };
 
 		std::vector<BufferChunk> m_snapshotBuffers{};
-		size_t m_SnapshotSize{ 0 };
+		SIZE_T m_SnapshotSize{ 0 };
 		std::map<LPCVOID, MemoryRegion> m_regions{};
-		//std::vector<std::future<size_t>> futures{};
 
 		void update_memory_layout();
 		void make_snapshot_buffers();
-		size_t get_optimal_buffer_size() const;
+		SIZE_T get_optimal_buffer_size() const;
 		void distribute_regions();
 		void compute_thread_count();
+		std::vector<RegionView> divide_regions_by_size();
 
 		void init() {
 			update_memory_layout();
 			make_snapshot_buffers();
 			compute_thread_count();
 		}
+
+		SIZE_T dump_region_view(HANDLE handle, const RegionView& regionView);
 	public:
 		Memdump() = delete;
 		explicit Memdump(Meminfo* meminfo) noexcept
@@ -110,10 +121,10 @@ namespace mem {
 		{}
 
 		const RegionContext getRegionContext(LPCVOID address) const;
-		MemoryView readBytesAt(LPCVOID address, size_t amount);
+		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
 		Meminfo* getMeminfo() const { return m_meminfo; }
 		Process* getProcess() const { return m_targetProcess; }
-		void dump();
+		SIZE_T dump();
 		void setLiveMode() { m_bLiveMode = true; }
 	};
 }

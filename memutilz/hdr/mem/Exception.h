@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common.h"
+#include <sstream>
+#include <stdexcept>
 
 namespace mem {
 	class Exception : public std::runtime_error {

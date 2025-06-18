@@ -101,7 +101,7 @@ namespace gui {
 				firstValidAddr = m_topAddress;
 			}
 
-			size_t shownBytes = m_visibleLines * m_config.bytesPerLine;
+			SIZE_T shownBytes = m_visibleLines * m_config.bytesPerLine;
 			m_memdump->setLiveMode();
 			mem::MemoryView mv = m_memdump->readBytesAt(reinterpret_cast<LPCVOID>(firstValidAddr), shownBytes);
 
@@ -129,7 +129,7 @@ namespace gui {
 				}
 
 				mem::MemoryView lineView;
-				size_t byteOffset = (lineAddress - firstValidAddr);
+				SIZE_T byteOffset = (lineAddress - firstValidAddr);
 
 				if (byteOffset <= mv.size) {
 					lineView.data = mv.data + byteOffset;
@@ -234,7 +234,7 @@ namespace gui {
 			maxScrollLine = currentLine + scrollRangeLines / 2;
 		}
 
-		// size_t maxScroll = m_metrics.totalLines - static_cast<int>(m_visibleLines);
+		// SIZE_T maxScroll = m_metrics.totalLines - static_cast<int>(m_visibleLines);
 		verticalScrollBar()->setRange(minScrollLine, maxScrollLine);
 		verticalScrollBar()->setValue(currentLine);
 		verticalScrollBar()->setPageStep(m_visibleLines);
@@ -292,7 +292,7 @@ namespace gui {
 	QString Hexview::formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) {
 		uintptr_t address = reinterpret_cast<uintptr_t>(addr);
 
-		size_t capacity = 0;
+		SIZE_T capacity = 0;
 		if (m_config.bShowAddress) {
 			capacity += m_meminfo->is32Bit() ? 12 : 16;
 		}
@@ -312,7 +312,7 @@ namespace gui {
 		}
 
 		if (bIsUnknown) {
-			for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+			for (SIZE_T i = 0; i < m_config.bytesPerLine; ++i) {
 				formattedLine.append("?? ");
 			}
 
@@ -325,7 +325,7 @@ namespace gui {
 		if (!m_memdump)
 			return formattedLine;
 
-		for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+		for (SIZE_T i = 0; i < m_config.bytesPerLine; ++i) {
 			if (i < lineView.size) {
 				BYTE b = lineView.data[i];
 				formattedLine.append(HEX_DIGITS[b >> 4]);
@@ -337,7 +337,7 @@ namespace gui {
 		}
 
 		if (m_config.bShowAscii) {
-			for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+			for (SIZE_T i = 0; i < m_config.bytesPerLine; ++i) {
 				if (i < lineView.size) {
 					const BYTE b = lineView.data[i];
 					formattedLine.append(IS_PRINTABLE[b] ? static_cast<char>(b) : '.');

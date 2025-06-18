@@ -3,15 +3,15 @@
 #include "mem/Exception.h"
 
 namespace mem {
-	constexpr size_t operator"" _MB(unsigned long long mb) {
+	constexpr SIZE_T operator"" _MB(unsigned long long mb) {
 		return mb * 1024 * 1024;
 	}
 
-	static constexpr size_t SIZE_16MB = 16_MB;
-	static constexpr size_t SIZE_32MB = 32_MB;
-	static constexpr size_t SIZE_64MB = 64_MB;
-	static constexpr size_t SIZE_100MB = 100_MB;
-	static constexpr size_t SIZE_500MB = 500_MB;
+	static constexpr SIZE_T SIZE_16MB = 16_MB;
+	static constexpr SIZE_T SIZE_32MB = 32_MB;
+	static constexpr SIZE_T SIZE_64MB = 64_MB;
+	static constexpr SIZE_T SIZE_100MB = 100_MB;
+	static constexpr SIZE_T SIZE_500MB = 500_MB;
 
 	void Memdump::update_memory_layout() {
 		m_meminfo->find_page_info(); // update memory layout
@@ -23,7 +23,7 @@ namespace mem {
 			}
 		}
 	}
-	size_t Memdump::get_optimal_buffer_size() const {
+	SIZE_T Memdump::get_optimal_buffer_size() const {
 		if (m_SnapshotSize < SIZE_100MB)
 			return SIZE_16MB;
 		else if (m_SnapshotSize < SIZE_500MB)
@@ -32,8 +32,8 @@ namespace mem {
 			return SIZE_64MB;
 	}
 	void Memdump::distribute_regions() {
-		size_t offset = 0;
-		size_t bufferIndex = 0;
+		SIZE_T offset = 0;
+		SIZE_T bufferIndex = 0;
 		for (const auto& mbi : m_meminfo->get_pages()) {
 			if (mbi.State == MEM_COMMIT && is_readable_page(mbi)) {
 				if (offset + mbi.RegionSize > m_snapshotBuffers[0].m_size) {
@@ -57,30 +57,30 @@ namespace mem {
 		}
 	}
 	void Memdump::make_snapshot_buffers() {
-		size_t optimalBufferSize = get_optimal_buffer_size();
+		SIZE_T optimalBufferSize = get_optimal_buffer_size();
 
 		bool bShouldResize = false;
 		if (!m_snapshotBuffers.empty()) {
-			size_t currentBufferSize = m_snapshotBuffers[0].m_size;
+			SIZE_T currentBufferSize = m_snapshotBuffers[0].m_size;
 			bShouldResize = (optimalBufferSize > currentBufferSize * 2)
 				|| (currentBufferSize > optimalBufferSize * 2);
 		}
 
 		if (m_snapshotBuffers.empty() || bShouldResize) {
 			m_snapshotBuffers.clear();
-			size_t buffers_needed = ((m_SnapshotSize + optimalBufferSize - 1) / optimalBufferSize) + 1;
+			SIZE_T buffers_needed = ((m_SnapshotSize + optimalBufferSize - 1) / optimalBufferSize) + 1;
 
-			for (size_t i = 0; i < buffers_needed; ++i) {
+			for (SIZE_T i = 0; i < buffers_needed; ++i) {
 				m_snapshotBuffers.emplace_back(BufferChunk{ optimalBufferSize });
 			}
 		}
 		else {
-			size_t bufferSize = m_snapshotBuffers[0].m_size;
-			size_t currCapacity = bufferSize * m_snapshotBuffers.size();
+			SIZE_T bufferSize = m_snapshotBuffers[0].m_size;
+			SIZE_T currCapacity = bufferSize * m_snapshotBuffers.size();
 
 			if (m_SnapshotSize > currCapacity) {
-				size_t additionalBuffers = ((m_SnapshotSize - currCapacity) + bufferSize - 1) / bufferSize;
-				for (size_t i = 0; i < additionalBuffers; ++i) {
+				SIZE_T additionalBuffers = ((m_SnapshotSize - currCapacity) + bufferSize - 1) / bufferSize;
+				for (SIZE_T i = 0; i < additionalBuffers; ++i) {
 					m_snapshotBuffers.emplace_back(BufferChunk{ bufferSize });
 				}
 			}
@@ -88,9 +88,7 @@ namespace mem {
 		distribute_regions();
 	}
 	void Memdump::compute_thread_count() {
-		m_threadCount = 1;
-		return;
-		size_t size_mb = m_SnapshotSize / (1024 * 1024);
+		SIZE_T size_mb = m_SnapshotSize / (1024 * 1024);
 		for (const auto& config : configs) {
 			if (size_mb <= config.max_size_mb) {
 				m_threadCount = config.thread_count;
@@ -98,6 +96,34 @@ namespace mem {
 			}
 		}
 		m_threadCount = 8;
+	}
+	std::vector<RegionView> Memdump::divide_regions_by_size() {
+		std::vector<RegionView> views{};
+		SIZE_T bytesPerThread = m_SnapshotSize / m_threadCount;
+
+		auto threadBegin = m_regions.begin();
+		auto iter = m_regions.begin();
+
+		for (SIZE_T i = 0; i < m_threadCount; ++i) {
+			SIZE_T currentThreadBytes{ 0 };
+			threadBegin = iter;
+
+			if (i == m_threadCount - 1) {
+				views.emplace_back(threadBegin, m_regions.end());
+				break;
+			}
+
+			while (iter != m_regions.end()
+				&& currentThreadBytes < bytesPerThread) {
+				currentThreadBytes += iter->second.m_size;
+				++iter;
+			}
+
+			if (threadBegin != iter)
+				views.emplace_back(threadBegin, iter);
+		}
+
+		return views;
 	}
 
 	const RegionContext Memdump::getRegionContext(LPCVOID address) const {
@@ -127,7 +153,7 @@ namespace mem {
 
 		return ct;
 	}
-	MemoryView Memdump::readBytesAt(LPCVOID address, size_t amount) {
+	MemoryView Memdump::readBytesAt(LPCVOID address, SIZE_T amount) {
 		const RegionContext ct = getRegionContext(address);
 		if(!ct.curr)
 			return MemoryView();
@@ -136,10 +162,10 @@ namespace mem {
 		uintptr_t regionStart = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr);
 		uintptr_t regionEnd = regionStart + ct.curr->m_size;
 
-		size_t offset = addr - regionStart;
+		SIZE_T offset = addr - regionStart;
 
-		size_t availableBytes = regionEnd - addr;
-		size_t returnedAmount = (((amount) < (availableBytes)) ? (amount) : (availableBytes));
+		SIZE_T availableBytes = regionEnd - addr;
+		SIZE_T returnedAmount = (((amount) < (availableBytes)) ? (amount) : (availableBytes));
 
 		if (m_bLiveMode) {
 			if(hRead.get() == nullptr)
@@ -157,48 +183,70 @@ namespace mem {
 		}
 	}
 
-	void Memdump::dump() {
+	SIZE_T Memdump::dump() {
 		init();
 		Handle hRead{ OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->get_pid()) };
+		SIZE_T totalBytesRead{0};
 
 		m_targetProcess->suspend();
 		if (m_targetProcess->is_suspended()) {
 			if (m_threadCount == 1) {
-				SIZE_T total_read = 0;
-				for (const auto& [originalAddress, region] : m_regions) {
-					SIZE_T region_read = 0;
-					uintptr_t src = (uintptr_t)originalAddress;
-					LPVOID dst = m_snapshotBuffers[region.m_buffer_chunk_idx].m_address;
-					SIZE_T size = region.m_size;
+				auto regions = RegionView{ m_regions.begin(), m_regions.end() };
+				totalBytesRead = dump_region_view(hRead.get(), regions);
+			} else { // Async scanning
+				auto allRegions{ divide_regions_by_size() };
+				std::vector<std::future<SIZE_T>> futures;
 
-					while (region_read < region.m_size) {
-						SIZE_T bytes_read = 0;
-						if (!ReadProcessMemory(hRead.get(),
-							(LPCVOID)src,
-							(LPVOID)((uintptr_t)dst + total_read + region_read),
-							size,
-							&bytes_read
-						)) {
-							DWORD code = GetLastError();
-							if (code == ERROR_ACCESS_DENIED) {
-								break;
-							}
-						}
-
-						if (bytes_read == 0)
-							break;
-
-						total_read += bytes_read;
-						region_read += bytes_read;
-						src += bytes_read;
-						size -= bytes_read;
-					}
+				for (const auto& threadRegions : allRegions) {
+					futures.emplace_back(
+						std::async(
+							std::launch::async,
+							[this, handle = hRead.get()](const RegionView& threadView) {
+								return dump_region_view(handle, threadView);
+							},
+							threadRegions
+						));
 				}
-				//
-				// Async stuff
-				//
+				for (auto& future : futures) {
+					totalBytesRead += future.get();
+				}
 			}
 		}
 		m_targetProcess->resume();
+		return totalBytesRead;
+	}
+	SIZE_T Memdump::dump_region_view(HANDLE handle, const RegionView& regionView) {
+		SIZE_T total_bytes_read = 0;
+
+		for (const auto& [originalAddress, region] : regionView) {
+			SIZE_T region_read = 0;
+			uintptr_t src = (uintptr_t)originalAddress;
+			LPVOID dst = m_snapshotBuffers[region.m_buffer_chunk_idx].m_address;
+			SIZE_T size = region.m_size;
+
+			while (region_read < region.m_size) {
+				SIZE_T bytes_read = 0;
+				if (!ReadProcessMemory(handle,
+					(LPCVOID)src,
+					(LPVOID)((uintptr_t)dst + region.m_buffer_offset + region_read),
+					size,
+					&bytes_read
+				)) {
+					DWORD code = GetLastError();
+					if (code == ERROR_ACCESS_DENIED) {
+						break;
+					}
+				}
+
+				if (bytes_read == 0)
+					break;
+
+				total_bytes_read += bytes_read;
+				region_read += bytes_read;
+				src += bytes_read;
+				size -= bytes_read;
+			}
+		}
+		return total_bytes_read;
 	}
 }
