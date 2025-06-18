@@ -11,6 +11,7 @@
 
 #include "gui/common.h"
 
+#include "mem/Meminfo.h"
 #include "mem/Memdump.h"
 #include "mem/constants.h"
 
@@ -24,11 +25,11 @@ namespace gui {
 			bool bShowAddress = true;
 			bool bShowAscii = true;
 			bool bShowRegionBoundaries = false;
-		};
+		} m_config;
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
-		void setMemdump(const mem::Memdump* memdump);
+		void setMemdump(mem::Memdump* memdump);
 		void setDisplayConfig(DisplayConfig& config);
 		void goToAddress(LPCVOID address);
 		void clear(); // detach from process
@@ -44,7 +45,8 @@ namespace gui {
 	private:
 		void getMetrics();
 		void updateScrollbars();
-		QString formatLine(LPCVOID addr, bool bIsUnknown);
+		QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown);
+		QString formatLine(LPCVOID addr, bool bIsUnknown) { return formatLine({}, addr, bIsUnknown); }
 
 		static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
 		static constexpr bool IS_PRINTABLE[256] = {
@@ -83,14 +85,13 @@ namespace gui {
 			int asciiWidth{ 0 };
 			int totalWidth{ 0 };
 			uintptr_t totalLines{ 1 };
-		};
+		} m_metrics;
 
-		const mem::Memdump* m_memdump{ nullptr };
+		mem::Memdump* m_memdump{ nullptr };
+		const mem::Meminfo* m_meminfo{ nullptr };
+
 		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT };
-		bool m_bIs64Bit{ true };
 
-		DisplayConfig m_config;
-		DisplayMetrics m_metrics;
 		QFont m_font;
 		bool initialized = false;
 

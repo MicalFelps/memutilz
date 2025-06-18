@@ -15,12 +15,12 @@ namespace mem {
 			: m_targetProcess{ process }
 			, m_bIs32Bit{ resolve_bitness() }{
 		}
-		Process* get_process() { return m_targetProcess; }
-		uintptr_t get_module_base(std::wstring_view name);
-		uintptr_t get_program_base() { return get_module_base(m_targetProcess->get_name()); }
+		Process* get_process() const { return m_targetProcess; }
+		uintptr_t get_module_base(std::wstring_view name) const;
+		uintptr_t get_program_base() const { return get_module_base(m_targetProcess->get_name()); }
 		void find_page_info();
 		std::vector<MEMORY_BASIC_INFORMATION> get_pages() { return pages; }
-		bool is32Bit() { return m_bIs32Bit; }
+		bool is32Bit() const { return m_bIs32Bit; }
 	};
 
 	bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi);

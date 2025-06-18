@@ -68,7 +68,7 @@ namespace mem {
 
 		if (m_snapshotBuffers.empty() || bShouldResize) {
 			m_snapshotBuffers.clear();
-			size_t buffers_needed = (m_SnapshotSize + optimalBufferSize - 1) / optimalBufferSize;
+			size_t buffers_needed = ((m_SnapshotSize + optimalBufferSize - 1) / optimalBufferSize) + 1;
 
 			for (size_t i = 0; i < buffers_needed; ++i) {
 				m_snapshotBuffers.emplace_back(BufferChunk{ optimalBufferSize });
@@ -114,8 +114,8 @@ namespace mem {
 			}
 			--it;
 		}
-
-		--it;
+		if(it != m_regions.begin())
+			--it;
 		const MemoryRegion& region = it->second;
 		uintptr_t regionStart = (uintptr_t)region.m_original_addr;
 		uintptr_t regionEnd = regionStart + region.m_size;
@@ -127,7 +127,7 @@ namespace mem {
 
 		return ct;
 	}
-	MemoryView Memdump::readBytesAt(LPCVOID address, size_t amount) const {
+	MemoryView Memdump::readBytesAt(LPCVOID address, size_t amount) {
 		const RegionContext ct = getRegionContext(address);
 		if(!ct.curr)
 			return MemoryView();
@@ -141,8 +141,20 @@ namespace mem {
 		size_t availableBytes = regionEnd - addr;
 		size_t returnedAmount = (((amount) < (availableBytes)) ? (amount) : (availableBytes));
 
-		const BufferChunk& c = m_snapshotBuffers[ct.curr->m_buffer_chunk_idx];
-		return MemoryView{(reinterpret_cast<BYTE*>(c.m_address) + ct.curr->m_buffer_offset + offset), returnedAmount};
+		if (m_bLiveMode) {
+			if(hRead.get() == nullptr)
+				hRead.reset(OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->get_pid()));
+
+			m_liveBuffer.resize(returnedAmount);
+			SIZE_T bytesRead;
+
+			if (ReadProcessMemory(hRead.get(), address, m_liveBuffer.data(), returnedAmount, &bytesRead))
+				return MemoryView{ m_liveBuffer.data(), bytesRead };
+			return MemoryView();
+		} else {
+			const BufferChunk& c = m_snapshotBuffers[ct.curr->m_buffer_chunk_idx];
+			return MemoryView{ (reinterpret_cast<BYTE*>(c.m_address) + ct.curr->m_buffer_offset + offset), returnedAmount };
+		}
 	}
 
 	void Memdump::dump() {

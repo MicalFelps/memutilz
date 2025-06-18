@@ -80,6 +80,10 @@ namespace mem {
 		Meminfo* m_meminfo{ nullptr };
 		Process* m_targetProcess{ nullptr };
 
+		bool m_bLiveMode{ false };
+		std::vector<BYTE> m_liveBuffer;
+		Handle hRead{ nullptr };
+
 		size_t m_threadCount{ 1 };
 
 		std::vector<BufferChunk> m_snapshotBuffers{};
@@ -106,9 +110,10 @@ namespace mem {
 		{}
 
 		const RegionContext getRegionContext(LPCVOID address) const;
-		MemoryView readBytesAt(LPCVOID address, size_t amount) const;
+		MemoryView readBytesAt(LPCVOID address, size_t amount);
 		Meminfo* getMeminfo() const { return m_meminfo; }
 		Process* getProcess() const { return m_targetProcess; }
 		void dump();
+		void setLiveMode() { m_bLiveMode = true; }
 	};
 }

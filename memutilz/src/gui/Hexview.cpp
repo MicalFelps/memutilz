@@ -19,19 +19,19 @@ namespace gui {
 		connect(verticalScrollBar(), &QScrollBar::valueChanged,
 				this, &Hexview::onVerticalScrollChange);
 	}
-	void Hexview::setMemdump(const mem::Memdump* memdump) {
+
+	void Hexview::setMemdump(mem::Memdump* memdump) {
 		m_memdump = memdump;
 
 		if (m_memdump) {
-			m_bIs64Bit = (!m_memdump->getMeminfo()->is32Bit());
-			(m_bIs64Bit)
-				? m_maxDisplayAddress = mem::USERSPACE_END_64BIT
-				: m_maxDisplayAddress = mem::USERSPACE_END_32BIT;
+			m_meminfo = m_memdump->getMeminfo();
+			m_meminfo->is32Bit() 
+				? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
+				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
 			m_metrics.totalLines = (m_maxDisplayAddress + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
-			m_topAddress = m_memdump->getMeminfo()->get_program_base();
+			m_topAddress = m_meminfo->get_program_base();
 			updateScrollbars();
 		}
-
 		viewport()->update();
 	}
 	void Hexview::setDisplayConfig(DisplayConfig& config) {
@@ -80,25 +80,30 @@ namespace gui {
 				QString formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), true);
 				painter.drawText(-hScrollOffset, y, formattedLine);
 			}
-		} 
+		}
 		else { // If process attached
 			mem::RegionContext ct = m_memdump->getRegionContext(reinterpret_cast<LPCVOID>(m_topAddress));
 			uintptr_t boundary{ m_maxDisplayAddress };
+			uintptr_t firstValidAddr{0};
 			bool isUnknown{ false };
 
-			if (!ct.curr) { // If we're in unreadable memory
+			if (!ct.curr) { // Unreadable Memory
 				if (ct.next) {
 					boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
-				}
-				else {
-					boundary = m_maxDisplayAddress;
+					firstValidAddr = boundary;
 				}
 				isUnknown = true;
+			} else {  // if we're in readable memory
+				if (ct.next) {
+					if (ct.next->m_original_addr != reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size))
+						boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
+				}
+				firstValidAddr = m_topAddress;
 			}
-			else if (ct.next) { // if we're in readable memory
-				if(ct.next->m_original_addr != reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size))
-					boundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
-			}
+
+			size_t shownBytes = m_visibleLines * m_config.bytesPerLine;
+			m_memdump->setLiveMode();
+			mem::MemoryView mv = m_memdump->readBytesAt(reinterpret_cast<LPCVOID>(firstValidAddr), shownBytes);
 
 			for (int line = firstLine; line <= lastLine; ++line) {
 				int y = line * m_metrics.lineHeight + m_metrics.charHeight;
@@ -123,7 +128,15 @@ namespace gui {
 					}
 				}
 
-				QString formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), isUnknown);
+				mem::MemoryView lineView;
+				size_t byteOffset = (lineAddress - firstValidAddr);
+
+				if (byteOffset <= mv.size) {
+					lineView.data = mv.data + byteOffset;
+					lineView.size = (((m_config.bytesPerLine) < (mv.size - byteOffset)) ? (m_config.bytesPerLine) : (mv.size - byteOffset));
+				}
+
+				QString formattedLine = formatLine(lineView, reinterpret_cast<LPCVOID>(lineAddress), isUnknown);
 				painter.drawText(-hScrollOffset, y, formattedLine);
 			}
 		}
@@ -183,9 +196,10 @@ namespace gui {
 		m_metrics.lineHeight = m_metrics.charHeight + 2; // some space in between lines
 
 		if (m_config.bShowAddress) {
-			m_metrics.addressWidth = m_bIs64Bit
-				? fm.horizontalAdvance("000000000000: ")
-				: fm.horizontalAdvance("00000000: ");
+			if(m_meminfo)
+				m_metrics.addressWidth = m_meminfo->is32Bit()
+					? fm.horizontalAdvance("00000000: ")
+					: fm.horizontalAdvance("000000000000: ");
 		} else m_metrics.addressWidth = 0;
 
 		// Hex Area
@@ -274,12 +288,13 @@ namespace gui {
 
 		viewport()->update();
 	}
-	QString Hexview::formatLine(LPCVOID addr, bool bIsUnknown) {
+	
+	QString Hexview::formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) {
 		uintptr_t address = reinterpret_cast<uintptr_t>(addr);
 
 		size_t capacity = 0;
 		if (m_config.bShowAddress) {
-			capacity += m_bIs64Bit ? 16 : 12;
+			capacity += m_meminfo->is32Bit() ? 12 : 16;
 		}
 
 		capacity += m_config.bytesPerLine * 3;
@@ -291,9 +306,9 @@ namespace gui {
 		formattedLine.reserve(capacity);
 
 		if (m_config.bShowAddress) {
-			m_bIs64Bit 
-				? formattedLine.append(QStringLiteral("0x%1: ").arg(address, 12, 16, QLatin1Char('0')))
-				: formattedLine.append(QStringLiteral("0x%1: ").arg(static_cast<uint32_t>(address), 8, 16, QLatin1Char('0')));
+			m_meminfo->is32Bit()
+				? formattedLine.append(QStringLiteral("0x%1: ").arg(static_cast<uint32_t>(address), 8, 16, QLatin1Char('0')))
+				: formattedLine.append(QStringLiteral("0x%1: ").arg(address, 12, 16, QLatin1Char('0')));
 		}
 
 		if (bIsUnknown) {
@@ -310,11 +325,9 @@ namespace gui {
 		if (!m_memdump)
 			return formattedLine;
 
-		mem::MemoryView mv = m_memdump->readBytesAt(addr, m_config.bytesPerLine);
-
 		for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
-			if (i < mv.size) {
-				BYTE b = mv.data[i];
+			if (i < lineView.size) {
+				BYTE b = lineView.data[i];
 				formattedLine.append(HEX_DIGITS[b >> 4]);
 				formattedLine.append(HEX_DIGITS[b & 0x0F]);
 			} else {
@@ -325,8 +338,8 @@ namespace gui {
 
 		if (m_config.bShowAscii) {
 			for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
-				if (i < mv.size) {
-					const BYTE b = mv.data[i];
+				if (i < lineView.size) {
+					const BYTE b = lineView.data[i];
 					formattedLine.append(IS_PRINTABLE[b] ? static_cast<char>(b) : '.');
 				} else {
 					formattedLine.append(".");

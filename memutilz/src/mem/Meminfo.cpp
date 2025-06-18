@@ -17,7 +17,7 @@ namespace mem {
 		bool bIs64bitOS{ sysinfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 };
 		return (bIs64bitOS && bIsWoW64);
 	}
-	uintptr_t Meminfo::get_module_base(std::wstring_view name) {
+	uintptr_t Meminfo::get_module_base(std::wstring_view name) const {
 		uintptr_t ret{};
 		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, m_targetProcess->get_pid()) };
 
