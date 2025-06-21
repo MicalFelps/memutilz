@@ -1,5 +1,7 @@
 project(memutilz VERSION 1.0.0 LANGUAGES CXX)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/Qt-Advanced-Docking-System)
+
 # Find QT 6.8.1
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 qt_standard_project_setup()
@@ -8,18 +10,31 @@ qt_standard_project_setup()
 find_package(Microsoft.Windows.CppWinRT QUIET)
 
 # Source files
-file(GLOB MEMUTILZ_SOURCES CONFIGURE_DEPENDS
-    src/gui/*.cpp
-    src/mem/*.cpp
-    src/utilz/*.cpp
+set(MEMUTILZ_SOURCES
     src/main.cpp
+    src/gui/MainWindow.cpp
+    src/gui/MemoryView/AbstractMemoryView.cpp
+    src/gui/MemoryView/Hexview.cpp
+    src/mem/Memdump.cpp
+    src/mem/Meminfo.cpp
+    src/mem/Process.cpp
+    src/utilz/privilege.cpp
 )
 
 # Header files
-file(GLOB MEMUTILZ_HEADERS CONFIGURE_DEPENDS
-    hdr/gui/*.h
-    hdr/mem/*.h
-    hdr/utilz/*.h
+set(MEMUTILZ_HEADERS
+    hdr/gui/common.h
+    hdr/gui/MainWindow.h
+    hdr/gui/MemoryView/AbstractMemoryView.h
+    hdr/gui/MemoryView/Hexview.h
+    hdr/mem/common.h
+    hdr/mem/constants.h
+    hdr/mem/Exception.h
+    hdr/mem/Handle.h
+    hdr/mem/Memdump.h
+    hdr/mem/Meminfo.h
+    hdr/mem/Process.h
+    hdr/utilz/privilege.h
 )
 
 # UI and resource files
@@ -34,12 +49,14 @@ qt_add_executable(memutilz
     rsrc/memutilz.rc
 )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set_target_properties(memutilz PROPERTIES
     WIN32_EXECUTABLE TRUE
     OUTPUT_NAME "memutilz"
 
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_SOURCE_DIR}/bin/${PLATFORM}/Debug"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_SOURCE_DIR}/bin/${PLATFORM}/Release"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${SOLUTION_DIR}/${PLATFORM}/bin/Debug/${CMAKE_PROJECT_NAME}"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${SOLUTION_DIR}/${PLATFORM}/bin/Release/${CMAKE_PROJECT_NAME}"
 
     # For some reason AUTOUIC can't find the ui/ dir on it's own
     AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
@@ -49,13 +66,14 @@ set_target_properties(memutilz PROPERTIES
 target_include_directories(memutilz PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr/gui
+    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/gui/MemoryView
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr/mem
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr/utilz
 )
 
 target_compile_options(memutilz PRIVATE
-    $<$<CONFIG:Debug>:/W3 /sdl /Zi /MP>
-    $<$<CONFIG:Release>:/W3 /sdl /MP /O2 /Oi /Gy>
+    $<$<CONFIG:Debug>:/W3 /sdl /Zi /MP /EHsc>
+    $<$<CONFIG:Release>:/W3 /sdl /MP /O2 /Oi /Gy /EHsc>
 )
 
 target_compile_definitions(memutilz PRIVATE
@@ -70,6 +88,7 @@ target_link_libraries(memutilz PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    qtadvanceddocking-qt6
 )
 
 if(Microsoft.Windows.CppWinRT_FOUND)

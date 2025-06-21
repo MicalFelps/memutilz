@@ -43,10 +43,12 @@ namespace gui {
 	private slots:
 		void onVerticalScrollChange(int value);
 	private:
+		void updateAddressWidth();
 		void getMetrics();
 		void updateScrollbars();
 		QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown);
 		QString formatLine(LPCVOID addr, bool bIsUnknown) { return formatLine({}, addr, bIsUnknown); }
+		QString formatHeaderLine();
 
 		static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
 		static constexpr bool IS_PRINTABLE[256] = {
@@ -90,7 +92,7 @@ namespace gui {
 		mem::Memdump* m_memdump{ nullptr };
 		const mem::Meminfo* m_meminfo{ nullptr };
 
-		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT };
+		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT }; // Default to a 32-bit hexview
 
 		QFont m_font;
 		bool initialized = false;

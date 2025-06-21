@@ -1,4 +1,4 @@
-#include "gui/Hexview.h"
+#include "gui/MemoryView/Hexview.h"
 
 namespace gui {
 	Hexview::Hexview(QWidget* parent) 
@@ -30,6 +30,7 @@ namespace gui {
 				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
 			m_metrics.totalLines = (m_maxDisplayAddress + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
 			m_topAddress = m_meminfo->get_program_base();
+			updateAddressWidth();
 			updateScrollbars();
 		}
 		viewport()->update();
@@ -68,10 +69,16 @@ namespace gui {
 		lastLine = (((lastLine) < (static_cast<int>(m_visibleLines) - 1)) ? (lastLine) : (static_cast<int>(m_visibleLines) - 1));
 
 		int hScrollOffset = horizontalScrollBar() ? horizontalScrollBar()->value() : 0;
+		painter.drawText(-hScrollOffset, m_metrics.charHeight, formatHeaderLine());
+		painter.setPen(QPen({ 255, 255, 255 }));
+		int headerSeperatorOffsetY = 2;
+		painter.drawLine(event->rect().left(), m_metrics.lineHeight + headerSeperatorOffsetY,
+						m_metrics.totalWidth, m_metrics.lineHeight + headerSeperatorOffsetY);
+
 
 		if (!m_memdump) {
 			for (int line = firstLine; line <= lastLine; ++line) {
-				int y = line * m_metrics.lineHeight + m_metrics.charHeight;
+				int y = (line + 1) * m_metrics.lineHeight + m_metrics.charHeight;
 				uintptr_t lineAddress = m_topAddress + (line * m_config.bytesPerLine);
 
 				if (lineAddress >= m_maxDisplayAddress)
@@ -106,7 +113,7 @@ namespace gui {
 			mem::MemoryView mv = m_memdump->readBytesAt(reinterpret_cast<LPCVOID>(firstValidAddr), shownBytes);
 
 			for (int line = firstLine; line <= lastLine; ++line) {
-				int y = line * m_metrics.lineHeight + m_metrics.charHeight;
+				int y = (line + 1) * m_metrics.lineHeight + m_metrics.charHeight;
 				uintptr_t lineAddress = m_topAddress + (line * m_config.bytesPerLine);
 
 				if (lineAddress >= m_maxDisplayAddress)
@@ -140,23 +147,18 @@ namespace gui {
 				painter.drawText(-hScrollOffset, y, formattedLine);
 			}
 		}
+
 		// Draw Lines
-		if (m_config.bShowAddress && m_config.bShowAscii) {
-			painter.setPen(QPen(palette().mid().color(), 1));
-			const int lineOffsetX = 2 * m_metrics.charWidth;
+		QColor lineColor{ 255, 0, 0 };
+		painter.setPen(QPen(lineColor, 1));
+		int numberOfLines = (m_config.bytesPerLine - 1) / 8;
+		int lineOffsetX = m_metrics.charWidth / 2;
 
-			// Line after address
-			int addressEndX = m_metrics.addressWidth - hScrollOffset;
-			if (addressEndX > 0 && addressEndX < viewport()->width()) {
-				painter.drawLine(addressEndX - lineOffsetX, event->rect().top(),
-								addressEndX - lineOffsetX, event->rect().bottom());
-			}
-
-			// Line after hex
-			int hexEndX = m_metrics.addressWidth + m_metrics.hexWidth - hScrollOffset;
-			if (hexEndX > 0 && hexEndX < viewport()->width()) {
-				painter.drawLine(hexEndX - lineOffsetX, event->rect().top(),
-								hexEndX - lineOffsetX, event->rect().bottom());
+		for (int i = 1; i <= numberOfLines; ++i) {
+			int positionX = m_metrics.addressWidth + ((m_metrics.charWidth * 3) * 8 * i) - hScrollOffset - lineOffsetX;
+			if (positionX > 0 && positionX < viewport()->width()) {
+				painter.drawLine(positionX, event->rect().top(),
+								positionX, event->rect().bottom());
 			}
 		}
 	}
@@ -189,19 +191,35 @@ namespace gui {
 		event->accept();
 	}
 
+	void Hexview::updateAddressWidth() {
+		if (!m_config.bShowAddress) {
+			m_metrics.addressWidth = 0;
+			m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
+			return;
+		}
+
+		QFontMetrics fm{ m_font };
+		if (!m_memdump) {
+			m_metrics.addressWidth = fm.horizontalAdvance("0x00000000: ");
+			return;
+		}
+		else {
+			m_metrics.addressWidth = m_meminfo->is32Bit()
+				? fm.horizontalAdvance("0x00000000: ")
+				: fm.horizontalAdvance("0x000000000000: ");
+		}
+
+		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
+	}
 	void Hexview::getMetrics() {
 		QFontMetrics fm{m_font};
 		m_metrics.charWidth = fm.horizontalAdvance('0');
 		m_metrics.charHeight = fm.height();
 		m_metrics.lineHeight = m_metrics.charHeight + 2; // some space in between lines
 
-		if (m_config.bShowAddress) {
-			if(m_meminfo)
-				m_metrics.addressWidth = m_meminfo->is32Bit()
-					? fm.horizontalAdvance("00000000: ")
-					: fm.horizontalAdvance("000000000000: ");
-		} else m_metrics.addressWidth = 0;
-
+		// Address Area
+		updateAddressWidth();
+		
 		// Hex Area
 		m_metrics.hexWidth = (m_config.bytesPerLine * 3) * m_metrics.charWidth;
 
@@ -212,6 +230,7 @@ namespace gui {
 
 		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
 	}
+
 	void Hexview::updateScrollbars() {
 		disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
 			this, &Hexview::onVerticalScrollChange);
@@ -346,6 +365,18 @@ namespace gui {
 				} 
 			}
 		}
+		return formattedLine;
+	}
+	QString Hexview::formatHeaderLine() {
+		QString formattedLine;
+		if (m_maxDisplayAddress == mem::USERSPACE_END_32BIT)
+			formattedLine.append("address     "); // "0x00000000: " length
+		else formattedLine.append("address         "); // "0x000000000000: " length
+
+		for (size_t i = 0; i < m_config.bytesPerLine; ++i) {
+			formattedLine.append(QStringLiteral("%1 ").arg(i, 2, 16, QLatin1Char('0')).toUpper());
+		}
+
 		return formattedLine;
 	}
 }

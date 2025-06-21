@@ -43,26 +43,128 @@
    <property name="nativeMenuBar">
     <bool>true</bool>
    </property>
-   <widget class="QMenu" name="menuProcess">
+   <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>Process</string>
+     <string>View</string>
     </property>
+    <addaction name="action_Modules"/>
+    <addaction name="action_Threads"/>
+    <addaction name="action_Memory_Map"/>
+   </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="action_Inject_DLL"/>
+    <addaction name="action_Scanner"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="action_Attach_to_Process"/>
+    <addaction name="action_Re_Attach_to_Process"/>
+    <addaction name="action_Detach"/>
+    <addaction name="separator"/>
+    <addaction name="action_Save_Dump"/>
+    <addaction name="action_Load_Dump"/>
+    <addaction name="separator"/>
+    <addaction name="action_Quit"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuProcess"/>
+   <addaction name="menuView"/>
+   <addaction name="menuDebug"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
   </widget>
+  <action name="action">
+   <property name="text">
+    <string>😀</string>
+   </property>
+  </action>
+  <action name="actionhi">
+   <property name="text">
+    <string>hi</string>
+   </property>
+  </action>
+  <action name="action_Attach_to_Process">
+   <property name="text">
+    <string>❤️ Attach to Process</string>
+   </property>
+  </action>
+  <action name="action_Re_Attach_to_Process">
+   <property name="text">
+    <string>💚 Re-Attach to Process</string>
+   </property>
+  </action>
+  <action name="action_Detach">
+   <property name="text">
+    <string>💔 Detach</string>
+   </property>
+  </action>
+  <action name="action_Save_Dump">
+   <property name="text">
+    <string>📷 Save Dump</string>
+   </property>
+  </action>
+  <action name="action_Load_Dump">
+   <property name="text">
+    <string>💾 Load Dump</string>
+   </property>
+  </action>
+  <action name="action_Quit">
+   <property name="text">
+    <string>⛔ Quit</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="action_Inject_DLL">
+   <property name="text">
+    <string>💉 Inject DLL</string>
+   </property>
+  </action>
+  <action name="action_Threads">
+   <property name="text">
+    <string>🧵 Threads</string>
+   </property>
+  </action>
+  <action name="action_Modules">
+   <property name="text">
+    <string>📦 Modules</string>
+   </property>
+  </action>
+  <action name="action_Memory_Map">
+   <property name="text">
+    <string>🧩 Memory Map</string>
+   </property>
+  </action>
+  <action name="action_Scanner">
+   <property name="text">
+    <string>🔎 Scanner</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
    <class>gui::Hexview</class>
    <extends>QWidget</extends>
-   <header>gui/Hexview.h</header>
+   <header>gui/MemoryView/Hexview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

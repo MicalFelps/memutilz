@@ -13,6 +13,7 @@ else()
     set(PLATFORM "Win32")
 endif()
 
+set(SOLUTION_DIR ${CMAKE_SOURCE_DIR})
 option(BUILD_AGENT "Build Agent.dll" OFF)
 
 if(BUILD_AGENT)
