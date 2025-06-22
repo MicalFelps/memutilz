@@ -1,40 +1,11 @@
+#include "gui/MemoryView/AbstractMemoryView.h"
 #include "gui/MemoryView/Hexview.h"
 
 namespace gui {
 	Hexview::Hexview(QWidget* parent) 
-		: QAbstractScrollArea(parent)
-	{
-		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-		setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-		setFocusPolicy(Qt::StrongFocus);
+		: AbstractMemoryView(parent)
+	{}
 
-		m_font = QFont("Consolas", 10);
-		if (!m_font.exactMatch()) {
-			m_font = QFont("Courier New", 10);
-		}
-		m_font.setStyleHint(QFont::Monospace);
-		m_font.setFixedPitch(true);
-		setFont(m_font);
-
-		connect(verticalScrollBar(), &QScrollBar::valueChanged,
-				this, &Hexview::onVerticalScrollChange);
-	}
-
-	void Hexview::setMemdump(mem::Memdump* memdump) {
-		m_memdump = memdump;
-
-		if (m_memdump) {
-			m_meminfo = m_memdump->getMeminfo();
-			m_meminfo->is32Bit() 
-				? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
-				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
-			m_metrics.totalLines = (m_maxDisplayAddress + m_config.bytesPerLine - 1) / m_config.bytesPerLine;
-			m_topAddress = m_meminfo->get_program_base();
-			updateAddressWidth();
-			updateScrollbars();
-		}
-		viewport()->update();
-	}
 	void Hexview::setDisplayConfig(DisplayConfig& config) {
 		config.bytesPerLine = (config.bytesPerLine + 7) & ~0x7;
 		m_config = config;
@@ -53,10 +24,6 @@ namespace gui {
 		m_topAddress = alignedAddr;
 
 		updateScrollbars();
-		viewport()->update();
-	}
-	void Hexview::clear() {
-		m_memdump = nullptr;
 		viewport()->update();
 	}
 
@@ -191,87 +158,6 @@ namespace gui {
 		event->accept();
 	}
 
-	void Hexview::updateAddressWidth() {
-		if (!m_config.bShowAddress) {
-			m_metrics.addressWidth = 0;
-			m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
-			return;
-		}
-
-		QFontMetrics fm{ m_font };
-		if (!m_memdump) {
-			m_metrics.addressWidth = fm.horizontalAdvance("0x00000000: ");
-			return;
-		}
-		else {
-			m_metrics.addressWidth = m_meminfo->is32Bit()
-				? fm.horizontalAdvance("0x00000000: ")
-				: fm.horizontalAdvance("0x000000000000: ");
-		}
-
-		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
-	}
-	void Hexview::getMetrics() {
-		QFontMetrics fm{m_font};
-		m_metrics.charWidth = fm.horizontalAdvance('0');
-		m_metrics.charHeight = fm.height();
-		m_metrics.lineHeight = m_metrics.charHeight + 2; // some space in between lines
-
-		// Address Area
-		updateAddressWidth();
-		
-		// Hex Area
-		m_metrics.hexWidth = (m_config.bytesPerLine * 3) * m_metrics.charWidth;
-
-		// Ascii Area
-		if (m_config.bShowAscii) {
-			m_metrics.asciiWidth = ((m_config.bytesPerLine + 1) * m_metrics.charWidth);
-		} else m_metrics.asciiWidth = 0;
-
-		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
-	}
-
-	void Hexview::updateScrollbars() {
-		disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
-			this, &Hexview::onVerticalScrollChange);
-
-		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
-		int maxLines = m_maxDisplayAddress / m_config.bytesPerLine;
-		int currentLine = m_topAddress / m_config.bytesPerLine;
-		int minScrollLine, maxScrollLine;
-
-		if (currentLine < scrollRangeLines / 2) {
-			minScrollLine = 0;
-			maxScrollLine = scrollRangeLines;
-		}
-		else if (currentLine + scrollRangeLines / 2 > maxLines) {
-			maxScrollLine = maxLines;
-			minScrollLine = maxLines - scrollRangeLines;
-		}
-		else {
-			minScrollLine = currentLine - scrollRangeLines / 2;
-			maxScrollLine = currentLine + scrollRangeLines / 2;
-		}
-
-		// SIZE_T maxScroll = m_metrics.totalLines - static_cast<int>(m_visibleLines);
-		verticalScrollBar()->setRange(minScrollLine, maxScrollLine);
-		verticalScrollBar()->setValue(currentLine);
-		verticalScrollBar()->setPageStep(m_visibleLines);
-		verticalScrollBar()->setSingleStep(1);
-
-		connect(verticalScrollBar(), &QScrollBar::valueChanged,
-			this, &Hexview::onVerticalScrollChange);
-
-		int viewportWidth = viewport()->width();
-		if (m_metrics.totalWidth > viewportWidth) {
-			horizontalScrollBar()->setRange(0, m_metrics.totalWidth - viewportWidth);
-			horizontalScrollBar()->setPageStep(viewportWidth);
-			horizontalScrollBar()->setSingleStep(m_metrics.charWidth);
-		} else {
-			horizontalScrollBar()->setRange(0, 0);
-		}
-		viewport()->update();
-	}
 	void Hexview::onVerticalScrollChange(int value) {
 		m_topAddress = static_cast<uintptr_t>(value) * m_config.bytesPerLine;
 
@@ -307,7 +193,88 @@ namespace gui {
 
 		viewport()->update();
 	}
-	
+
+	void Hexview::updateAddressWidth() {
+		if (!m_config.bShowAddress) {
+			m_metrics.addressWidth = 0;
+			m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
+			return;
+		}
+
+		QFontMetrics fm{ m_font };
+		if (!m_memdump) {
+			m_metrics.addressWidth = fm.horizontalAdvance("0x00000000: ");
+			return;
+		}
+		else {
+			m_maxDisplayAddress == mem::USERSPACE_END_32BIT
+				? fm.horizontalAdvance("0x00000000: ")
+				: fm.horizontalAdvance("0x000000000000: ");
+		}
+
+		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
+	}
+
+	void Hexview::getMetrics() {
+		QFontMetrics fm{m_font};
+		m_metrics.charWidth = fm.horizontalAdvance('0');
+		m_metrics.charHeight = fm.height();
+		m_metrics.lineHeight = m_metrics.charHeight + 2; // some space in between lines
+
+		// Address Area
+		updateAddressWidth();
+		
+		// Hex Area
+		m_metrics.hexWidth = (m_config.bytesPerLine * 3) * m_metrics.charWidth;
+
+		// Ascii Area
+		if (m_config.bShowAscii) {
+			m_metrics.asciiWidth = ((m_config.bytesPerLine + 1) * m_metrics.charWidth);
+		} else m_metrics.asciiWidth = 0;
+
+		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
+	}
+	void Hexview::updateScrollbars() {
+		disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
+			this, &Hexview::onVerticalScrollChange);
+
+		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
+		int maxLines = m_maxDisplayAddress / m_config.bytesPerLine;
+		int currentLine = m_topAddress / m_config.bytesPerLine;
+		int minScrollLine, maxScrollLine;
+
+		if (currentLine < scrollRangeLines / 2) {
+			minScrollLine = 0;
+			maxScrollLine = scrollRangeLines;
+		}
+		else if (currentLine + scrollRangeLines / 2 > maxLines) {
+			maxScrollLine = maxLines;
+			minScrollLine = maxLines - scrollRangeLines;
+		}
+		else {
+			minScrollLine = currentLine - scrollRangeLines / 2;
+			maxScrollLine = currentLine + scrollRangeLines / 2;
+		}
+
+		verticalScrollBar()->setRange(minScrollLine, maxScrollLine);
+		verticalScrollBar()->setValue(currentLine);
+		verticalScrollBar()->setPageStep(m_visibleLines);
+		verticalScrollBar()->setSingleStep(1);
+
+		connect(verticalScrollBar(), &QScrollBar::valueChanged,
+			this, &Hexview::onVerticalScrollChange);
+
+		int viewportWidth = viewport()->width();
+		if (m_metrics.totalWidth > viewportWidth) {
+			horizontalScrollBar()->setRange(0, m_metrics.totalWidth - viewportWidth);
+			horizontalScrollBar()->setPageStep(viewportWidth);
+			horizontalScrollBar()->setSingleStep(m_metrics.charWidth);
+		} else {
+			horizontalScrollBar()->setRange(0, 0);
+		}
+		viewport()->update();
+	}
+
 	QString Hexview::formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) {
 		uintptr_t address = reinterpret_cast<uintptr_t>(addr);
 

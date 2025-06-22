@@ -10,13 +10,15 @@
 #include <algorithm>
 
 #include "gui/common.h"
+#include "gui/MemoryView/AbstractMemoryView.h"
+#include "gui/constants.h"
 
 #include "mem/Meminfo.h"
 #include "mem/Memdump.h"
 #include "mem/constants.h"
 
 namespace gui {
-	class Hexview : public QAbstractScrollArea {
+	class Hexview : public AbstractMemoryView {
 		Q_OBJECT
 
 	public:
@@ -25,14 +27,12 @@ namespace gui {
 			bool bShowAddress = true;
 			bool bShowAscii = true;
 			bool bShowRegionBoundaries = false;
-		} m_config;
+		};
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
-		void setMemdump(mem::Memdump* memdump);
 		void setDisplayConfig(DisplayConfig& config);
-		void goToAddress(LPCVOID address);
-		void clear(); // detach from process
+		virtual void goToAddress(LPCVOID address) override;
 
 		virtual ~Hexview() = default;
 	protected:
@@ -41,42 +41,16 @@ namespace gui {
 		void resizeEvent(QResizeEvent* event) override; // To figure out how many lines fit in the new size
 		void wheelEvent(QWheelEvent* event) override;	// For converting wheel movement to scroll bar movement
 	private slots:
-		void onVerticalScrollChange(int value);
+		virtual void onVerticalScrollChange(int value) override;
 	private:
-		void updateAddressWidth();
-		void getMetrics();
-		void updateScrollbars();
-		QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown);
+		virtual void updateAddressWidth() override;
+
+		virtual void getMetrics() override;
+		virtual void updateScrollbars() override;
+
+		virtual QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) override;
 		QString formatLine(LPCVOID addr, bool bIsUnknown) { return formatLine({}, addr, bIsUnknown); }
-		QString formatHeaderLine();
-
-		static constexpr char HEX_DIGITS[] = "0123456789ABCDEF";
-		static constexpr bool IS_PRINTABLE[256] = {
-			// 0-31: control chars
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			// 32-126: printable ASCII
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			// 127: DEL (non-printable)
-			0,
-			// 128-255: extended ASCII (usually non-printable in plain ASCII)
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		};
-
-		static constexpr int SCROLL_RANGE = 0x100000;
-		static constexpr int SCROLL_RANGE_HALF = SCROLL_RANGE / 2;
+		virtual QString formatHeaderLine() override;
 
 		struct DisplayMetrics {
 			int lineHeight{ 0 };
@@ -86,18 +60,8 @@ namespace gui {
 			int hexWidth{ 0 };
 			int asciiWidth{ 0 };
 			int totalWidth{ 0 };
-			uintptr_t totalLines{ 1 };
 		} m_metrics;
 
-		mem::Memdump* m_memdump{ nullptr };
-		const mem::Meminfo* m_meminfo{ nullptr };
-
-		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT }; // Default to a 32-bit hexview
-
-		QFont m_font;
-		bool initialized = false;
-
-		uintptr_t m_topAddress{ 0 }; // address at the top of view
-		int m_visibleLines{ 1 };
+		DisplayConfig m_config;
 	};
 }

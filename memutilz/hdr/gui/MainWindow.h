@@ -1,11 +1,7 @@
 #pragma once
 
 #include "gui/common.h"
-#include "ui_MainWindow.h"
-
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindowClass; };
-QT_END_NAMESPACE
+#include "Ui_MainWindow.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -15,7 +11,7 @@ public:
     ~MainWindow();
     void initialize();
 private:
-    Ui::MainWindowClass* ui;
+    gui::Ui_MainWindow* ui;
 
     std::unique_ptr<mem::Process> proc;
     std::unique_ptr<mem::Meminfo> meminfo;

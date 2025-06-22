@@ -2,7 +2,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new(std::nothrow) Ui::MainWindowClass())
+    , ui(new(std::nothrow) gui::Ui_MainWindow)
 {
     ui->setupUi(this);
 }

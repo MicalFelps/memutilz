@@ -13,7 +13,9 @@ find_package(Microsoft.Windows.CppWinRT QUIET)
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/MainWindow.cpp
+    src/gui/Ui_MainWindow.cpp
     src/gui/MemoryView/AbstractMemoryView.cpp
+    src/gui/MemoryView/AssemblyView.cpp
     src/gui/MemoryView/Hexview.cpp
     src/mem/Memdump.cpp
     src/mem/Meminfo.cpp
@@ -25,7 +27,9 @@ set(MEMUTILZ_SOURCES
 set(MEMUTILZ_HEADERS
     hdr/gui/common.h
     hdr/gui/MainWindow.h
+    hdr/gui/Ui_MainWindow.h
     hdr/gui/MemoryView/AbstractMemoryView.h
+    hdr/gui/MemoryView/AssemblyView.h
     hdr/gui/MemoryView/Hexview.h
     hdr/mem/common.h
     hdr/mem/constants.h
@@ -37,14 +41,12 @@ set(MEMUTILZ_HEADERS
     hdr/utilz/privilege.h
 )
 
-# UI and resource files
-file(GLOB MEMUTILZ_UI_FILES ui/*.ui)
+# resource files
 file(GLOB MEMUTILZ_RESOURCES rsrc/*.qrc)
 
 qt_add_executable(memutilz
     ${MEMUTILZ_SOURCES}
     ${MEMUTILZ_HEADERS}
-    ${MEMUTILZ_UI_FILES}
     ${MEMUTILZ_RESOURCES}
     rsrc/memutilz.rc
 )
@@ -59,7 +61,7 @@ set_target_properties(memutilz PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${SOLUTION_DIR}/${PLATFORM}/bin/Release/${CMAKE_PROJECT_NAME}"
 
     # For some reason AUTOUIC can't find the ui/ dir on it's own
-    AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
+    # AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
 )
 
 # Include directories
