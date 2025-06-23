@@ -2,8 +2,6 @@
 #include "gui/MainWindow.h"
 #include "utilz/privilege.h"
 
-#include <DockAreaTabBar.h>
-
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);

@@ -1,6 +1,7 @@
 project(memutilz VERSION 1.0.0 LANGUAGES CXX)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/Qt-Advanced-Docking-System)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/capstone)
 
 # Find QT 6.8.1
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
@@ -91,6 +92,7 @@ target_link_libraries(memutilz PRIVATE
     Qt6::Gui
     Qt6::Widgets
     qtadvanceddocking-qt6
+    capstone
 )
 
 if(Microsoft.Windows.CppWinRT_FOUND)
