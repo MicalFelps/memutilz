@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MEMINFO_H
+#define MEMINFO_H
 
 #include "mem/Process.h"
 
@@ -25,3 +26,5 @@ namespace mem {
 
 	bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi);
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MEMDUMP_H
+#define MEMDUMP_H
 
 #include "common.h"
 
@@ -128,3 +129,5 @@ namespace mem {
 		void setLiveMode() { m_bLiveMode = true; }
 	};
 }
+
+#endif

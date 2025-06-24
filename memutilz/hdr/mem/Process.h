@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PROCESS_H
+#define PROCESS_H
 
 #include "common.h"
 #include "mem/Handle.h"
@@ -30,3 +31,5 @@ namespace mem {
 		void resume();
 	};
 }
+
+#endif

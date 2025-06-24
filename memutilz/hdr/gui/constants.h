@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUI_CONSTANTS_H
+#define GUI_CONSTANTS_H
 
 namespace gui {
 	static constexpr int SCROLL_RANGE = 0x100000;
@@ -29,3 +30,5 @@ namespace gui {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	};
 }
+
+#endif

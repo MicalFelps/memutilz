@@ -1,43 +1,34 @@
-#pragma once
+#ifndef ASSEMBLYVIEW_H
+#define ASSEMBLYVIEW_H
+
+#include <QTableView>
 
 #include "AbstractMemoryView.h"
+#include "AssemblyTableModel.h"
 
 namespace gui {
-	class AssemblyView : public AbstractMemoryView {
+	class AssemblyView : public QTableView, public AbstractMemoryView {
 		Q_OBJECT
 	public:
-		explicit AssemblyView(QWidget* parent);
-
+		explicit AssemblyView(QWidget* parent = nullptr);
+		virtual void setMemdump(mem::Memdump* memdump) override;
 		virtual void goToAddress(LPCVOID address) override;
-
+		virtual void clear() override; // Detach from process
 		virtual ~AssemblyView() = default;
 	protected:
-		void paintEvent(QPaintEvent* event) override;
 		void showEvent(QShowEvent* event) override;
 		void resizeEvent(QResizeEvent* event) override;
 		void wheelEvent(QWheelEvent* event) override;
-
 	private slots:
-		virtual void onVerticalScrollChange(int value) override;
+		void onTableScrolled(int value);
 	private:
-		virtual void updateAddressWidth() override;
+		void setupTable();
+		void updateVisibleRows();
 
-		virtual void getMetrics() override;
-		virtual void updateScrollbars() override;
-
-		virtual QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) override;
-		QString formatLine(LPCVOID addr, bool bIsUnknown) { return formatLine({}, addr, bIsUnknown); }
-		virtual QString formatHeaderLine() override;
-
-		struct DisplayMetrics {
-			int lineHeight{ 0 };
-			int charHeight{ 0 };
-			int charWidth{ 0 };
-			int addressWidth{ 0 };
-			int hexWidth{ 0 };
-			int opcodeWidth{ 0 };
-			int commentWidth{ 0 };
-			int totalWidth{ 0 };
-		} m_metrics;
+		AssemblyTableModel* m_model;
+		bool m_bShowRelativeAddress{ false };
+		int m_rowHeight{ 20 };
 	};
 }
+
+#endif

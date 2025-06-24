@@ -3,9 +3,39 @@
 
 namespace gui {
 	Hexview::Hexview(QWidget* parent) 
-		: AbstractMemoryView(parent)
-	{}
+		: QAbstractScrollArea(parent)
+	{
+		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+		setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+		setFocusPolicy(Qt::StrongFocus);
 
+		m_font = QFont("Consolas", 10);
+		if (!m_font.exactMatch()) {
+			m_font = QFont("Courier New", 10);
+		}
+
+		m_font.setStyleHint(QFont::Monospace);
+		m_font.setFixedPitch(true);
+		setFont(m_font);
+
+		connect(verticalScrollBar(), &QScrollBar::valueChanged,
+			this, &Hexview::onVerticalScrollChange);
+	}
+
+	void Hexview::setMemdump(mem::Memdump* memdump) {
+		m_memdump = memdump;
+
+		if (m_memdump) {
+			m_meminfo = m_memdump->getMeminfo();
+			m_meminfo->is32Bit()
+				? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
+				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
+			m_topAddress = m_meminfo->get_program_base();
+			updateAddressWidth();
+			updateScrollbars();
+		}
+		viewport()->update();
+	}
 	void Hexview::setDisplayConfig(DisplayConfig& config) {
 		config.bytesPerLine = (config.bytesPerLine + 7) & ~0x7;
 		m_config = config;
@@ -131,16 +161,16 @@ namespace gui {
 	}
 	void Hexview::showEvent(QShowEvent* event) {
 		QAbstractScrollArea::showEvent(event);
-		if (!initialized) {
+		if (!m_initialized) {
 			getMetrics();
 			m_visibleLines = viewport()->height() / m_metrics.lineHeight;
 			updateScrollbars();
-			initialized = true;
+			m_initialized = true;
 		}
 	}
 	void Hexview::resizeEvent(QResizeEvent* event) {
 		QAbstractScrollArea::resizeEvent(event);
-		if (initialized) {
+		if (m_initialized) {
 			m_visibleLines = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 			updateScrollbars();
 		}

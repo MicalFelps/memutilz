@@ -15,7 +15,7 @@ set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/MainWindow.cpp
     src/gui/Ui_MainWindow.cpp
-    src/gui/MemoryView/AbstractMemoryView.cpp
+    src/gui/MemoryView/AssemblyTableModel.cpp
     src/gui/MemoryView/AssemblyView.cpp
     src/gui/MemoryView/Hexview.cpp
     src/mem/Memdump.cpp
@@ -29,7 +29,8 @@ set(MEMUTILZ_HEADERS
     hdr/gui/common.h
     hdr/gui/MainWindow.h
     hdr/gui/Ui_MainWindow.h
-    hdr/gui/MemoryView/AbstractMemoryView.h
+    hdr/gui/MemoryView/AbstractMemoryView.h 
+    hdr/gui/MemoryView/AssemblyTableModel.h
     hdr/gui/MemoryView/AssemblyView.h
     hdr/gui/MemoryView/Hexview.h
     hdr/mem/common.h

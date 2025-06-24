@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MEM_CONSTANTS_H
+#define MEM_CONSTANTS_H
 
 #include <windows.h>
 
@@ -15,3 +16,5 @@ namespace mem {
 		PAGE_EXECUTE_READWRITE |
 		PAGE_EXECUTE_WRITECOPY;
 }
+
+#endif

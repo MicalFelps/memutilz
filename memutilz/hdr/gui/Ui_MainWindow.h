@@ -1,6 +1,8 @@
-﻿#pragma once
+﻿#ifndef UI_MAINWINDOW_H
+#define UI_MAINWINDOW_H
 
 #include <QMenuBar.h>
+#include "MemoryView/AssemblyView.h"
 #include "MemoryView/Hexview.h"
 
 namespace gui {
@@ -8,6 +10,7 @@ namespace gui {
     public:
         QWidget* centralWidget;
         gui::Hexview* hexview;
+        gui::AssemblyView* assemblyView;
         QMenuBar* menuBar;
 
         void setupUi(QMainWindow* MainWindow)
@@ -17,8 +20,13 @@ namespace gui {
                 MainWindow->setObjectName("MainWindow");
 
             centralWidget = new QWidget{ MainWindow };
-            hexview = new gui::Hexview(centralWidget);
-            hexview->setGeometry(QRect(10, 30, 1271, 841));
+
+            assemblyView = new gui::AssemblyView{ centralWidget };
+            assemblyView->setGeometry(QRect(10, 30, 630, 840));
+            assemblyView->show();
+
+            hexview = new gui::Hexview{ centralWidget };
+            hexview->setGeometry(QRect(650, 30, 650, 840));
             hexview->show();
 
             MainWindow->setCentralWidget(centralWidget);
@@ -77,3 +85,5 @@ namespace gui {
         } // setupUi
     };
 }
+
+#endif

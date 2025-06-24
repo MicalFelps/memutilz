@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EXCEPTION_H
+#define EXCEPTION_H
 
 #include "common.h"
 #include <sstream>
@@ -40,3 +41,5 @@ namespace mem {
 		}
 	};
 }
+
+#endif

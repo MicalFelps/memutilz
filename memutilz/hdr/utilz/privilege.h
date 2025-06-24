@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PRIVILEGE_H
+#define PRIVILEGE_H
 
 #include "Windows.h"
 
@@ -9,3 +10,5 @@ namespace utilz {
 		bool CheckAndRequestAdmin();
 	}
 }
+
+#endif

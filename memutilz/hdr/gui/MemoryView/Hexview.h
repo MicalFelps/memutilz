@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HEXVIEW_H
+#define HEXVIEW_H
 
 #include <QAbstractScrollArea>
 #include <QScrollBar>
@@ -18,7 +19,7 @@
 #include "mem/constants.h"
 
 namespace gui {
-	class Hexview : public AbstractMemoryView {
+	class Hexview : public QAbstractScrollArea, public AbstractMemoryView {
 		Q_OBJECT
 
 	public:
@@ -31,8 +32,10 @@ namespace gui {
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
+		virtual void setMemdump(mem::Memdump* memdump) override;
 		void setDisplayConfig(DisplayConfig& config);
 		virtual void goToAddress(LPCVOID address) override;
+		virtual void clear() override { m_memdump = nullptr; viewport()->update(); }
 
 		virtual ~Hexview() = default;
 	protected:
@@ -41,16 +44,15 @@ namespace gui {
 		void resizeEvent(QResizeEvent* event) override; // To figure out how many lines fit in the new size
 		void wheelEvent(QWheelEvent* event) override;	// For converting wheel movement to scroll bar movement
 	private slots:
-		virtual void onVerticalScrollChange(int value) override;
+		void onVerticalScrollChange(int value);
 	private:
-		virtual void updateAddressWidth() override;
+		void updateAddressWidth();
+		void updateScrollbars();
+		void getMetrics();
 
-		virtual void getMetrics() override;
-		virtual void updateScrollbars() override;
-
-		virtual QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown) override;
+		QString formatLine(mem::MemoryView lineView, LPCVOID addr, bool bIsUnknown);
 		QString formatLine(LPCVOID addr, bool bIsUnknown) { return formatLine({}, addr, bIsUnknown); }
-		virtual QString formatHeaderLine() override;
+		QString formatHeaderLine();
 
 		struct DisplayMetrics {
 			int lineHeight{ 0 };
@@ -65,3 +67,5 @@ namespace gui {
 		DisplayConfig m_config;
 	};
 }
+
+#endif

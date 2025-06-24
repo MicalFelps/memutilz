@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HANDLE_H
+#define HANDLE_H
 
 namespace mem {
 	// The sole purpose of this class is just to avoid having to call CloseHandle()
@@ -39,3 +40,5 @@ namespace mem {
 		}
 	};
 }
+
+#endif

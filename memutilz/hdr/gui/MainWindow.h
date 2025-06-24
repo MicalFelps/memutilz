@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include "gui/common.h"
 #include "Ui_MainWindow.h"
@@ -20,3 +21,5 @@ private:
     void printError(const std::wstring& err);
     void printError(const std::string& err);
 };
+
+#endif
