@@ -22,6 +22,7 @@ void MainWindow::initialize() {
         memdump->dump();
 
         ui->hexview->setMemdump(memdump.get());
+        ui->assemblyView->setMemdump(memdump.get());
     }
     catch (const mem::Exception& e) {
         printError(e.full_msg());

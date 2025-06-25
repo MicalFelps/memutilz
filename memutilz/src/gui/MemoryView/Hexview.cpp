@@ -63,7 +63,7 @@ namespace gui {
 
 		int firstLine = event->rect().top() / m_metrics.lineHeight;
 		int lastLine = (event->rect().bottom() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
-		lastLine = (((lastLine) < (static_cast<int>(m_visibleLines) - 1)) ? (lastLine) : (static_cast<int>(m_visibleLines) - 1));
+		lastLine = (((lastLine) < (static_cast<int>(m_visibleRows) - 1)) ? (lastLine) : (static_cast<int>(m_visibleRows) - 1));
 
 		int hScrollOffset = horizontalScrollBar() ? horizontalScrollBar()->value() : 0;
 		painter.drawText(-hScrollOffset, m_metrics.charHeight, formatHeaderLine());
@@ -105,7 +105,7 @@ namespace gui {
 				firstValidAddr = m_topAddress;
 			}
 
-			SIZE_T shownBytes = m_visibleLines * m_config.bytesPerLine;
+			SIZE_T shownBytes = m_visibleRows * m_config.bytesPerLine;
 			m_memdump->setLiveMode();
 			mem::MemoryView mv = m_memdump->readBytesAt(reinterpret_cast<LPCVOID>(firstValidAddr), shownBytes);
 
@@ -163,7 +163,7 @@ namespace gui {
 		QAbstractScrollArea::showEvent(event);
 		if (!m_initialized) {
 			getMetrics();
-			m_visibleLines = viewport()->height() / m_metrics.lineHeight;
+			m_visibleRows = viewport()->height() / m_metrics.lineHeight;
 			updateScrollbars();
 			m_initialized = true;
 		}
@@ -171,7 +171,7 @@ namespace gui {
 	void Hexview::resizeEvent(QResizeEvent* event) {
 		QAbstractScrollArea::resizeEvent(event);
 		if (m_initialized) {
-			m_visibleLines = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
+			m_visibleRows = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 			updateScrollbars();
 		}
 	}
@@ -288,7 +288,7 @@ namespace gui {
 
 		verticalScrollBar()->setRange(minScrollLine, maxScrollLine);
 		verticalScrollBar()->setValue(currentLine);
-		verticalScrollBar()->setPageStep(m_visibleLines);
+		verticalScrollBar()->setPageStep(m_visibleRows);
 		verticalScrollBar()->setSingleStep(1);
 
 		connect(verticalScrollBar(), &QScrollBar::valueChanged,

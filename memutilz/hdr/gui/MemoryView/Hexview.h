@@ -35,7 +35,7 @@ namespace gui {
 		virtual void setMemdump(mem::Memdump* memdump) override;
 		void setDisplayConfig(DisplayConfig& config);
 		virtual void goToAddress(LPCVOID address) override;
-		virtual void clear() override { m_memdump = nullptr; viewport()->update(); }
+		virtual void detach() override { m_memdump = nullptr; viewport()->update(); }
 
 		virtual ~Hexview() = default;
 	protected:
