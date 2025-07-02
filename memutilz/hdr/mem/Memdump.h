@@ -18,6 +18,7 @@ namespace mem {
 		DWORD m_protection;
 	};
 	struct RegionContext {
+		const MemoryRegion* prev{ nullptr };
 		const MemoryRegion* curr{ nullptr };// nullptr if not applicable
 		const MemoryRegion* next{ nullptr };
 		const MemoryRegion* nnext{ nullptr };
@@ -100,17 +101,17 @@ namespace mem {
 		SIZE_T m_SnapshotSize{ 0 };
 		std::map<LPCVOID, MemoryRegion> m_regions{};
 
-		void update_memory_layout();
-		void make_snapshot_buffers();
-		SIZE_T get_optimal_buffer_size() const;
-		void distribute_regions();
-		void compute_thread_count();
+		void updateMemoryLayout();
+		void makeSnapshotBuffers();
+		SIZE_T getOptimalBufferSize() const;
+		void distributeRegions();
+		void computeThreadCount();
 		std::vector<RegionView> divide_regions_by_size();
 
 		void init() {
-			update_memory_layout();
-			make_snapshot_buffers();
-			compute_thread_count();
+			updateMemoryLayout();
+			makeSnapshotBuffers();
+			computeThreadCount();
 		}
 
 		SIZE_T dump_region_view(HANDLE handle, const RegionView& regionView);
@@ -118,10 +119,11 @@ namespace mem {
 		Memdump() = delete;
 		explicit Memdump(Meminfo* meminfo) noexcept
 			: m_meminfo{meminfo}
-			, m_targetProcess{ m_meminfo->get_process() }
+			, m_targetProcess{ m_meminfo->getProcess() }
 		{}
 
 		const RegionContext getRegionContext(LPCVOID address) const;
+		const MemoryRegion* getRegion(LPCVOID address) const;
 		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
 		Meminfo* getMeminfo() const { return m_meminfo; }
 		Process* getProcess() const { return m_targetProcess; }

@@ -1,13 +1,13 @@
 #include "gui/common.h"
 #include "gui/MainWindow.h"
-#include "utilz/privilege.h"
+#include "priv/privilege.h"
 
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
     app.setStyle("fusion");
 
-    if (!utilz::privilege::CheckAndRequestAdmin())
+    if (!priv::CheckAndRequestAdmin())
         return 1; // Exit if we're not admin or if elevation failed / got declined
 
     MainWindow w;

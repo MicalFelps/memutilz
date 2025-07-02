@@ -1,3 +1,4 @@
+#include "AssemblyView.h"
 #include "AssemblyTableModel.h"
 
 namespace gui {
@@ -20,43 +21,12 @@ namespace gui {
 			return;
 		}
 
+		// 1. fill unknown memory with unknown pattern
+
 		size_t maxBytes = visibleRows * 16; // assume max 16 bytes / instruction
-		mem::MemoryView mv = m_asmView->m_memdump->readBytesAt(
-			reinterpret_cast<LPCVOID>(topAddress), maxBytes);
-		disassembleBytes(mv);
+		disassembleBytes(topAddress, maxBytes);
 
 		endResetModel();
-	}
-
-	bool AssemblyTableModel::isJumpInstruction(int row) const {
-		if (row < 0 || row >= static_cast<int>(m_count) || !m_insn)
-			return false;
-		return cs_insn_group(m_csh, &m_insn[row], CS_GRP_JUMP);
-	}
-	bool AssemblyTableModel::isCallInstruction(int row) const {
-		if (row < 0 || row >= static_cast<int>(m_count) || !m_insn)
-			return false;
-		return cs_insn_group(m_csh, &m_insn[row], CS_GRP_CALL);
-	}
-	uintptr_t AssemblyTableModel::getJumpTarget(int row) const {
-		if (row < 0 || row >= static_cast<int>(m_count) || !m_insn)
-			return 0;
-
-		const cs_insn* insn = &m_insn[row];
-
-		if(!cs_insn_group(m_csh, insn, CS_GRP_JUMP) && !cs_insn_group(m_csh, insn, CS_GRP_CALL))
-			return 0;
-
-		// check operands
-		cs_detail* detail = insn->detail;
-		if (!detail) return 0;
-
-		for (int i = 0; i < detail->x86.op_count; ++i) {
-			if (detail->x86.operands[i].type & X86_OP_IMM) {
-				return static_cast<uintptr_t>(detail->x86.operands[i].imm);
-			}
-		}
-		return 0;
 	}
 
 	int AssemblyTableModel::rowCount(const QModelIndex& parent) const {
@@ -113,45 +83,6 @@ namespace gui {
 
 	// --- PRIVATE ---
 
-	bool AssemblyTableModel::initializeCapstone() {
-		if (m_capstoneInitialized) {
-			cleanupCapstone();
-		}
-
-		if (m_asmView->m_meminfo) {
-			m_architecture = CS_ARCH_X86;
-			m_mode = m_asmView->m_meminfo->is32Bit() ? CS_MODE_32 : CS_MODE_64;
-		}
-
-		cs_err e = cs_open(m_architecture, m_mode, &m_csh);
-		if (e != CS_ERR_OK) {
-			return false;
-		}
-
-		// syntax options (IMPORTANT)
-		cs_option(m_csh, CS_OPT_SYNTAX, m_asmView->m_config.syntax);
-		cs_option(m_csh, CS_OPT_DETAIL, CS_OPT_ON);
-
-		m_capstoneInitialized = true;
-		return true;
-	}
-	void AssemblyTableModel::cleanupCapstone() {
-		if (m_insn) {
-			cs_free(m_insn, m_count);
-			m_insn = nullptr;
-			m_count = 0;
-		}
-
-		if (m_capstoneInitialized) {
-			cs_close(&m_csh);
-			m_csh = 0;
-			m_capstoneInitialized = false;
-		}
-	}
-
-	void AssemblyTableModel::disassembleBytes(const mem::MemoryView& mv) {
-
-	}
 	QString AssemblyTableModel::formatAddress(const cs_insn* insn) const {
 		if (m_asmView->m_config.m_bShowModuleAddresses && m_asmView->m_meminfo) {
 			// show module+offset format, except we need more info
@@ -183,13 +114,13 @@ namespace gui {
 		// This assumes we enabled detail mode via
 		// cs_option(m_csh, CS_OPT_DETAIL, CS_OPT_ON);
 
-		if(cs_insn_group(m_csh, insn, CS_GRP_JUMP)) {
+		if(cs_insn_group(m_asmView->m_dasm->getHandle(), insn, CS_GRP_JUMP)) {
 			return QColor(0, 128, 255); // blue
-		} else if (cs_insn_group(m_csh, insn, CS_GRP_CALL)) {
+		} else if (cs_insn_group(m_asmView->m_dasm->getHandle(), insn, CS_GRP_CALL)) {
 			return QColor(255, 128, 0); // orange
-		} else if (cs_insn_group(m_csh, insn, CS_GRP_RET)) {
+		} else if (cs_insn_group(m_asmView->m_dasm->getHandle(), insn, CS_GRP_RET)) {
 			return QColor(255, 0, 128); // pink
-		} else if (cs_insn_group(m_csh, insn, CS_GRP_INT)) {
+		} else if (cs_insn_group(m_asmView->m_dasm->getHandle(), insn, CS_GRP_INT)) {
 			return QColor(255, 0, 0); // red 4 interrupts
 		}
 

@@ -30,7 +30,7 @@ namespace gui {
 			m_meminfo->is32Bit()
 				? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
 				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
-			m_topAddress = m_meminfo->get_program_base();
+			m_topAddress = m_meminfo->getProgramBase();
 			updateAddressWidth();
 			updateScrollbars();
 		}

@@ -18,29 +18,34 @@ set(MEMUTILZ_SOURCES
     src/gui/MemoryView/AssemblyTableModel.cpp
     src/gui/MemoryView/AssemblyView.cpp
     src/gui/MemoryView/Hexview.cpp
+    src/hash/xxhash.c
+    src/mem/Disassembler.cpp
     src/mem/Memdump.cpp
     src/mem/Meminfo.cpp
     src/mem/Process.cpp
-    src/utilz/privilege.cpp
+    src/priv/privilege.cpp
 )
 
 # Header files
 set(MEMUTILZ_HEADERS
     hdr/gui/common.h
+    hdr/gui/constants.h
     hdr/gui/MainWindow.h
     hdr/gui/Ui_MainWindow.h
-    hdr/gui/MemoryView/AbstractMemoryView.h 
+    hdr/gui/MemoryView/AbstractMemoryView.h
     hdr/gui/MemoryView/AssemblyTableModel.h
     hdr/gui/MemoryView/AssemblyView.h
     hdr/gui/MemoryView/Hexview.h
+    hdr/hash/xxhash.h
     hdr/mem/common.h
     hdr/mem/constants.h
+    hdr/mem/Disassembler.h
     hdr/mem/Exception.h
     hdr/mem/Handle.h
     hdr/mem/Memdump.h
     hdr/mem/Meminfo.h
     hdr/mem/Process.h
-    hdr/utilz/privilege.h
+    hdr/priv/privilege.h
 )
 
 # resource files

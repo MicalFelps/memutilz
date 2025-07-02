@@ -1,6 +1,8 @@
 #ifndef HANDLE_H
 #define HANDLE_H
 
+#include "common.h"
+
 namespace mem {
 	// The sole purpose of this class is just to avoid having to call CloseHandle()
 	class Handle {

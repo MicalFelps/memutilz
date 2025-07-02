@@ -4,8 +4,8 @@
 #include "mem/constants.h"
 
 namespace mem {
-	bool Meminfo::resolve_bitness() {
-		Handle hProc{ OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_targetProcess->get_pid()) };
+	bool Meminfo::resolveBitness() {
+		Handle hProc{ OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_targetProcess->getPID()) };
 		BOOL bIsWoW64 = FALSE;
 
 		if (!IsWow64Process(hProc.get(), &bIsWoW64))
@@ -17,9 +17,9 @@ namespace mem {
 		bool bIs64bitOS{ sysinfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 };
 		return (bIs64bitOS && bIsWoW64);
 	}
-	uintptr_t Meminfo::get_module_base(std::wstring_view name) const {
+	uintptr_t Meminfo::getModuleBase(std::wstring_view name) const {
 		uintptr_t ret{};
-		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, m_targetProcess->get_pid()) };
+		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, m_targetProcess->getPID()) };
 
 		if (hSnap.get() != INVALID_HANDLE_VALUE) {
 			MODULEENTRY32 moduleEntry{};
@@ -38,7 +38,7 @@ namespace mem {
 		}
 		throw mem::Exception("Failed to get module snapshot");
 	}
-	void Meminfo::find_page_info() {
+	void Meminfo::findPageInfo() {
 		pages.clear();
 		SIZE_T start_addr{ USERSPACE_START_ADDR };
 		SIZE_T end_addr{};
@@ -46,7 +46,7 @@ namespace mem {
 			? end_addr = USERSPACE_END_32BIT
 			: end_addr = USERSPACE_END_64BIT;
 
-		Handle hProc{ OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, m_targetProcess->get_pid()) };
+		Handle hProc{ OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, m_targetProcess->getPID()) };
 		MEMORY_BASIC_INFORMATION mbi{};
 		while (start_addr < end_addr) {
 			if (VirtualQueryEx(hProc.get(), (LPCVOID)start_addr, &mbi, sizeof(mbi))) {
@@ -62,7 +62,7 @@ namespace mem {
 		}
 	}
 
-	bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi) {
+	bool isReadablePage(const MEMORY_BASIC_INFORMATION& mbi) {
 		if (mbi.Protect & PAGE_GUARD) return false;
 		return (mbi.Protect & PAGE_READ_FLAGS);
 	}

@@ -1,6 +1,7 @@
 #include "mem/common.h"
 #include "mem/Memdump.h"
 #include "mem/Exception.h"
+#include "Memdump.h"
 
 namespace mem {
 	constexpr SIZE_T operator"" _MB(unsigned long long mb) {
@@ -13,17 +14,17 @@ namespace mem {
 	static constexpr SIZE_T SIZE_100MB = 100_MB;
 	static constexpr SIZE_T SIZE_500MB = 500_MB;
 
-	void Memdump::update_memory_layout() {
-		m_meminfo->find_page_info(); // update memory layout
+	void Memdump::updateMemoryLayout() {
+		m_meminfo->findPageInfo(); // update memory layout
 
 		m_SnapshotSize = 0;
-		for (const auto& mbi : m_meminfo->get_pages()) {
-			if (mbi.State == MEM_COMMIT && is_readable_page(mbi)) {
+		for (const auto& mbi : m_meminfo->getPages()) {
+			if (mbi.State == MEM_COMMIT && isReadablePage(mbi)) {
 				m_SnapshotSize += mbi.RegionSize;
 			}
 		}
 	}
-	SIZE_T Memdump::get_optimal_buffer_size() const {
+	SIZE_T Memdump::getOptimalBufferSize() const {
 		if (m_SnapshotSize < SIZE_100MB)
 			return SIZE_16MB;
 		else if (m_SnapshotSize < SIZE_500MB)
@@ -31,11 +32,11 @@ namespace mem {
 		else
 			return SIZE_64MB;
 	}
-	void Memdump::distribute_regions() {
+	void Memdump::distributeRegions() {
 		SIZE_T offset = 0;
 		SIZE_T bufferIndex = 0;
-		for (const auto& mbi : m_meminfo->get_pages()) {
-			if (mbi.State == MEM_COMMIT && is_readable_page(mbi)) {
+		for (const auto& mbi : m_meminfo->getPages()) {
+			if (mbi.State == MEM_COMMIT && isReadablePage(mbi)) {
 				if (offset + mbi.RegionSize > m_snapshotBuffers[0].m_size) {
 					++bufferIndex;
 					offset = 0;
@@ -56,8 +57,8 @@ namespace mem {
 			}
 		}
 	}
-	void Memdump::make_snapshot_buffers() {
-		SIZE_T optimalBufferSize = get_optimal_buffer_size();
+	void Memdump::makeSnapshotBuffers() {
+		SIZE_T optimalBufferSize = getOptimalBufferSize();
 
 		bool bShouldResize = false;
 		if (!m_snapshotBuffers.empty()) {
@@ -85,9 +86,9 @@ namespace mem {
 				}
 			}
 		}
-		distribute_regions();
+		distributeRegions();
 	}
-	void Memdump::compute_thread_count() {
+	void Memdump::computeThreadCount() {
 		SIZE_T size_mb = m_SnapshotSize / (1024 * 1024);
 		for (const auto& config : configs) {
 			if (size_mb <= config.max_size_mb) {
@@ -129,29 +130,64 @@ namespace mem {
 	const RegionContext Memdump::getRegionContext(LPCVOID address) const {
 		if (m_regions.empty()) return {};
 
-		RegionContext ct;
-
-		auto it = m_regions.upper_bound(address);
-		if (it != m_regions.end()) {
-			ct.next = &it->second;
-			++it;
-			if (it != m_regions.end()) {
-				ct.nnext = &it->second;
-			}
-			--it;
-		}
-		if(it != m_regions.begin())
-			--it;
-		const MemoryRegion& region = it->second;
-		uintptr_t regionStart = (uintptr_t)region.m_original_addr;
-		uintptr_t regionEnd = regionStart + region.m_size;
+		RegionContext ct{};
 		uintptr_t addr = (uintptr_t)address;
 
-		if (addr >= regionStart && addr < regionEnd) {
-			ct.curr = &region;
+		auto next = m_regions.upper_bound(address);
+
+		if (next != m_regions.end()) {
+			ct.next = &next->second;
+
+			auto nnext = std::next(next);
+			if (nnext != m_regions.end()) {
+				const auto& nextRegion = next->second;
+				uintptr_t nextRegionEnd = (uintptr_t)nextRegion.m_original_addr + nextRegion.m_size;
+
+				if (nextRegionEnd == (uintptr_t)nnext->second.m_original_addr)
+					ct.nnext = &nnext->second;
+			}
+		}
+
+
+		if (next != m_regions.begin()) {
+			auto curr = std::prev(next);
+
+			const auto& region = curr->second;
+			uintptr_t regionStart = (uintptr_t)region.m_original_addr;
+			uintptr_t regionEnd = regionStart + region.m_size;
+
+			if (addr >= regionStart && addr < regionEnd) {
+				ct.curr = &region;
+
+				auto prev = std::prev(curr);
+				if (curr != m_regions.begin()) {
+					const auto& prevRegion = prev->second;
+					uintptr_t prevRegionEnd = (uintptr_t)prevRegion.m_original_addr + prevRegion.m_size;
+
+					if (prevRegionEnd == (uintptr_t)curr->second.m_original_addr)
+						ct.prev = &prev->second;
+				}
+			} else {
+				ct.prev = &region;
+			}
 		}
 
 		return ct;
+	}
+	const MemoryRegion* Memdump::getRegion(LPCVOID address) const {
+		uintptr_t addr = reinterpret_cast<uintptr_t>(address);
+		const auto next = m_regions.upper_bound(address);
+		if (next != m_regions.begin()) {
+			auto curr = std::prev(next);
+
+			const auto& region = curr->second;
+			uintptr_t regionStart = (uintptr_t)region.m_original_addr;
+			uintptr_t regionEnd = regionStart + region.m_size;
+
+			if (addr >= regionStart && addr < regionEnd) {
+				return &curr->second;
+			}
+		}
 	}
 	MemoryView Memdump::readBytesAt(LPCVOID address, SIZE_T amount) {
 		const RegionContext ct = getRegionContext(address);
@@ -169,7 +205,7 @@ namespace mem {
 
 		if (m_bLiveMode) {
 			if(hRead.get() == nullptr)
-				hRead.reset(OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->get_pid()));
+				hRead.reset(OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->getPID()));
 
 			m_liveBuffer.resize(returnedAmount);
 			SIZE_T bytesRead;
@@ -185,11 +221,11 @@ namespace mem {
 
 	SIZE_T Memdump::dump() {
 		init();
-		Handle hRead{ OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->get_pid()) };
+		Handle hRead{ OpenProcess(PROCESS_VM_READ, FALSE, m_targetProcess->getPID()) };
 		SIZE_T totalBytesRead{0};
 
 		m_targetProcess->suspend();
-		if (m_targetProcess->is_suspended()) {
+		if (m_targetProcess->isSuspended()) {
 			if (m_threadCount == 1) {
 				auto regions = RegionView{ m_regions.begin(), m_regions.end() };
 				totalBytesRead = dump_region_view(hRead.get(), regions);

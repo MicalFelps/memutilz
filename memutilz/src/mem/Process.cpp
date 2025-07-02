@@ -4,7 +4,7 @@
 #include "mem/Exception.h"
 
 namespace mem {
-	DWORD Process::find_pid_by_name(std::wstring_view name) {
+	DWORD Process::findPIDByName(std::wstring_view name) {
 		DWORD pid{0};
 		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
 
@@ -27,7 +27,7 @@ namespace mem {
 		throw mem::Exception("Failed to get process snapshot");
 	}
 
-	void Process::find_thread_ids() {
+	void Process::findThreadIDs() {
 		m_threadIDs.clear();
 		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid) };
 		if (hSnap.get() != INVALID_HANDLE_VALUE) {
@@ -48,8 +48,8 @@ namespace mem {
 		}
 		throw mem::Exception("Failed to get thread snapshot");
 	}
-	DWORD Process::find_main_thread() {
-		find_thread_ids(); // In case a new thread spawned
+	DWORD Process::findMainThread() {
+		findThreadIDs(); // In case a new thread spawned
 		FILETIME earliestCreationTime{};
 		bool first = true;
 
@@ -73,9 +73,9 @@ namespace mem {
 
 	void Process::suspend() {
 		if (m_mainThread == 0)
-			find_main_thread();
+			findMainThread();
 		else
-			find_thread_ids();
+			findThreadIDs();
 
 		Handle hMainThread{ OpenThread(THREAD_SUSPEND_RESUME, FALSE, m_mainThread) };
 		if (SuspendThread(hMainThread.get()) == -1)

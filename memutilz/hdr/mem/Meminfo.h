@@ -9,22 +9,22 @@ namespace mem {
 		std::vector<MEMORY_BASIC_INFORMATION> pages;
 		bool m_bIs32Bit{ false };
 
-		bool resolve_bitness();
+		bool resolveBitness();
 	public:
 		Meminfo() = delete;
 		explicit Meminfo(Process* process) noexcept
 			: m_targetProcess{ process }
-			, m_bIs32Bit{ resolve_bitness() }{
+			, m_bIs32Bit{ resolveBitness() }{
 		}
-		Process* get_process() const { return m_targetProcess; }
-		uintptr_t get_module_base(std::wstring_view name) const;
-		uintptr_t get_program_base() const { return get_module_base(m_targetProcess->get_name()); }
-		void find_page_info();
-		std::vector<MEMORY_BASIC_INFORMATION> get_pages() { return pages; }
+		Process* getProcess() const { return m_targetProcess; }
+		uintptr_t getModuleBase(std::wstring_view name) const;
+		uintptr_t getProgramBase() const { return getModuleBase(m_targetProcess->getName()); }
+		void findPageInfo();
+		std::vector<MEMORY_BASIC_INFORMATION> getPages() { return pages; }
 		bool is32Bit() const { return m_bIs32Bit; }
 	};
 
-	bool is_readable_page(const MEMORY_BASIC_INFORMATION& mbi);
+	bool isReadablePage(const MEMORY_BASIC_INFORMATION& mbi);
 }
 
 #endif

@@ -16,7 +16,7 @@ void MainWindow::initialize() {
         proc = std::make_unique<mem::Process>(L"ac_client.exe");
 
         meminfo = std::make_unique<mem::Meminfo>(proc.get());
-        meminfo->find_page_info();
+        meminfo->findPageInfo();
 
         memdump = std::make_unique<mem::Memdump>(meminfo.get());
         memdump->dump();

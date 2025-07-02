@@ -12,22 +12,22 @@ namespace mem {
 		std::vector<DWORD> m_threadIDs{};
 		bool m_bIsSuspended{ false };
 
-		DWORD find_pid_by_name(std::wstring_view name);
+		DWORD findPIDByName(std::wstring_view name);
 	public:
 		explicit Process(std::wstring_view name)
-			: m_pid{ find_pid_by_name(name) }
+			: m_pid{ findPIDByName(name) }
 			, m_name{ name }
 		{}
 
-		const std::wstring& get_name() const noexcept { return m_name; }
-		DWORD get_pid() const { return m_pid; }
-		void set_pid(DWORD pid) { m_pid = pid; }
+		const std::wstring& getName() const noexcept { return m_name; }
+		DWORD getPID() const { return m_pid; }
+		void setPID(DWORD pid) { m_pid = pid; }
 
-		void find_thread_ids();
-		DWORD find_main_thread();
+		void findThreadIDs();
+		DWORD findMainThread();
 
 		void suspend();
-		bool is_suspended() { return m_bIsSuspended; }
+		bool isSuspended() { return m_bIsSuspended; }
 		void resume();
 	};
 }
