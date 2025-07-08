@@ -18,11 +18,11 @@ void MainWindow::initialize() {
         meminfo = std::make_unique<mem::Meminfo>(proc.get());
         meminfo->findPageInfo();
 
-        memdump = std::make_unique<mem::Memdump>(meminfo.get());
+        memdump = std::make_shared<mem::Memdump>(meminfo.get());
         memdump->dump();
 
-        ui->hexview->setMemdump(memdump.get());
-        ui->assemblyView->setMemdump(memdump.get());
+        ui->hexview->setMemdump(memdump);
+        ui->assemblyView->setMemdump(memdump);
     }
     catch (const mem::Exception& e) {
         printError(e.full_msg());

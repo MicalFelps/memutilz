@@ -23,22 +23,13 @@ namespace gui {
         setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         setFocusPolicy(Qt::StrongFocus);
 
-        m_font = QFont();
-        m_font.setFamily("Consolas");
-        m_font.setPointSize(10);
-        m_font.setStyleHint(QFont::Monospace);
-        m_font.setFixedPitch(true);
+        m_metrics.font = QFont();
+        m_metrics.font.setFamily("Consolas");
+        m_metrics.font.setPointSize(10);
+        m_metrics.font.setStyleHint(QFont::Monospace);
+        m_metrics.font.setFixedPitch(true);
 
-        QStringList fontFamilies = { "Consolas", "Courier New", "Monaco", "monospace" };
-        for (const QString& family : fontFamilies) {
-            m_font.setFamily(family);
-            QFontInfo info(m_font);
-            if (info.fixedPitch()) {
-                break;
-            }
-        }
-
-        setFont(m_font);
+        setFont(m_metrics.font);
 
         // Connect Signals
         connect(verticalScrollBar(), &QScrollBar::valueChanged,
@@ -48,44 +39,45 @@ namespace gui {
     }
     void AssemblyView::setDisplayConfig(const DisplayConfig& config) {
         m_config = config;
-        if (m_memdump) // only matters if process attached
+        if (m_memory.memdump) // only matters if process attached
             updateVisibleRows();
     }
-    void AssemblyView::setMemdump(mem::Memdump* memdump) {
-        m_memdump = memdump;
+    void AssemblyView::setMemdump(std::shared_ptr<mem::Memdump> memdump) {
+        m_memory.memdump = memdump;
 
-        if (m_memdump) {
-            m_dasm = std::make_unique<mem::Disassembler>(m_memdump);
+        if (m_memory.memdump) {
+            m_disasm.disassembler = std::make_unique<mem::Disassembler>(memdump);
 
-            m_meminfo = m_memdump->getMeminfo();
-            m_meminfo->is32Bit()
-                ? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
-                : m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
-            m_topAddress = m_meminfo->getProgramBase();
+            m_memory.memdump->getMeminfo()->is32Bit()
+                ? m_memory.maxDisplayAddress = mem::USERSPACE_END_32BIT
+                : m_memory.maxDisplayAddress = mem::USERSPACE_END_64BIT;
+            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase();
             updateVisibleRows();
             updateScrollbars();
         }
     }
     void AssemblyView::goToAddress(LPCVOID address) {
-        if (!address) return;
         uintptr_t addr = reinterpret_cast<uintptr_t>(address);
 
-        m_topAddress = m_dasm->alignToInstrStart(addr);
-        updateBoundaries();
+        if (m_disasm.disassembler) {
+            m_memory.topAddress = m_disasm.disassembler->alignToInstrStart(addr);
+            updateBoundaries();
+        } else m_memory.topAddress = addr;
+
         updateVisibleRows();
         updateScrollbars();
     }
     void AssemblyView::detach() {
-        m_memdump = nullptr;
-        m_meminfo = nullptr;
+        m_disasm.disassembler.reset();
+        m_memory.memdump.reset();
         
         updateVisibleRows();
     }
 
     void AssemblyView::showEvent(QShowEvent* event) {
         QTableView::showEvent(event);
-        if (!m_initialized) {
-            m_initialized = true;
+        if (!m_view.initialized) {
+            m_view.initialized = true;
             updateMetrics();
             updateVisibleRows();
             updateScrollbars();
@@ -93,7 +85,7 @@ namespace gui {
     }
     void AssemblyView::resizeEvent(QResizeEvent* event) {
         QTableView::resizeEvent(event);
-        if (m_initialized) {
+        if (m_view.initialized) {
             updateVisibleRows();
             updateScrollbars();
         }
@@ -120,7 +112,7 @@ namespace gui {
             break;
         case Qt::Key_G:
             if (event->modifiers() & Qt::ControlModifier) {
-                m_goToAddressAction->trigger();
+                m_ui.goToAddressAction->trigger();
             }
             break;
         default:
@@ -134,7 +126,7 @@ namespace gui {
         if (event->button() == Qt::LeftButton) {
             QModelIndex index = indexAt(event->pos());
             if (index.isValid()) {
-                m_selectedRow = index.row();
+                m_view.selectedRow = index.row();
             }
         }
     }
@@ -143,21 +135,21 @@ namespace gui {
         QModelIndex index = indexAt(event->pos());
         if (index.isValid()) {
             setCurrentIndex(index);
-            m_selectedRow = index.row();
+            m_view.selectedRow = index.row();
             
-            m_followJumpAction->setEnabled(
-                m_model->isJumpInstruction(m_selectedRow) ||
-                m_model->isCallInstruction(m_selectedRow)
+            m_ui.followJumpAction->setEnabled(
+                m_disasm.disassembler->isJumpInstruction(&m_disasm.currentDisassembly[m_view.selectedRow]) ||
+                m_disasm.disassembler->isCallInstruction(&m_disasm.currentDisassembly[m_view.selectedRow])
             );
 
-            m_contextMenu->exec(event->globalPos());
+            m_ui.contextMenu->exec(event->globalPos());
         }
     }
 
     void AssemblyView::onSelectionChange() {
         QModelIndex index = currentIndex();
         if (index.isValid()) {
-            m_selectedRow = index.row();
+            m_view.selectedRow = index.row();
         }
     }
     void AssemblyView::onVerticalScrollChange(int value) {
@@ -173,7 +165,7 @@ namespace gui {
         we then call updateScrollwheel whenever delta isn't 0
         */
 
-        int instructionDelta = value - m_prevScrollValue;
+        int instructionDelta = value - m_view.prevScrollValue;
         if (instructionDelta != 0) {
             updateTopAddress(instructionDelta);
             updateVisibleRows();
@@ -183,48 +175,53 @@ namespace gui {
     
     void AssemblyView::updateVisibleRows() {
         // This function gets called on every m_topAddress update
-        if (!m_initialized) return;
-
-        m_visibleRows = (viewport()->height() + m_metrics.rowHeight - 1) / m_metrics.rowHeight;
-
-        if (m_topAddress < m_lowerBoundary ||
-            (m_topAddress + m_visibleRows * 15) > m_upperBoundary)
-            updateBoundaries();
-
-        m_model->updateVisibleRows(m_topAddress, m_visibleRows);
+        // or every resize event
+        if (!m_view.initialized) return;
+        m_metrics.visibleRows = (viewport()->height() + m_metrics.rowHeight - 1) / m_metrics.rowHeight;
+        m_model->updateVisibleRows(m_memory.topAddress);
     }
 
     void AssemblyView::updateTopAddress(int delta) {
         // delta is bytes scrolled, with the disassembly, we can convert this to lines
         // we need a seperate alignAddress() function that does everything below
 
-        if (!m_memdump) { m_topAddress + delta; return; }
-        // else { alignTopAddress(); }
+        m_memory.topAddress += delta;
+        if (!m_memory.memdump) { return; }
+
+        if (m_memory.topAddress < m_memory.lowerBoundary ||
+            (m_memory.topAddress + m_metrics.visibleRows * 15) > m_memory.upperBoundary)
+            updateBoundaries();
+
+        if (m_memory.bInReadableMemory) {
+            m_memory.topAddress = m_disasm.disassembler->alignToInstrStart(m_memory.topAddress);
+        } else {
+            m_memory.topAddress += delta;
+        }
     }
     void AssemblyView::updateScrollbars() {
-        disconnect(verticalScrollBar(), QScrollBar::valueChanged,
+        disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
             this, &AssemblyView::onVerticalScrollChange);
 
-        if (m_topAddress < mem::HALF_PAGE_SIZE) {
+        if (m_memory.topAddress < mem::HALF_PAGE_SIZE) {
             int maxScroll = verticalScrollBar()->maximum();
-            int value = static_cast<int>(m_topAddress * maxScroll / mem::PAGE_SIZE);
+            int value = static_cast<int>(m_memory.topAddress * maxScroll / mem::PAGE_SIZE);
             verticalScrollBar()->setValue(value);
-            m_prevScrollValue = value;
+            m_view.prevScrollValue = value;
         }
-        else if (m_topAddress > (m_maxDisplayAddress - mem::HALF_PAGE_SIZE)) {
+        else if (m_memory.topAddress > (m_memory.maxDisplayAddress - mem::HALF_PAGE_SIZE)) {
             int maxScroll = verticalScrollBar()->maximum();
-            uintptr_t fromEnd = m_maxDisplayAddress - m_topAddress;
+            uintptr_t fromEnd = m_memory.maxDisplayAddress - m_memory.topAddress;
             int value = maxScroll - static_cast<int>(fromEnd * maxScroll / mem::PAGE_SIZE);
             verticalScrollBar()->setValue(value);
-            m_prevScrollValue = value;
+            m_view.prevScrollValue = value;
         }
         else { // reset to middle (99% of cases)
             int middle = verticalScrollBar()->maximum() / 2;
             verticalScrollBar()->setValue(middle);
-            m_prevScrollValue = middle;
+            m_view.prevScrollValue = middle;
         }
 
-        connect(verticalScrollBar(), QScrollBar::valueChanged,
+        connect(verticalScrollBar(), &QScrollBar::valueChanged,
             this, &AssemblyView::onVerticalScrollChange);
     }
 
@@ -247,45 +244,47 @@ namespace gui {
         setColumnWidth(2, 300);
     }
     void AssemblyView::updateBoundaries() {
-        // This function update boundaries between readable and unreadable memory regions
-
-        mem::RegionContext ct = m_memdump->getRegionContext(reinterpret_cast<LPCVOID>(m_topAddress));\
+        // This function tracks where in the visible rows readable and unreadable regions end
+        mem::RegionContext ct = m_memory.memdump->getRegionContext(reinterpret_cast<LPCVOID>(m_memory.topAddress));
 
         if (ct.curr) {
+            m_memory.bInReadableMemory = true;
+
             if (ct.prev) {
-                m_lowerBoundary = reinterpret_cast<uintptr_t>(ct.prev->m_original_addr);
-            } else m_lowerBoundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr);
+                m_memory.lowerBoundary = reinterpret_cast<uintptr_t>(ct.prev->m_original_addr);
+            } else m_memory.lowerBoundary = reinterpret_cast<uintptr_t>(ct.curr->m_original_addr);
 
             if (ct.next) {
-                m_upperBoundary = (reinterpret_cast<uintptr_t>(ct.next->m_original_addr) + ct.next->m_size);
-            } else m_upperBoundary = (reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size);
+                m_memory.upperBoundary = (reinterpret_cast<uintptr_t>(ct.next->m_original_addr) + ct.next->m_size);
+            } else m_memory.upperBoundary = (reinterpret_cast<uintptr_t>(ct.curr->m_original_addr) + ct.curr->m_size);
 
         } else {
+            m_memory.bInReadableMemory = false;
             // We still have to check that curr is not the first region in memory, in which case both curr and prev would be null
             if (ct.prev)
-                m_lowerBoundary = (reinterpret_cast<uintptr_t>(ct.prev->m_original_addr) + ct.prev->m_size);
-            else m_lowerBoundary = 0;
+                m_memory.lowerBoundary = (reinterpret_cast<uintptr_t>(ct.prev->m_original_addr) + ct.prev->m_size);
+            else m_memory.lowerBoundary = 0;
 
             if (ct.next) {
-                m_upperBoundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
-            } else m_upperBoundary = m_maxDisplayAddress;
+                m_memory.upperBoundary = reinterpret_cast<uintptr_t>(ct.next->m_original_addr);
+            } else m_memory.upperBoundary = m_memory.maxDisplayAddress;
         }
     }
     void AssemblyView::updateMetrics() {
         m_metrics.rowHeight = fontMetrics().height() + 2; // padding
     }
     void AssemblyView::createContextMenu() {
-        m_contextMenu = new QMenu(this);
+        m_ui.contextMenu = std::make_unique<QMenu>(this);
 
-        m_copyAction = m_contextMenu->addAction("Copy", this, &AssemblyView::copyToClipboard);
-        m_copyAction->setShortcut(QKeySequence::Copy);
+        m_ui.copyAction = m_ui.contextMenu->addAction("Copy", this, &AssemblyView::copyToClipboard);
+        m_ui.copyAction->setShortcut(QKeySequence::Copy);
 
-        m_contextMenu->addSeparator();
+        m_ui.contextMenu->addSeparator();
 
-        m_followJumpAction = m_contextMenu->addAction("Follow Jump/Call", this, &AssemblyView::followJump);
-        m_followJumpAction->setShortcut(Qt::Key_Enter);
+        m_ui.followJumpAction = m_ui.contextMenu->addAction("Follow Jump/Call", this, &AssemblyView::followJump);
+        m_ui.followJumpAction->setShortcut(Qt::Key_Enter);
 
-        m_goToAddressAction = m_contextMenu->addAction("Go to Address", this, [this]() {
+        m_ui.goToAddressAction = m_ui.contextMenu->addAction("Go to Address", this, [this]() {
             bool ok;
             QString sAddress = QInputDialog::getText(this, "Go to Address",
                 "Fill in the address you want to go to:",
@@ -299,23 +298,23 @@ namespace gui {
                 }
             }
         });
-        m_goToAddressAction->setShortcut(QKeySequence("Ctrl+G"));
+        m_ui.goToAddressAction->setShortcut(QKeySequence("Ctrl+G"));
     }
     void AssemblyView::copyToClipboard() {
-        if (!m_memdump || m_selectedRow < 0) return;
+        if (!m_memory.memdump || m_view.selectedRow < 0) return;
 
-        QString address = m_model->data(m_model->index(m_selectedRow, 0)).toString();
-        QString bytes = m_model->data(m_model->index(m_selectedRow, 1)).toString();
-        QString assembly = m_model->data(m_model->index(m_selectedRow, 2)).toString();
+        QString address = m_model->data(m_model->index(m_view.selectedRow, 0)).toString();
+        QString bytes = m_model->data(m_model->index(m_view.selectedRow, 1)).toString();
+        QString assembly = m_model->data(m_model->index(m_view.selectedRow, 2)).toString();
 
         QString text = QString("%1 %2 %3").arg(address, bytes, assembly);
         QApplication::clipboard()->setText(text);
     }
     void AssemblyView::followJump() {
-        if (!m_memdump || m_selectedRow < 0) return;
+        if (!m_memory.memdump || m_view.selectedRow < 0) return;
 
-        if (m_model->isJumpInstruction(m_selectedRow) || m_model->isCallInstruction(m_selectedRow)) {
-            uintptr_t targetAddr = m_model->getJumpTarget(m_selectedRow);
+        if (m_disasm.disassembler->isJumpInstruction(&m_disasm.currentDisassembly[m_view.selectedRow]) || m_disasm.disassembler->isCallInstruction(&m_disasm.currentDisassembly[m_view.selectedRow])) {
+            uintptr_t targetAddr = m_disasm.disassembler->getJumpTarget(&m_disasm.currentDisassembly[m_view.selectedRow]);
             if (targetAddr != 0)
                 goToAddress(reinterpret_cast<LPCVOID>(targetAddr));
         }

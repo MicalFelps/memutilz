@@ -1,4 +1,4 @@
-#include "gui/MemoryView/AbstractMemoryView.h"
+#include "gui/MemoryView/IMemoryView.h"
 #include "gui/MemoryView/Hexview.h"
 
 namespace gui {
@@ -22,7 +22,7 @@ namespace gui {
 			this, &Hexview::onVerticalScrollChange);
 	}
 
-	void Hexview::setMemdump(mem::Memdump* memdump) {
+	void Hexview::setMemdump(std::shared_ptr<mem::Memdump> memdump) {
 		m_memdump = memdump;
 
 		if (m_memdump) {
@@ -310,7 +310,7 @@ namespace gui {
 
 		SIZE_T capacity = 0;
 		if (m_config.bShowAddress) {
-			capacity += m_meminfo->is32Bit() ? 12 : 16;
+			capacity += m_maxDisplayAddress == mem::USERSPACE_END_32BIT ? 12 : 16;
 		}
 
 		capacity += m_config.bytesPerLine * 3;
@@ -322,7 +322,7 @@ namespace gui {
 		formattedLine.reserve(capacity);
 
 		if (m_config.bShowAddress) {
-			m_meminfo->is32Bit()
+			m_maxDisplayAddress == mem::USERSPACE_END_32BIT
 				? formattedLine.append(QStringLiteral("0x%1: ").arg(static_cast<uint32_t>(address), 8, 16, QLatin1Char('0')))
 				: formattedLine.append(QStringLiteral("0x%1: ").arg(address, 12, 16, QLatin1Char('0')));
 		}

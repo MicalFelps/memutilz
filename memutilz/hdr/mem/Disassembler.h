@@ -94,6 +94,7 @@ namespace mem {
 		std::unordered_map<uintptr_t, CachedRegion> m_regionCache;
 
 	public:
+		Disassembler() = delete; // disassembler should only exist if we have at least 1 instance of memdump
 		explicit Disassembler(std::shared_ptr<mem::Memdump> memdump);
 		~Disassembler() { cs_close(&m_csh); }
 

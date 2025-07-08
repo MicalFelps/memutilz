@@ -5,7 +5,7 @@
 
 #include <QTableView>
 
-#include "AbstractMemoryView.h"
+#include "IMemoryView.h"
 #include "AssemblyTableModel.h"
 #include "Disassembler.h"
 
@@ -24,7 +24,7 @@ hash changes, we re-disassemble the new memory.
 */
 
 namespace gui {
-	class AssemblyView : public QTableView, public AbstractMemoryView {
+	class AssemblyView : public QTableView, public IMemoryView {
 		Q_OBJECT
 	public:
 		struct DisplayConfig {
@@ -34,10 +34,10 @@ namespace gui {
 
 		explicit AssemblyView(QWidget* parent = nullptr);
 		void setDisplayConfig(const DisplayConfig& config);
-		virtual void setMemdump(mem::Memdump* memdump) override;
+		virtual void setMemdump(std::shared_ptr<mem::Memdump> memdump) override;
 		virtual void goToAddress(LPCVOID address) override;
 		virtual void detach() override;
-		virtual ~AssemblyView() {if (m_contextMenu) delete m_contextMenu; }
+		virtual ~AssemblyView() = default;
 	protected:
 		void showEvent(QShowEvent* event) override;
 		void resizeEvent(QResizeEvent* event) override;
@@ -61,25 +61,50 @@ namespace gui {
 		void copyToClipboard();
 		void followJump();
 
-		struct DisplayMetrics {
-			int rowHeight{ 20 };
-		} m_metrics;
-
 		friend class AssemblyTableModel;
 		std::unique_ptr<AssemblyTableModel> m_model;
-		std::unique_ptr<mem::Disassembler> m_dasm;
-		DisplayConfig m_config;
-		int m_selectedRow{ 0 };
 
-		int m_prevScrollValue{ 0 };
+		struct MemoryContext {
+			std::shared_ptr<mem::Memdump> memdump{ nullptr };
+			uintptr_t topAddress{ 0 };
+			uintptr_t maxDisplayAddress{ mem::USERSPACE_END_32BIT };
+			uintptr_t lowerBoundary{ 0 };
+			uintptr_t upperBoundary{ mem::USERSPACE_END_64BIT };
+			bool bInReadableMemory{ false };
+		};
 
-		uintptr_t m_lowerBoundary{ 0 };
-		uintptr_t m_upperBoundary{ 0 };
+		struct DisassemblyContext {
+			mem::InsnChunk currentDisassembly;
+			std::unique_ptr<mem::Disassembler> disassembler{ nullptr };
+		};
 
-		QMenu* m_contextMenu{ nullptr };
-		QAction* m_copyAction{ nullptr };
-		QAction* m_followJumpAction{ nullptr };
-		QAction* m_goToAddressAction{ nullptr };
+		struct ViewState {
+			int selectedRow{ 0 };
+			int prevScrollValue{ 0 };
+			bool initialized = false;
+		};
+
+		struct DisplayMetrics {
+			QFont font;
+			int rowHeight{ 20 };
+			int visibleRows{ 1 };
+		};
+
+		struct UIComponents {
+			std::unique_ptr<QMenu> contextMenu{ nullptr };
+			QAction* copyAction{ nullptr };
+			QAction* followJumpAction{ nullptr };
+			QAction* goToAddressAction{ nullptr };
+		};
+
+		MemoryContext		m_memory;
+		DisassemblyContext	m_disasm;
+
+		DisplayConfig		m_config;
+		ViewState			m_view;
+		DisplayMetrics		m_metrics;
+
+		UIComponents		m_ui;
 	};
 }
 

@@ -11,7 +11,7 @@
 #include <algorithm>
 
 #include "gui/common.h"
-#include "gui/MemoryView/AbstractMemoryView.h"
+#include "gui/MemoryView/IMemoryView.h"
 #include "gui/constants.h"
 
 #include "mem/Meminfo.h"
@@ -19,7 +19,7 @@
 #include "mem/constants.h"
 
 namespace gui {
-	class Hexview : public QAbstractScrollArea, public AbstractMemoryView {
+	class Hexview : public QAbstractScrollArea, public IMemoryView {
 		Q_OBJECT
 
 	public:
@@ -32,7 +32,7 @@ namespace gui {
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
-		virtual void setMemdump(mem::Memdump* memdump) override;
+		virtual void setMemdump(std::shared_ptr<mem::Memdump> memdump) override;
 		void setDisplayConfig(DisplayConfig& config);
 		virtual void goToAddress(LPCVOID address) override;
 		virtual void detach() override { m_memdump = nullptr; viewport()->update(); }
@@ -65,6 +65,14 @@ namespace gui {
 		} m_metrics;
 
 		DisplayConfig m_config;
+
+		std::shared_ptr<mem::Memdump> m_memdump{ nullptr };
+		const mem::Meminfo* m_meminfo{ nullptr };
+		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT };
+		uintptr_t m_topAddress{ 0 }; // address at the top of view
+		QFont m_font;
+		bool m_initialized = false;
+		int m_visibleRows{ 1 };
 	};
 }
 

@@ -3,7 +3,7 @@ project(memutilz VERSION 1.0.0 LANGUAGES CXX)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/Qt-Advanced-Docking-System)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/capstone)
 
-# Find QT 6.8.1
+# Find QT 6.9.1
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 qt_standard_project_setup()
 
@@ -32,7 +32,7 @@ set(MEMUTILZ_HEADERS
     hdr/gui/constants.h
     hdr/gui/MainWindow.h
     hdr/gui/Ui_MainWindow.h
-    hdr/gui/MemoryView/AbstractMemoryView.h
+    hdr/gui/MemoryView/IMemoryView.h
     hdr/gui/MemoryView/AssemblyTableModel.h
     hdr/gui/MemoryView/AssemblyView.h
     hdr/gui/MemoryView/Hexview.h

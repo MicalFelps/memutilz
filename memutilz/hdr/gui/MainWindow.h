@@ -16,7 +16,7 @@ private:
 
     std::unique_ptr<mem::Process> proc;
     std::unique_ptr<mem::Meminfo> meminfo;
-    std::unique_ptr<mem::Memdump> memdump;
+    std::shared_ptr<mem::Memdump> memdump;
 
     void printError(const std::wstring& err);
     void printError(const std::string& err);

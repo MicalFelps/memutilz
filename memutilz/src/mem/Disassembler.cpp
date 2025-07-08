@@ -136,7 +136,7 @@ namespace mem {
 				cache.m_disassembly = InsnChunk(cachedInsns, static_cast<int>(filteredInsns.size()));
 			}
 		}
-		else { // for shellcode and such we do direct disassembly because we assume the user knows what he's doing
+		else if(ctx.curr) { // for shellcode and such we do direct disassembly because we assume the user knows what he's doing
 			// check cache
 			auto regionCache = getCacheFrom(m_regionCache, address);
 			if (regionCache.has_value()) {
@@ -167,6 +167,8 @@ namespace mem {
 
 			return result;
 		}
+
+		return InsnChunk();
 	}
 	InsnChunk Disassembler::disassembleRaw(uintptr_t address, size_t maxBytes) {
 		m_memdump->setLiveMode();
@@ -274,7 +276,7 @@ namespace mem {
 
 		for (const auto& mbi : pages) {
 			if (mbi.State == MEM_COMMIT && (mbi.Protect & mem::PAGE_EXECUTE_READ_FLAGS)) {
-				m_pageCache.emplace(mbi.BaseAddress, CachedPage{
+				m_pageCache.emplace(reinterpret_cast<uintptr_t>(mbi.BaseAddress), CachedPage{
 						0,
 						m_memdump->getRegion(mbi.BaseAddress),
 						std::optional<InsnChunk>{}
