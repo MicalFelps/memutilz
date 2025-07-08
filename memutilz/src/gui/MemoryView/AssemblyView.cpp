@@ -51,7 +51,8 @@ namespace gui {
             m_memory.memdump->getMeminfo()->is32Bit()
                 ? m_memory.maxDisplayAddress = mem::USERSPACE_END_32BIT
                 : m_memory.maxDisplayAddress = mem::USERSPACE_END_64BIT;
-            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase();
+            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase() + 0xB8BC1;
+            m_memory.bInReadableMemory = true;
             updateVisibleRows();
             updateScrollbars();
         }
@@ -61,6 +62,10 @@ namespace gui {
 
         if (m_disasm.disassembler) {
             m_memory.topAddress = m_disasm.disassembler->alignToInstrStart(addr);
+            /*
+            if (m_memory.memdump->getRegion(reinterpret_cast<LPCVOID>(m_memory.topAddress)))
+                m_memory.bInReadableMemory = true;
+            */
             updateBoundaries();
         } else m_memory.topAddress = addr;
 
@@ -271,7 +276,7 @@ namespace gui {
         }
     }
     void AssemblyView::updateMetrics() {
-        m_metrics.rowHeight = fontMetrics().height() + 2; // padding
+        m_metrics.rowHeight = rowHeight(0);
     }
     void AssemblyView::createContextMenu() {
         m_ui.contextMenu = std::make_unique<QMenu>(this);

@@ -188,6 +188,7 @@ namespace mem {
 				return &curr->second;
 			}
 		}
+		return nullptr;
 	}
 	MemoryView Memdump::readBytesAt(LPCVOID address, SIZE_T amount) {
 		const RegionContext ct = getRegionContext(address);

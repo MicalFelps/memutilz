@@ -32,11 +32,7 @@ namespace gui {
         };
 
         AssemblyView* m_asmView;
-        int m_offsetToFirstInsn{0};
-
-        int m_visibleRows{0};
-        mem::InsnChunk& m_currDisasm;
-        mem::Disassembler* m_disassembler;
+        size_t m_offsetToFirstInsn{0};
 
         QString formatAddress(const Row& row) const;
         QString formatBytes(const Row& row) const;

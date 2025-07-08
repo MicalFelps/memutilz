@@ -7,15 +7,18 @@ namespace mem {
 		if (!m_insn || m_count == 0)
 			return InsnChunk();
 
+		cs_insn* iter = m_original ? m_original : m_insn;
+		int iterCount = m_original ? m_originalCount : m_count;
 		uintptr_t endAddr = startAddr + maxBytes;
-
 		int startIdx = -1, endIdx = -1;
-		for (int i = 0; i < m_count; i++) {
-			if (startIdx == -1 && m_insn[i].address >= startAddr)
+
+		for (int i = 0; i < iterCount; i++) {
+			if (startIdx == -1 && iter[i].address >= startAddr)
 				startIdx = i;
-			if (m_insn[i].address < endAddr)
+			if (iter[i].address < endAddr)
 				endIdx = i;
-			else break;
+			else
+				break;
 		}
 
 		if (startIdx == -1 || endIdx == -1) {
@@ -23,14 +26,7 @@ namespace mem {
 		}
 
 		int rangeCount = endIdx - startIdx + 1;
-		cs_insn* newInsn = static_cast<cs_insn*>(cs_malloc(rangeCount));
-		if (!newInsn)
-			return InsnChunk();
-
-		for (int i = 0; i < rangeCount; ++i) {
-			newInsn[i] = m_insn[startIdx + i];
-		}
-		return InsnChunk(newInsn, rangeCount);
+		return InsnChunk(&iter[startIdx], rangeCount);
 	}
 
 	Disassembler::Disassembler(std::shared_ptr<mem::Memdump> memdump)
@@ -46,6 +42,7 @@ namespace mem {
 			throw std::runtime_error("Failed to init capstone");
 		}
 
+		cs_option(m_csh, CS_OPT_SKIPDATA, CS_OPT_ON); // this is very important if not enabled, we don't get partial disassembly
 		cs_option(m_csh, CS_OPT_SYNTAX, CS_OPT_SYNTAX_INTEL);
 		cs_option(m_csh, CS_OPT_DETAIL, CS_OPT_ON);
 	}
@@ -107,33 +104,30 @@ namespace mem {
 				if (count == 0)
 					return InsnChunk();
 
-				std::vector<cs_insn> filteredInsns;
+				// trim edges
+				int startIdx{ 0 };
+				int endIdx{ static_cast<int>(count) - 1 };
+
 				uintptr_t pageEndAddr = pageStartAddr + cache.m_pRegion->m_size;
 
-				for (int i = 0; i < count; ++i) {
-					uintptr_t insnStart = insn[i].address;
-					uintptr_t insnEnd = insnStart + insn[i].size;
-
-					if (insnStart >= pageStartAddr && insnStart < pageEndAddr ||
-						insnStart <  pageStartAddr && insnEnd > pageStartAddr) {
-						filteredInsns.emplace_back(insn[i]);
-					}
+				while (startIdx < count && (insn[startIdx].address + insn[startIdx].size <= pageStartAddr)) {
+					++startIdx;
 				}
 
-				cs_free(insn, count);
-
-				if (filteredInsns.empty())
-					return InsnChunk();
-
-				cs_insn* cachedInsns = static_cast<cs_insn*>(cs_malloc(filteredInsns.size()));
-				if (!cachedInsns)
-					return InsnChunk();
-
-				for (size_t i = 0; i < filteredInsns.size(); ++i) {
-					cachedInsns[i] = filteredInsns[i];
+				while (endIdx >= startIdx && (insn[endIdx].address >= pageEndAddr)) {
+					--endIdx;
 				}
 
-				cache.m_disassembly = InsnChunk(cachedInsns, static_cast<int>(filteredInsns.size()));
+				if (startIdx > endIdx) {
+					cs_free(insn, count);
+					return InsnChunk();
+				}
+
+				int validCount = endIdx - startIdx + 1;
+				cs_insn* firstValidInsn = &insn[startIdx];
+
+				cache.m_disassembly = InsnChunk(firstValidInsn, validCount, insn, count);
+				return cache.m_disassembly->fromRange(address, maxBytes);
 			}
 		}
 		else if(ctx.curr) { // for shellcode and such we do direct disassembly because we assume the user knows what he's doing

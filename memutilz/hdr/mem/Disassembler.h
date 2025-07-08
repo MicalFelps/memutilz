@@ -8,10 +8,18 @@ namespace mem {
 	class InsnChunk {
 		cs_insn* m_insn{ nullptr };
 		int m_count{ 0 };
+		cs_insn* m_original{ nullptr };
+		int m_originalCount{ 0 };
 
 	public:
 		InsnChunk() = default;
 		InsnChunk(cs_insn* insn, int count) : m_insn{ insn }, m_count{ count } {}
+		InsnChunk(cs_insn* insn, int count, cs_insn* original, int originalCount)
+			: m_insn			{ insn }
+			, m_count			{ count }
+			, m_original		{ original }
+			, m_originalCount	{ originalCount }
+		{}
 
 		// no copying allowed
 		InsnChunk(const InsnChunk&) = delete;
@@ -19,10 +27,14 @@ namespace mem {
 
 		// only move
 		InsnChunk(InsnChunk&& other) noexcept 
-			: m_insn{ other.m_insn }
-			, m_count{ other.m_count } {
-			other.m_insn = nullptr;
-			other.m_count = 0;
+			: m_insn				{ other.m_insn }
+			, m_count				{ other.m_count }
+			, m_original			{ other.m_original }
+			, m_originalCount		{ other.m_originalCount } {
+			other.m_insn			= nullptr;
+			other.m_count			= 0;
+			other.m_original		= nullptr;
+			other.m_originalCount	= 0;
 		}
 		InsnChunk& operator=(InsnChunk&& other) noexcept {
 			if (this == &other)
@@ -31,8 +43,12 @@ namespace mem {
 			cleanup();
 			m_insn = other.m_insn;
 			m_count = other.m_count;
+			m_original = other.m_original;
+			m_originalCount = other.m_originalCount;
 			other.m_insn = nullptr;
 			other.m_count = 0;
+			other.m_original = nullptr;
+			other.m_originalCount = 0;
 			return *this;
 		}
 
@@ -50,11 +66,13 @@ namespace mem {
 
 	private:
 		void cleanup() {
-			if (m_insn) {
-				cs_free(m_insn, m_count);
-				m_insn = nullptr;
-				m_count = 0;
+			if (m_original) {
+				cs_free(m_original, m_originalCount);
+				m_original = nullptr;
+				m_originalCount = 0;
 			}
+			m_insn = nullptr;
+			m_count = 0;
 		}
 	};
 

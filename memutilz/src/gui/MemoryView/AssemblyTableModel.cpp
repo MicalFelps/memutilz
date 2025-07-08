@@ -4,9 +4,6 @@
 namespace gui {
 	AssemblyTableModel::AssemblyTableModel(AssemblyView* asmView)
 		: m_asmView{ asmView }
-		, m_visibleRows	{ m_asmView->m_metrics.visibleRows }
-		, m_currDisasm	{ m_asmView->m_disasm.currentDisassembly }
-		, m_disassembler{ m_asmView->m_disasm.disassembler.get() }
 	{}
 	void AssemblyTableModel::updateVisibleRows(uintptr_t topAddress) {
 		/*
@@ -33,21 +30,21 @@ namespace gui {
 
 		beginResetModel();
 
-		if ( m_visibleRows <= 0) {
+		if ( m_asmView->m_metrics.visibleRows <= 0) {
 			endResetModel();
 			return;
 		}
 
-		size_t maxBytes = m_visibleRows * 16; // assume max 16 bytes / instruction
+		size_t maxBytes = m_asmView->m_metrics.visibleRows * 16; // assume max 16 bytes / instruction
 		uintptr_t upperBoundary = m_asmView->m_memory.upperBoundary;
 
 		if (m_asmView->m_memory.bInReadableMemory) {
 			m_offsetToFirstInsn = 0;
-			m_currDisasm = m_disassembler->disassemble(topAddress, maxBytes);
+			m_asmView->m_disasm.currentDisassembly = m_asmView->m_disasm.disassembler->disassemble(topAddress, maxBytes);
 		} else {
 			m_offsetToFirstInsn = upperBoundary - topAddress;
-			if (m_offsetToFirstInsn < m_visibleRows)
-				m_currDisasm = m_disassembler->disassemble(upperBoundary, maxBytes);
+			if (m_offsetToFirstInsn < m_asmView->m_metrics.visibleRows)
+				m_asmView->m_disasm.currentDisassembly = m_asmView->m_disasm.disassembler->disassemble(upperBoundary, maxBytes);
 		}
 
 		endResetModel();
@@ -62,24 +59,24 @@ namespace gui {
 		return 3; // Address, Bytes, Assembly
 	}
 	QVariant AssemblyTableModel::data(const QModelIndex& index, int role) const {
-		if (!index.isValid() || index.row() > m_visibleRows)
+		if (!index.isValid() || index.row() > m_asmView->m_metrics.visibleRows)
 			return QVariant();
 
 		Row row{};
-		if (!m_offsetToFirstInsn) { // topAddress readable
-			if (index.row() < m_asmView->m_disasm.currentDisassembly.size()) {
-				row.insn.value() = &m_asmView->m_disasm.currentDisassembly[index.row()];
+		if (m_asmView->m_memory.bInReadableMemory) { // topAddress readable
+			if (index.row() <= m_asmView->m_disasm.currentDisassembly.size()) {
+				row.insn = &m_asmView->m_disasm.currentDisassembly[index.row()];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;
 			}
-			int offsetToUnreadable{ index.row() - m_asmView->m_disasm.currentDisassembly.size() };
-			row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
+			// int offsetToUnreadable{ index.row() - m_asmView->m_disasm.currentDisassembly.size() };
+			// row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
 		} else {
 			if (index.row() < m_offsetToFirstInsn) {
 				row.address = m_asmView->m_memory.topAddress + m_offsetToFirstInsn;
 			} else {
-				int offsetToReadable{ index.row() - m_offsetToFirstInsn };
-				row.insn.value() = &m_asmView->m_disasm.currentDisassembly[offsetToReadable];
+				int offsetToReadable{ index.row() - static_cast<int>(m_offsetToFirstInsn) };
+				row.insn = &m_asmView->m_disasm.currentDisassembly[offsetToReadable];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;
 			}
@@ -172,6 +169,6 @@ namespace gui {
 			return QColor(255, 0, 0); // red 4 interrupts
 		}
 
-		return QColor(0, 0, 0); // black for everything else
+		return QColor(255, 255, 255); // black for everything else
 	}
 }

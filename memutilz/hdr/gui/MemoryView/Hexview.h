@@ -24,7 +24,7 @@ namespace gui {
 
 	public:
 		struct DisplayConfig {
-			int bytesPerLine = 0x20;
+			int bytesPerLine = 0x10;
 			bool bShowAddress = true;
 			bool bShowAscii = true;
 			bool bShowRegionBoundaries = false;
