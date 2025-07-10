@@ -5,14 +5,13 @@
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
+    app.setApplicationName("Memutilz 1.0");
     app.setStyle("fusion");
 
     if (!priv::CheckAndRequestAdmin())
         return 1; // Exit if we're not admin or if elevation failed / got declined
 
     MainWindow w;
-    w.setWindowTitle("Memutilz 1.0");
     w.show();
-    w.initialize();
     return app.exec();
 }

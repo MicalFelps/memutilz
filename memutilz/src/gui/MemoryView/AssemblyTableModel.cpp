@@ -38,12 +38,11 @@ namespace gui {
 		size_t maxBytes = m_asmView->m_metrics.visibleRows * 16; // assume max 16 bytes / instruction
 		uintptr_t upperBoundary = m_asmView->m_memory.upperBoundary;
 
-		if (m_asmView->m_memory.bInReadableMemory) {
-			m_offsetToFirstInsn = 0;
+		if (m_asmView->m_memory.bInReadableMemory) { // we need to figure out where the thing ends
 			m_asmView->m_disasm.currentDisassembly = m_asmView->m_disasm.disassembler->disassemble(topAddress, maxBytes);
-		} else {
-			m_offsetToFirstInsn = upperBoundary - topAddress;
-			if (m_offsetToFirstInsn < m_asmView->m_metrics.visibleRows)
+		} else { // this is simple because 1 instruction is 1 byte
+			m_rowOffsetToBoundary = upperBoundary - topAddress;
+			if (m_rowOffsetToBoundary < m_asmView->m_metrics.visibleRows)
 				m_asmView->m_disasm.currentDisassembly = m_asmView->m_disasm.disassembler->disassemble(upperBoundary, maxBytes);
 		}
 
@@ -62,20 +61,21 @@ namespace gui {
 		if (!index.isValid() || index.row() > m_asmView->m_metrics.visibleRows)
 			return QVariant();
 
+		// We don't handle the case that we cross into unreadable
 		Row row{};
 		if (m_asmView->m_memory.bInReadableMemory) { // topAddress readable
-			if (index.row() <= m_asmView->m_disasm.currentDisassembly.size()) {
+			if (index.row() < m_asmView->m_disasm.currentDisassembly.size()) {
 				row.insn = &m_asmView->m_disasm.currentDisassembly[index.row()];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;
 			}
-			// int offsetToUnreadable{ index.row() - m_asmView->m_disasm.currentDisassembly.size() };
-			// row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
+			int offsetToUnreadable{ index.row() - m_asmView->m_disasm.currentDisassembly.size() };
+			row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
 		} else {
-			if (index.row() < m_offsetToFirstInsn) {
-				row.address = m_asmView->m_memory.topAddress + m_offsetToFirstInsn;
+			if (index.row() < m_rowOffsetToBoundary) {
+				row.address = m_asmView->m_memory.topAddress + index.row();
 			} else {
-				int offsetToReadable{ index.row() - static_cast<int>(m_offsetToFirstInsn) };
+				int offsetToReadable{ index.row() - static_cast<int>(m_rowOffsetToBoundary) };
 				row.insn = &m_asmView->m_disasm.currentDisassembly[offsetToReadable];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;

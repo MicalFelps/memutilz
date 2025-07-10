@@ -53,7 +53,8 @@ namespace gui {
             m_memory.memdump->getMeminfo()->is32Bit()
                 ? m_memory.maxDisplayAddress = mem::USERSPACE_END_32BIT
                 : m_memory.maxDisplayAddress = mem::USERSPACE_END_64BIT;
-            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase() + 0xB8BC1;
+            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase() + 0x8D8F0;
+            updateBoundaries(); // we need to call this at least once
             m_memory.bInReadableMemory = true;
             updateVisibleRows();
             updateScrollbars();
@@ -61,6 +62,7 @@ namespace gui {
     }
     void AssemblyView::goToAddress(LPCVOID address) {
         uintptr_t addr = reinterpret_cast<uintptr_t>(address);
+        addr = addr > m_memory.maxDisplayAddress ? addr - m_metrics.visibleRows : addr;
 
         if (m_disasm.disassembler) {
             m_memory.topAddress = m_disasm.disassembler->alignToInstrStart(addr);
@@ -160,16 +162,23 @@ namespace gui {
         }
     }
     void AssemblyView::onVerticalScrollChange(int value) {
+        if (value == NEUTRAL_SCROLL_POS) return;
         QSignalBlocker blocker(verticalScrollBar());
-        verticalScrollBar()->setRange(0, insnScrollRange);
-        verticalScrollBar()->setValue(neutralScrollPos);
 
-        int instructionDelta = value - verticalScrollBar()->value();
-        if (instructionDelta != 0) {
-            updateTopAddress(instructionDelta);
-            updateScrollbars();
-            updateVisibleRows();
-        }
+        int visibleDelta = value - NEUTRAL_SCROLL_POS;
+        int instructionDelta{ visibleDelta };
+        if(visibleDelta > 10)
+             instructionDelta = visibleDelta / SCALE_FACTOR;
+
+        if (instructionDelta == 0)
+            instructionDelta = (visibleDelta > 0) ? 1 : -1;
+
+        updateTopAddress(instructionDelta);
+        updateScrollbars();
+        updateVisibleRows();
+
+        verticalScrollBar()->setRange(0, VISIBLE_SCROLL_RANGE);
+        verticalScrollBar()->setValue(NEUTRAL_SCROLL_POS);
     }
     
     void AssemblyView::updateVisibleRows() {
@@ -213,21 +222,21 @@ namespace gui {
         }
 
         if (m_memory.topAddress < m_memory.lowerBoundary ||
-            (m_memory.topAddress + m_metrics.visibleRows * 15) > m_memory.upperBoundary)
+            m_memory.topAddress > m_memory.upperBoundary)
             updateBoundaries();
     }
     void AssemblyView::updateScrollbars() {
         QSignalBlocker blocker(verticalScrollBar());
 
         // we don't handle the edge cases but for now we don't need to
-        verticalScrollBar()->setValue(neutralScrollPos);
+        verticalScrollBar()->setValue(NEUTRAL_SCROLL_POS);
 
         if (!m_bScrollBarInit) {
             m_bScrollBarInit = true;
 
-            verticalScrollBar()->setRange(0, insnScrollRange);
+            verticalScrollBar()->setRange(0, VISIBLE_SCROLL_RANGE);
             verticalScrollBar()->setPageStep(m_metrics.visibleRows);
-            verticalScrollBar()->setSingleStep(100);
+            verticalScrollBar()->setSingleStep(10000);
         }
     }
 

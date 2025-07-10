@@ -20,15 +20,6 @@ namespace gui {
                 MainWindow->setObjectName("MainWindow");
 
             centralWidget = new QWidget{ MainWindow };
-
-            assemblyView = new gui::AssemblyView{ centralWidget };
-            assemblyView->setGeometry(QRect(10, 30, 630, 840));
-            assemblyView->show();
-
-            hexview = new gui::Hexview{ centralWidget };
-            hexview->setGeometry(QRect(650, 30, 650, 840));
-            hexview->show();
-
             MainWindow->setCentralWidget(centralWidget);
 
             // --- Menu Bar ---

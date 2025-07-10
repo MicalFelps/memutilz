@@ -101,6 +101,14 @@ target_link_libraries(memutilz PRIVATE
     capstone
 )
 
+if(WIN32)
+    add_custom_command(TARGET memutilz POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:qtadvanceddocking-qt6>
+        $<TARGET_FILE_DIR:memutilz>
+    )
+endif()
+
 if(Microsoft.Windows.CppWinRT_FOUND)
     target_link_libraries(memutilz PRIVATE Microsoft.Windows.CppWinRT)
 endif()

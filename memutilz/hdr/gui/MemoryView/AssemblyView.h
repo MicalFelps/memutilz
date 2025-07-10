@@ -24,8 +24,10 @@ hash changes, we re-disassemble the new memory.
 */
 
 namespace gui {
-	inline constexpr int insnScrollRange{ 1000 };
-	inline constexpr int neutralScrollPos{ insnScrollRange / 2 };
+	inline constexpr int VISIBLE_SCROLL_RANGE{ 10000 };
+	inline constexpr int SCALE_FACTOR { 100 };
+	inline constexpr int EFFECTIVE_SCROLL_RANGE { VISIBLE_SCROLL_RANGE / SCALE_FACTOR };
+	inline constexpr int NEUTRAL_SCROLL_POS{ VISIBLE_SCROLL_RANGE / 2 };
 
 	class AssemblyView : public QTableView, public IMemoryView {
 		Q_OBJECT

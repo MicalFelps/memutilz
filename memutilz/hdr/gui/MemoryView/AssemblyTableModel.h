@@ -32,7 +32,7 @@ namespace gui {
         };
 
         AssemblyView* m_asmView;
-        size_t m_offsetToFirstInsn{0};
+        size_t m_rowOffsetToBoundary{0};
 
         QString formatAddress(const Row& row) const;
         QString formatBytes(const Row& row) const;

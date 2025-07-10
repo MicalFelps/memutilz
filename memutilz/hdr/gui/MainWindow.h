@@ -4,20 +4,19 @@
 #include "gui/common.h"
 #include "Ui_MainWindow.h"
 
+struct MainWindowPrivate;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
+private:
+    friend struct MainWindowPrivate;
+    MainWindowPrivate* d; //< pImpl
 
 public:
     explicit MainWindow(QWidget *parent = Q_NULLPTR);
-    ~MainWindow();
-    void initialize();
+    virtual ~MainWindow();
+
 private:
-    gui::Ui_MainWindow* ui;
-
-    std::unique_ptr<mem::Process> proc;
-    std::unique_ptr<mem::Meminfo> meminfo;
-    std::shared_ptr<mem::Memdump> memdump;
-
     void printError(const std::wstring& err);
     void printError(const std::string& err);
 };
