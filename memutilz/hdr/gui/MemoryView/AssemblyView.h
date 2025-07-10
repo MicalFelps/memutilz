@@ -24,6 +24,9 @@ hash changes, we re-disassemble the new memory.
 */
 
 namespace gui {
+	inline constexpr int insnScrollRange{ 1000 };
+	inline constexpr int neutralScrollPos{ insnScrollRange / 2 };
+
 	class AssemblyView : public QTableView, public IMemoryView {
 		Q_OBJECT
 	public:
@@ -63,6 +66,7 @@ namespace gui {
 
 		friend class AssemblyTableModel;
 		std::unique_ptr<AssemblyTableModel> m_model;
+		bool m_bScrollBarInit{ false };
 
 		struct MemoryContext {
 			std::shared_ptr<mem::Memdump> memdump{ nullptr };
@@ -80,7 +84,6 @@ namespace gui {
 
 		struct ViewState {
 			int selectedRow{ 0 };
-			int prevScrollValue{ 0 };
 			bool initialized = false;
 		};
 

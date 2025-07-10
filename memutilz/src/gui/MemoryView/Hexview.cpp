@@ -210,15 +210,7 @@ namespace gui {
 		}
 
 		if (needsRecalc) {
-			// Temporarily disconnect to prevent recursion
-			disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
-				this, &Hexview::onVerticalScrollChange);
-
 			updateScrollbars(); // This will recalculate the window around new position
-
-			// Reconnect
-			connect(verticalScrollBar(), &QScrollBar::valueChanged,
-				this, &Hexview::onVerticalScrollChange);
 		}
 
 		viewport()->update();
@@ -265,8 +257,7 @@ namespace gui {
 		m_metrics.totalWidth = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.asciiWidth;
 	}
 	void Hexview::updateScrollbars() {
-		disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
-			this, &Hexview::onVerticalScrollChange);
+		QSignalBlocker blocker(verticalScrollBar());
 
 		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
 		int maxLines = m_maxDisplayAddress / m_config.bytesPerLine;
@@ -291,8 +282,7 @@ namespace gui {
 		verticalScrollBar()->setPageStep(m_visibleRows);
 		verticalScrollBar()->setSingleStep(1);
 
-		connect(verticalScrollBar(), &QScrollBar::valueChanged,
-			this, &Hexview::onVerticalScrollChange);
+		blocker.unblock();
 
 		int viewportWidth = viewport()->width();
 		if (m_metrics.totalWidth > viewportWidth) {

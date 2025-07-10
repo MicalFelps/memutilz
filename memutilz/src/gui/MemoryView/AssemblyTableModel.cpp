@@ -164,7 +164,7 @@ namespace gui {
 		} else if (cs_insn_group(m_asmView->m_disasm.disassembler->getHandle(), row.insn.value(), CS_GRP_CALL)) {
 			return QColor(255, 128, 0); // orange
 		} else if (cs_insn_group(m_asmView->m_disasm.disassembler->getHandle(), row.insn.value(), CS_GRP_RET)) {
-			return QColor(255, 0, 128); // pink
+			return QColor(0, 255, 0); // green
 		} else if (cs_insn_group(m_asmView->m_disasm.disassembler->getHandle(), row.insn.value(), CS_GRP_INT)) {
 			return QColor(255, 0, 0); // red 4 interrupts
 		}

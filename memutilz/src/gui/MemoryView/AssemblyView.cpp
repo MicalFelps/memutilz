@@ -4,6 +4,8 @@
 #include <QClipboard>
 #include <QMenu>
 #include <QInputDialog>
+#include <QTimer>
+#include <cmath>
 
 #include "gui/MemoryView/AssemblyView.h"
 #include "gui/constants.h"
@@ -158,23 +160,15 @@ namespace gui {
         }
     }
     void AssemblyView::onVerticalScrollChange(int value) {
-        /*
-        This function gets called when we directly modify the scrollbar
-        in some way, this includes:
+        QSignalBlocker blocker(verticalScrollBar());
+        verticalScrollBar()->setRange(0, insnScrollRange);
+        verticalScrollBar()->setValue(neutralScrollPos);
 
-        1. holding it down and moving it
-        2. keyboard movement
-        3. scrollwheel
-
-        Since we want the scrollwheel to basically never move from the middle,
-        we then call updateScrollwheel whenever delta isn't 0
-        */
-
-        int instructionDelta = value - m_view.prevScrollValue;
+        int instructionDelta = value - verticalScrollBar()->value();
         if (instructionDelta != 0) {
             updateTopAddress(instructionDelta);
-            updateVisibleRows();
             updateScrollbars();
+            updateVisibleRows();
         }
     }
     
@@ -186,48 +180,55 @@ namespace gui {
         m_model->updateVisibleRows(m_memory.topAddress);
     }
 
-    void AssemblyView::updateTopAddress(int delta) {
-        // delta is bytes scrolled, with the disassembly, we can convert this to lines
-        // we need a seperate alignAddress() function that does everything below
+    void AssemblyView::updateTopAddress(int instructionDelta) {
+        // we need to translate instructionDelta to a certain number of bytes depending on how much we scrolled
+        // loop through the number of instructions until we get to instructionDelta, then add that many bytes to topAddress
 
-        m_memory.topAddress += delta;
-        if (!m_memory.memdump) { return; }
+        // this is the simple case where a process is not attached, where 1 instruction is 1 byte, so we don't have to complicate anything at all.
+        if (!m_memory.memdump) { m_memory.topAddress += instructionDelta; return; }
+
+        if (m_memory.bInReadableMemory) {
+            int bytesDelta{ 0 };
+            if (instructionDelta > 0) {
+                for (int i = 0; i < instructionDelta; ++i) {
+                    bytesDelta += m_disasm.currentDisassembly[i].size;
+                }
+                m_memory.topAddress += bytesDelta;
+            } else { // we're scrolling up
+                // how far do we go up? what if we're no longer in readable memory?
+                const int lookbackBytes = 0x10;
+                mem::InsnChunk lookbackDisasm;
+                if (m_memory.topAddress - m_memory.lowerBoundary < lookbackBytes)
+                    lookbackDisasm = m_disasm.disassembler->disassemble(m_memory.lowerBoundary, lookbackBytes);
+                else
+                    lookbackDisasm = m_disasm.disassembler->disassemble(m_memory.topAddress - lookbackBytes, lookbackBytes);
+
+                for (int i = 0, j = lookbackDisasm.size() - 1; i < -instructionDelta && j >= 0; ++i, --j) {
+                    bytesDelta -= lookbackDisasm[j].size;
+                }
+                m_memory.topAddress += bytesDelta;
+            }
+        } else {
+            m_memory.topAddress += instructionDelta;
+        }
 
         if (m_memory.topAddress < m_memory.lowerBoundary ||
             (m_memory.topAddress + m_metrics.visibleRows * 15) > m_memory.upperBoundary)
             updateBoundaries();
-
-        if (m_memory.bInReadableMemory) {
-            m_memory.topAddress = m_disasm.disassembler->alignToInstrStart(m_memory.topAddress);
-        } else {
-            m_memory.topAddress += delta;
-        }
     }
     void AssemblyView::updateScrollbars() {
-        disconnect(verticalScrollBar(), &QScrollBar::valueChanged,
-            this, &AssemblyView::onVerticalScrollChange);
+        QSignalBlocker blocker(verticalScrollBar());
 
-        if (m_memory.topAddress < mem::HALF_PAGE_SIZE) {
-            int maxScroll = verticalScrollBar()->maximum();
-            int value = static_cast<int>(m_memory.topAddress * maxScroll / mem::PAGE_SIZE);
-            verticalScrollBar()->setValue(value);
-            m_view.prevScrollValue = value;
-        }
-        else if (m_memory.topAddress > (m_memory.maxDisplayAddress - mem::HALF_PAGE_SIZE)) {
-            int maxScroll = verticalScrollBar()->maximum();
-            uintptr_t fromEnd = m_memory.maxDisplayAddress - m_memory.topAddress;
-            int value = maxScroll - static_cast<int>(fromEnd * maxScroll / mem::PAGE_SIZE);
-            verticalScrollBar()->setValue(value);
-            m_view.prevScrollValue = value;
-        }
-        else { // reset to middle (99% of cases)
-            int middle = verticalScrollBar()->maximum() / 2;
-            verticalScrollBar()->setValue(middle);
-            m_view.prevScrollValue = middle;
-        }
+        // we don't handle the edge cases but for now we don't need to
+        verticalScrollBar()->setValue(neutralScrollPos);
 
-        connect(verticalScrollBar(), &QScrollBar::valueChanged,
-            this, &AssemblyView::onVerticalScrollChange);
+        if (!m_bScrollBarInit) {
+            m_bScrollBarInit = true;
+
+            verticalScrollBar()->setRange(0, insnScrollRange);
+            verticalScrollBar()->setPageStep(m_metrics.visibleRows);
+            verticalScrollBar()->setSingleStep(100);
+        }
     }
 
     void AssemblyView::setupTable() {
