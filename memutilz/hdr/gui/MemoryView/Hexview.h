@@ -24,16 +24,15 @@ namespace gui {
 
 	public:
 		struct DisplayConfig {
-			int bytesPerLine = 0x10;
+			int bytesPerLine = 0x8;
 			bool bShowAddress = true;
 			bool bShowAscii = true;
-			bool bShowRegionBoundaries = false;
 		};
 
 		explicit Hexview(QWidget* parent = Q_NULLPTR);
 
 		virtual void setMemdump(std::shared_ptr<mem::Memdump> memdump) override;
-		void setDisplayConfig(DisplayConfig& config);
+		void updateDisplayConfig();
 		virtual void goToAddress(LPCVOID address) override;
 		virtual void detach() override { m_memdump = nullptr; viewport()->update(); }
 

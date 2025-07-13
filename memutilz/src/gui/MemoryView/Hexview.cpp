@@ -6,7 +6,6 @@ namespace gui {
 		: QAbstractScrollArea(parent)
 	{
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-		setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 		setFocusPolicy(Qt::StrongFocus);
 
 		m_font = QFont("Consolas", 10);
@@ -36,11 +35,14 @@ namespace gui {
 		}
 		viewport()->update();
 	}
-	void Hexview::setDisplayConfig(DisplayConfig& config) {
-		config.bytesPerLine = (config.bytesPerLine + 7) & ~0x7;
-		m_config = config;
-		getMetrics();
-		updateScrollbars();
+	void Hexview::updateDisplayConfig() {
+		DisplayConfig newConfig{};
+
+		int availableWidth = viewport()->width() - m_metrics.addressWidth - m_metrics.asciiWidth;
+		int qwords = availableWidth / (m_metrics.charWidth * 0x3 * 0x8);
+		newConfig.bytesPerLine = qwords * 0x8;
+		m_config = newConfig;
+
 		viewport()->update();
 	}
 	void Hexview::goToAddress(LPCVOID address) {
@@ -65,12 +67,11 @@ namespace gui {
 		int lastLine = (event->rect().bottom() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 		lastLine = (((lastLine) < (static_cast<int>(m_visibleRows) - 1)) ? (lastLine) : (static_cast<int>(m_visibleRows) - 1));
 
-		int hScrollOffset = horizontalScrollBar() ? horizontalScrollBar()->value() : 0;
-		painter.drawText(-hScrollOffset, m_metrics.charHeight, formatHeaderLine());
+		painter.drawText(0, m_metrics.charHeight, formatHeaderLine());
 		painter.setPen(QPen({ 255, 255, 255 }));
 		int headerSeperatorOffsetY = 2;
 		painter.drawLine(event->rect().left(), m_metrics.lineHeight + headerSeperatorOffsetY,
-						m_metrics.totalWidth, m_metrics.lineHeight + headerSeperatorOffsetY);
+						viewport()->width(), m_metrics.lineHeight + headerSeperatorOffsetY);
 
 
 		if (!m_memdump) {
@@ -82,7 +83,7 @@ namespace gui {
 					break;
 
 				QString formattedLine = formatLine(reinterpret_cast<LPCVOID>(lineAddress), true);
-				painter.drawText(-hScrollOffset, y, formattedLine);
+				painter.drawText(0, y, formattedLine);
 			}
 		}
 		else { // If process attached
@@ -141,7 +142,7 @@ namespace gui {
 				}
 
 				QString formattedLine = formatLine(lineView, reinterpret_cast<LPCVOID>(lineAddress), isUnknown);
-				painter.drawText(-hScrollOffset, y, formattedLine);
+				painter.drawText(0, y, formattedLine);
 			}
 		}
 
@@ -152,10 +153,20 @@ namespace gui {
 		int lineOffsetX = m_metrics.charWidth / 2;
 
 		for (int i = 1; i <= numberOfLines; ++i) {
-			int positionX = m_metrics.addressWidth + ((m_metrics.charWidth * 3) * 8 * i) - hScrollOffset - lineOffsetX;
+			int positionX = m_metrics.addressWidth + ((m_metrics.charWidth * 3) * 8 * i) - lineOffsetX;
 			if (positionX > 0 && positionX < viewport()->width()) {
 				painter.drawLine(positionX, event->rect().top(),
 								positionX, event->rect().bottom());
+			}
+		}
+		if (m_config.bShowAscii) {
+			for (int i = 1; i <= numberOfLines; ++i) {
+				m_metrics.hexWidth = (m_config.bytesPerLine * 3) * m_metrics.charWidth;
+				int positionX = m_metrics.addressWidth + m_metrics.hexWidth + m_metrics.charWidth * 0x8 * i;
+				if (positionX > 0 && positionX < viewport()->width()) {
+					painter.drawLine(positionX, event->rect().top(),
+						positionX, event->rect().bottom());
+				}
 			}
 		}
 	}
@@ -171,6 +182,10 @@ namespace gui {
 	void Hexview::resizeEvent(QResizeEvent* event) {
 		QAbstractScrollArea::resizeEvent(event);
 		if (m_initialized) {
+			if  (m_metrics.totalWidth < viewport()->width() ||
+				(m_metrics.totalWidth > viewport()->width() && m_config.bytesPerLine != 0x8)) {
+				updateDisplayConfig();
+			}
 			m_visibleRows = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 			updateScrollbars();
 		}
@@ -229,7 +244,8 @@ namespace gui {
 			return;
 		}
 		else {
-			m_maxDisplayAddress == mem::USERSPACE_END_32BIT
+			m_metrics.addressWidth =
+				m_maxDisplayAddress == mem::USERSPACE_END_32BIT
 				? fm.horizontalAdvance("0x00000000: ")
 				: fm.horizontalAdvance("0x000000000000: ");
 		}
@@ -259,6 +275,8 @@ namespace gui {
 	void Hexview::updateScrollbars() {
 		QSignalBlocker blocker(verticalScrollBar());
 
+		if (m_config.bytesPerLine == 0) return;
+
 		int scrollRangeLines = SCROLL_RANGE / m_config.bytesPerLine;
 		int maxLines = m_maxDisplayAddress / m_config.bytesPerLine;
 		int currentLine = m_topAddress / m_config.bytesPerLine;
@@ -283,15 +301,6 @@ namespace gui {
 		verticalScrollBar()->setSingleStep(1);
 
 		blocker.unblock();
-
-		int viewportWidth = viewport()->width();
-		if (m_metrics.totalWidth > viewportWidth) {
-			horizontalScrollBar()->setRange(0, m_metrics.totalWidth - viewportWidth);
-			horizontalScrollBar()->setPageStep(viewportWidth);
-			horizontalScrollBar()->setSingleStep(m_metrics.charWidth);
-		} else {
-			horizontalScrollBar()->setRange(0, 0);
-		}
 		viewport()->update();
 	}
 

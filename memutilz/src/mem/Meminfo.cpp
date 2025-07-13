@@ -57,8 +57,11 @@ namespace mem {
 				pages.push_back(mbi);
 				start_addr += mbi.RegionSize;
 			}
-			else
+			else {
+				if (GetLastError() == ERROR_INVALID_PARAMETER)
+					break;
 				throw mem::Exception("VirtualQueryEx Failed");
+			}
 		}
 	}
 

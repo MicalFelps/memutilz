@@ -24,11 +24,6 @@ hash changes, we re-disassemble the new memory.
 */
 
 namespace gui {
-	inline constexpr int VISIBLE_SCROLL_RANGE{ 10000 };
-	inline constexpr int SCALE_FACTOR { 100 };
-	inline constexpr int EFFECTIVE_SCROLL_RANGE { VISIBLE_SCROLL_RANGE / SCALE_FACTOR };
-	inline constexpr int NEUTRAL_SCROLL_POS{ VISIBLE_SCROLL_RANGE / 2 };
-
 	class AssemblyView : public QTableView, public IMemoryView {
 		Q_OBJECT
 	public:
@@ -50,6 +45,20 @@ namespace gui {
 		void keyPressEvent(QKeyEvent* event) override;
 		void mousePressEvent(QMouseEvent* event) override;
 		void contextMenuEvent(QContextMenuEvent* event) override;
+
+		void updateGeometries() override {
+			// Store your current scrollbar state
+			int savedValue = verticalScrollBar()->value();
+			int savedMin = verticalScrollBar()->minimum();
+			int savedMax = verticalScrollBar()->maximum();
+
+			// Let QTableView do its normal geometry updates
+			QTableView::updateGeometries();
+
+			// But restore YOUR scrollbar settings immediately after
+			verticalScrollBar()->setRange(savedMin, savedMax);
+			//verticalScrollBar()->setValue(savedValue);
+		}
 	private slots:
 		void onVerticalScrollChange(int value);
 		void onSelectionChange();
@@ -66,9 +75,11 @@ namespace gui {
 		void copyToClipboard();
 		void followJump();
 
+		const int SCROLL_RANGE{ 4 };
+		const int NEUTRAL_SCROLL_POS{ SCROLL_RANGE / 2 };
+
 		friend class AssemblyTableModel;
 		std::unique_ptr<AssemblyTableModel> m_model;
-		bool m_bScrollBarInit{ false };
 
 		struct MemoryContext {
 			std::shared_ptr<mem::Memdump> memdump{ nullptr };
@@ -78,23 +89,19 @@ namespace gui {
 			uintptr_t upperBoundary{ mem::USERSPACE_END_64BIT };
 			bool bInReadableMemory{ false };
 		};
-
 		struct DisassemblyContext {
 			mem::InsnChunk currentDisassembly;
 			std::unique_ptr<mem::Disassembler> disassembler{ nullptr };
 		};
-
 		struct ViewState {
 			int selectedRow{ 0 };
 			bool initialized = false;
 		};
-
 		struct DisplayMetrics {
 			QFont font;
 			int rowHeight{ 20 };
 			int visibleRows{ 1 };
 		};
-
 		struct UIComponents {
 			std::unique_ptr<QMenu> contextMenu{ nullptr };
 			QAction* copyAction{ nullptr };

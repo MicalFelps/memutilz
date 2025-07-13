@@ -58,24 +58,30 @@ namespace gui {
 		return 3; // Address, Bytes, Assembly
 	}
 	QVariant AssemblyTableModel::data(const QModelIndex& index, int role) const {
-		if (!index.isValid() || index.row() > m_asmView->m_metrics.visibleRows)
+		// To account for the automatic scroll behaviour
+		int rowIndex = index.row() - m_asmView->NEUTRAL_SCROLL_POS;
+
+		if (!index.isValid() ||
+			index.row() > m_asmView->m_metrics.visibleRows ||
+			index.row() < m_asmView->NEUTRAL_SCROLL_POS)
 			return QVariant();
 
 		// We don't handle the case that we cross into unreadable
 		Row row{};
 		if (m_asmView->m_memory.bInReadableMemory) { // topAddress readable
-			if (index.row() < m_asmView->m_disasm.currentDisassembly.size()) {
-				row.insn = &m_asmView->m_disasm.currentDisassembly[index.row()];
+			if (rowIndex < m_asmView->m_disasm.currentDisassembly.size()) {
+				row.insn = &m_asmView->m_disasm.currentDisassembly[rowIndex];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;
 			}
-			int offsetToUnreadable{ index.row() - m_asmView->m_disasm.currentDisassembly.size() };
-			row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
+			int offsetToUnreadable{ rowIndex - m_asmView->m_disasm.currentDisassembly.size() };
+			if(offsetToUnreadable >= 0 && offsetToUnreadable < m_asmView->m_metrics.visibleRows * 0x10)
+				row.address = m_asmView->m_memory.upperBoundary + offsetToUnreadable;
 		} else {
-			if (index.row() < m_rowOffsetToBoundary) {
-				row.address = m_asmView->m_memory.topAddress + index.row();
+			if (rowIndex < m_rowOffsetToBoundary) {
+				row.address = m_asmView->m_memory.topAddress + rowIndex;
 			} else {
-				int offsetToReadable{ index.row() - static_cast<int>(m_rowOffsetToBoundary) };
+				int offsetToReadable{ rowIndex - static_cast<int>(m_rowOffsetToBoundary) };
 				row.insn = &m_asmView->m_disasm.currentDisassembly[offsetToReadable];
 				row.isReadable = true;
 				row.address = row.insn.value()->address;
