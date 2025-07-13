@@ -174,6 +174,7 @@ namespace gui {
 		QAbstractScrollArea::showEvent(event);
 		if (!m_initialized) {
 			getMetrics();
+			updateDisplayConfig();
 			m_visibleRows = viewport()->height() / m_metrics.lineHeight;
 			updateScrollbars();
 			m_initialized = true;
@@ -182,10 +183,20 @@ namespace gui {
 	void Hexview::resizeEvent(QResizeEvent* event) {
 		QAbstractScrollArea::resizeEvent(event);
 		if (m_initialized) {
-			if  (m_metrics.totalWidth < viewport()->width() ||
-				(m_metrics.totalWidth > viewport()->width() && m_config.bytesPerLine != 0x8)) {
-				updateDisplayConfig();
+			getMetrics();
+			bool wasExpanding = event->size().width() > event->oldSize().width();
+
+			if (wasExpanding) {
+				int potentialWidth = m_metrics.addressWidth + m_metrics.charWidth * ((3 + 1) * (m_config.bytesPerLine + 8));
+				if (potentialWidth < viewport()->width()) {
+					updateDisplayConfig();
+				}
+			} else {
+				if (m_metrics.totalWidth > viewport()->width() && m_config.bytesPerLine != 8) {
+					updateDisplayConfig();
+				}
 			}
+
 			m_visibleRows = (viewport()->height() + m_metrics.lineHeight - 1) / m_metrics.lineHeight;
 			updateScrollbars();
 		}
