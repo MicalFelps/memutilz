@@ -134,7 +134,7 @@ namespace gui {
         if (event->button() == Qt::LeftButton) {
             QModelIndex index = indexAt(event->pos());
             if (index.isValid()) {
-                m_view.selectedRow = index.row();
+                m_view.selectedRow = index.row() - NEUTRAL_SCROLL_POS;
             }
         }
     }
@@ -143,7 +143,7 @@ namespace gui {
         QModelIndex index = indexAt(event->pos());
         if (index.isValid()) {
             setCurrentIndex(index);
-            m_view.selectedRow = index.row();
+            m_view.selectedRow = index.row() - NEUTRAL_SCROLL_POS;
             
             m_ui.followJumpAction->setEnabled(
                 m_disasm.disassembler->isJumpInstruction(&m_disasm.currentDisassembly[m_view.selectedRow]) ||
@@ -157,7 +157,7 @@ namespace gui {
     void AssemblyView::onSelectionChange() {
         QModelIndex index = currentIndex();
         if (index.isValid()) {
-            m_view.selectedRow = index.row();
+            m_view.selectedRow = index.row() - NEUTRAL_SCROLL_POS;
         }
     }
     void AssemblyView::onVerticalScrollChange(int value) {

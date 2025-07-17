@@ -45,20 +45,6 @@ namespace gui {
 		void keyPressEvent(QKeyEvent* event) override;
 		void mousePressEvent(QMouseEvent* event) override;
 		void contextMenuEvent(QContextMenuEvent* event) override;
-
-		void updateGeometries() override {
-			// Store your current scrollbar state
-			int savedValue = verticalScrollBar()->value();
-			int savedMin = verticalScrollBar()->minimum();
-			int savedMax = verticalScrollBar()->maximum();
-
-			// Let QTableView do its normal geometry updates
-			QTableView::updateGeometries();
-
-			// But restore YOUR scrollbar settings immediately after
-			verticalScrollBar()->setRange(savedMin, savedMax);
-			//verticalScrollBar()->setValue(savedValue);
-		}
 	private slots:
 		void onVerticalScrollChange(int value);
 		void onSelectionChange();
