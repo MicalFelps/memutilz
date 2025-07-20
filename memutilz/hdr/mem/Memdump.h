@@ -8,14 +8,17 @@
 #include "mem/Exception.h"
 #include <map>
 #include <future>
+#include <unordered_set>
 
 namespace mem {
 	struct MemoryRegion {
-		LPCVOID m_original_addr;
-		SIZE_T m_size;
-		SIZE_T m_buffer_chunk_idx;
-		SIZE_T m_buffer_offset;
-		DWORD m_protection;
+		LPCVOID m_original_addr{ 0 };
+		SIZE_T m_size{ 0 };
+		SIZE_T m_groupSize{ 0 };
+		int m_groupOffset{ 0 };
+		SIZE_T m_buffer_idx{ 0 };
+		SIZE_T m_buffer_offset{ 0 };
+		DWORD m_protection{ 0 };
 	};
 	struct RegionContext {
 		const MemoryRegion* prev{ nullptr };
@@ -28,12 +31,22 @@ namespace mem {
 		SIZE_T size{ 0 };
 	};
 	struct RegionView {
-		std::map<LPCVOID, MemoryRegion>::const_iterator m_begin;
-		std::map<LPCVOID, MemoryRegion>::const_iterator m_end;
+		std::vector<std::pair<LPCVOID, MemoryRegion*>> m_regions;
 
-		RegionView(auto b, auto e) : m_begin{ b }, m_end{ e } {}
-		auto begin() const { return m_begin; }
-		auto end() const { return m_end; }
+		RegionView(auto b, auto e) {
+			for (auto it = b; it != e; ++it) {
+				m_regions.emplace_back(it->first, it->second);
+			}
+		}
+
+		RegionView() = default;
+
+		void addRegion(const std::pair<LPCVOID, MemoryRegion*>& region) {
+			m_regions.push_back(region);
+		}
+
+		auto begin() const { return m_regions.begin(); }
+		auto end() const { return m_regions.end(); }
 	};
 
 	class Memdump {
@@ -97,13 +110,18 @@ namespace mem {
 
 		SIZE_T m_threadCount{ 1 };
 
+		int m_largeRegionsCount;
 		std::vector<BufferChunk> m_snapshotBuffers{};
-		SIZE_T m_SnapshotSize{ 0 };
+		std::vector<SIZE_T> m_remainingBuffers{};
+		SIZE_T m_snapshotSize{ 0 };
+
 		std::map<LPCVOID, MemoryRegion> m_regions{};
+		std::vector<std::pair<LPCVOID, MemoryRegion*>> m_sortedByGroupSize;
 
 		void updateMemoryLayout();
+		void updateConsecutiveRegions();
 		void makeSnapshotBuffers();
-		SIZE_T getOptimalBufferSize() const;
+		SIZE_T getOptimalBufferSize();
 		void distributeRegions();
 		void computeThreadCount();
 		std::vector<RegionView> divide_regions_by_size();
@@ -124,6 +142,8 @@ namespace mem {
 
 		const RegionContext getRegionContext(LPCVOID address) const;
 		const MemoryRegion* getRegion(LPCVOID address) const;
+		auto getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
+		auto getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
 		Meminfo* getMeminfo() const { return m_meminfo; }
 		Process* getProcess() const { return m_targetProcess; }

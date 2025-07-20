@@ -123,7 +123,7 @@ namespace mem {
 					return InsnChunk();
 				}
 
-				int validCount = endIdx - startIdx + 1;
+				size_t validCount = endIdx - startIdx + 1;
 				cs_insn* firstValidInsn = &insn[startIdx];
 
 				cache.m_disassembly = InsnChunk(firstValidInsn, validCount, insn, count);
