@@ -110,7 +110,7 @@ namespace mem {
 
 		SIZE_T m_threadCount{ 1 };
 
-		int m_largeRegionsCount;
+		int m_largeRegionsCount{ 0 };
 		std::vector<BufferChunk> m_snapshotBuffers{};
 		std::vector<SIZE_T> m_remainingBuffers{};
 		SIZE_T m_snapshotSize{ 0 };

@@ -14,8 +14,6 @@ namespace mem {
 	static constexpr SIZE_T SIZE_100MB = 100_MB;
 	static constexpr SIZE_T SIZE_500MB = 500_MB;
 
-
-
 	void Memdump::updateMemoryLayout() {
 		m_meminfo->findPageInfo(); // update memory layout
 		m_snapshotSize = 0;
@@ -85,6 +83,19 @@ namespace mem {
 		if (groupStart != m_regions.end()) {
 			groupStart->second.m_groupSize = groupSize;
 		}
+
+		m_sortedByGroupSize.clear();
+
+		for (auto& [addr, region] : m_regions) {
+			if (region.m_groupOffset == 0) {
+				m_sortedByGroupSize.emplace_back(addr, &region);
+			}
+		}
+
+		std::sort(m_sortedByGroupSize.begin(), m_sortedByGroupSize.end(),
+			[](const auto& a, const auto& b) {
+				return a.second->m_groupSize > b.second->m_groupSize;
+			});
 	}
 	SIZE_T Memdump::getOptimalBufferSize() {
 		// we pre-allocate any buffers that exceed our normal size
@@ -110,19 +121,7 @@ namespace mem {
 		return normalSize;
 	}
 	void Memdump::distributeRegions() {
-		m_sortedByGroupSize.clear();
 		m_remainingBuffers.clear();
-
-		for (auto& [addr, region] : m_regions) {
-			if (region.m_groupOffset == 0) {
-				m_sortedByGroupSize.emplace_back(addr, &region);
-			}
-		}
-
-		std::sort(m_sortedByGroupSize.begin(), m_sortedByGroupSize.end(),
-			[](const auto& a, const auto& b) {
-				return a.second->m_groupSize > b.second->m_groupSize;
-			});
 
 		m_remainingBuffers.reserve(m_snapshotBuffers.size());
 		for (const auto& buffer : m_snapshotBuffers) {
@@ -277,22 +276,29 @@ namespace mem {
 		return nullptr;
 	}
 	auto Memdump::getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const {
-		while (it != m_regions.begin() && it->second.m_groupOffset > 0) {
-			--it;
+		while (it != m_regions.begin()) {
+			auto prev = std::prev(it);
+			if (prev->second.m_groupOffset == 0) {
+				break;
+			}
+			it = prev;
 		}
+
 		return it;
 	}
 	auto Memdump::getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const {
 		while (it != m_regions.end() && it->second.m_groupOffset > 0) {
 			++it;
 		}
-		++it;
+
+		if(it != m_regions.end())
+			++it;
 		return it;
 	}
 
 	std::vector<RegionView> Memdump::divide_regions_by_size() {
 		std::vector<RegionView> views{};
-		views.reserve(m_threadCount);
+		views.resize(m_threadCount);
 
 		for (size_t i = 0; i < m_sortedByGroupSize.size(); ++i) {
 			size_t threadIndex = i % m_threadCount;
