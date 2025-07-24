@@ -276,12 +276,15 @@ namespace mem {
 		return nullptr;
 	}
 	auto Memdump::getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const {
+		if (it->second.m_groupOffset == 0)
+			return it;
+
 		while (it != m_regions.begin()) {
 			auto prev = std::prev(it);
 			if (prev->second.m_groupOffset == 0) {
+				it = prev;
 				break;
 			}
-			it = prev;
 		}
 
 		return it;
@@ -315,7 +318,7 @@ namespace mem {
 		auto startingGroupRegion = getFirstRegion(m_regions.find(currentRegion->m_original_addr));
 		uintptr_t addr = reinterpret_cast<uintptr_t>(address);
 		uintptr_t regionStart = reinterpret_cast<uintptr_t>(startingGroupRegion->second.m_original_addr);
-		uintptr_t regionEnd = regionStart + startingGroupRegion->second.m_size;
+		uintptr_t regionEnd = regionStart + startingGroupRegion->second.m_groupSize;
 
 		SIZE_T offset = addr - regionStart;
 		SIZE_T availableBytes = regionEnd - addr;

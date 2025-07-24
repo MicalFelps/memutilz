@@ -148,7 +148,7 @@ namespace mem {
 		Meminfo* getMeminfo() const { return m_meminfo; }
 		Process* getProcess() const { return m_targetProcess; }
 		SIZE_T dump();
-		void setLiveMode() { m_bLiveMode = true; }
+		void setLiveMode() { m_bLiveMode = false; }
 	};
 }
 
