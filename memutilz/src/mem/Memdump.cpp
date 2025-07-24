@@ -312,7 +312,7 @@ namespace mem {
 		if (!currentRegion)
 			return MemoryView();
 
-		auto startingGroupRegion = getFirstRegion(m_regions.find(currentRegion));
+		auto startingGroupRegion = getFirstRegion(m_regions.find(currentRegion->m_original_addr));
 		uintptr_t addr = reinterpret_cast<uintptr_t>(address);
 		uintptr_t regionStart = reinterpret_cast<uintptr_t>(startingGroupRegion->second.m_original_addr);
 		uintptr_t regionEnd = regionStart + startingGroupRegion->second.m_size;
