@@ -1,3 +1,3 @@
 # memutilz
 
-Useful for dynamic analysis of windows executables.
+Just a memory dumper with fancy qt widgets
