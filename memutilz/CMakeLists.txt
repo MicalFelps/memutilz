@@ -3,7 +3,7 @@ project(memutilz VERSION 1.0.0 LANGUAGES CXX)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/Qt-Advanced-Docking-System)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/capstone)
 
-# Find QT 6.9.1
+# Find QT 6.9.2
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 qt_standard_project_setup()
 
@@ -51,11 +51,17 @@ set(MEMUTILZ_HEADERS
 # resource files
 file(GLOB MEMUTILZ_RESOURCES rsrc/*.qrc)
 
-qt_add_executable(memutilz
+add_executable(memutilz
     ${MEMUTILZ_SOURCES}
     ${MEMUTILZ_HEADERS}
     ${MEMUTILZ_RESOURCES}
     rsrc/memutilz.rc
+)
+
+set_target_properties(memutilz PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
