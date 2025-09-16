@@ -28,6 +28,7 @@ namespace mem {
 
 		Handle(const Handle&) = delete;
 		Handle& operator=(const Handle&) = delete;
+		explicit operator bool() const { return m_handle != nullptr; }
 		
 		~Handle() {
 			if (m_handle)

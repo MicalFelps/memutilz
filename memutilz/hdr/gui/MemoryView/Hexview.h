@@ -14,7 +14,7 @@
 #include "gui/MemoryView/IMemoryView.h"
 #include "gui/constants.h"
 
-#include "mem/Meminfo.h"
+#include "mem/PageInfo.h"
 #include "mem/Memdump.h"
 #include "mem/constants.h"
 
@@ -66,7 +66,7 @@ namespace gui {
 		DisplayConfig m_config;
 
 		std::shared_ptr<mem::Memdump> m_memdump{ nullptr };
-		const mem::Meminfo* m_meminfo{ nullptr };
+		const mem::Process* m_process{ nullptr };
 		uintptr_t m_maxDisplayAddress{ mem::USERSPACE_END_32BIT };
 		uintptr_t m_topAddress{ 0 }; // address at the top of view
 		QFont m_font;

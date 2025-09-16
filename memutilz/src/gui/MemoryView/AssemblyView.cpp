@@ -50,10 +50,10 @@ namespace gui {
         if (m_memory.memdump) {
             m_disasm.disassembler = std::make_unique<mem::Disassembler>(memdump);
 
-            m_memory.memdump->getMeminfo()->is32Bit()
+            m_memory.memdump->getProcess()->is32Bit()
                 ? m_memory.maxDisplayAddress = mem::USERSPACE_END_32BIT
                 : m_memory.maxDisplayAddress = mem::USERSPACE_END_64BIT;
-            m_memory.topAddress = m_memory.memdump->getMeminfo()->getProgramBase() + 0xD9F00;
+            m_memory.topAddress = m_memory.memdump->getProcess()->getProgramBase() + 0xD9F00;
             updateBoundaries(); // we need to call this at least once
             m_memory.bInReadableMemory = true;
             updateVisibleRows();

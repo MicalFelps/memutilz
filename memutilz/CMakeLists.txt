@@ -19,9 +19,10 @@ set(MEMUTILZ_SOURCES
     src/gui/MemoryView/AssemblyView.cpp
     src/gui/MemoryView/Hexview.cpp
     src/hash/xxhash.c
+    src/mem/injection/injection.cpp
     src/mem/Disassembler.cpp
     src/mem/Memdump.cpp
-    src/mem/Meminfo.cpp
+    src/mem/PageInfo.cpp
     src/mem/Process.cpp
     src/priv/privilege.cpp
 )
@@ -37,13 +38,14 @@ set(MEMUTILZ_HEADERS
     hdr/gui/MemoryView/AssemblyView.h
     hdr/gui/MemoryView/Hexview.h
     hdr/hash/xxhash.h
+    hdr/mem/injection/injection.h
     hdr/mem/common.h
     hdr/mem/constants.h
     hdr/mem/Disassembler.h
     hdr/mem/Exception.h
     hdr/mem/Handle.h
     hdr/mem/Memdump.h
-    hdr/mem/Meminfo.h
+    hdr/mem/PageInfo.h
     hdr/mem/Process.h
     hdr/priv/privilege.h
 )

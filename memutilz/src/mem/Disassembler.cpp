@@ -33,7 +33,7 @@ namespace mem {
 		: m_memdump{ memdump }
 	{
 		if (memdump) {
-			if (memdump->getMeminfo()->is32Bit())
+			if (memdump->getProcess()->is32Bit())
 				m_mode = CS_MODE_32;
 		}
 
@@ -180,7 +180,7 @@ namespace mem {
 		return InsnChunk(insn, static_cast<int>(count));
 	}
 	uintptr_t Disassembler::alignToInstrStart(uintptr_t address) {
-		uintptr_t maxAddress = m_memdump->getMeminfo()->is32Bit()
+		uintptr_t maxAddress = m_memdump->getProcess()->is32Bit()
 			? mem::USERSPACE_END_32BIT
 			: mem::USERSPACE_END_64BIT;
 

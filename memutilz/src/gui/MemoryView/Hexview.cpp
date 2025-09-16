@@ -25,11 +25,11 @@ namespace gui {
 		m_memdump = memdump;
 
 		if (m_memdump) {
-			m_meminfo = m_memdump->getMeminfo();
-			m_meminfo->is32Bit()
+			m_process = m_memdump->getProcess();
+			m_process->is32Bit()
 				? m_maxDisplayAddress = mem::USERSPACE_END_32BIT
 				: m_maxDisplayAddress = mem::USERSPACE_END_64BIT;
-			m_topAddress = m_meminfo->getProgramBase();
+			m_topAddress = m_process->getProgramBase();
 			updateAddressWidth();
 			updateScrollbars();
 		}

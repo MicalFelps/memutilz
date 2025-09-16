@@ -102,4 +102,39 @@ namespace mem {
 		}
 		m_bIsSuspended = false;
 	}
+
+	bool Process::resolveBitness() {
+		Handle hProc{ OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, getPID()) };
+		BOOL bIsWoW64 = FALSE;
+
+		if (!IsWow64Process(hProc.get(), &bIsWoW64))
+			throw mem::Exception("IsWow64Process failed");
+
+		SYSTEM_INFO sysinfo;
+		GetNativeSystemInfo(&sysinfo);
+
+		bool bIs64bitOS{ sysinfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 };
+		return (bIs64bitOS && bIsWoW64);
+	}
+	uintptr_t Process::getModuleBase(std::wstring_view name) const {
+		uintptr_t ret{};
+		Handle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, getPID()) };
+
+		if (hSnap.get() != INVALID_HANDLE_VALUE) {
+			MODULEENTRY32 moduleEntry{};
+			moduleEntry.dwSize = sizeof(MODULEENTRY32);
+
+			if (Module32First(hSnap.get(), &moduleEntry)) {
+				do {
+					if (!_wcsicmp(moduleEntry.szModule, name.data())) {
+						ret = (uintptr_t)moduleEntry.modBaseAddr;
+						return ret;
+					}
+				} while (Module32Next(hSnap.get(), &moduleEntry));
+			}
+			if (!ret)
+				throw mem::Exception("Failed to get module base address");
+		}
+		throw mem::Exception("Failed to get module snapshot");
+	}
 }

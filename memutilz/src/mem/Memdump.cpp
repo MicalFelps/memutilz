@@ -15,12 +15,12 @@ namespace mem {
 	static constexpr SIZE_T SIZE_500MB = 500_MB;
 
 	void Memdump::updateMemoryLayout() {
-		m_meminfo->findPageInfo(); // update memory layout
+		m_pageinfo->findPageInfo(); // update memory layout
 		m_snapshotSize = 0;
 
 		std::unordered_set<LPCVOID> currPages;
 
-		for (const auto& mbi : m_meminfo->getPages()) {
+		for (const auto& mbi : m_pageinfo->getPages()) {
 			if (mbi.State == MEM_COMMIT && isReadablePage(mbi)) {
 				currPages.insert(mbi.BaseAddress);
 				m_snapshotSize += mbi.RegionSize;

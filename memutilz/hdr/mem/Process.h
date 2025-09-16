@@ -12,12 +12,16 @@ namespace mem {
 		std::vector<DWORD> m_threadIDs{};
 		bool m_bIsSuspended{ false };
 
+		bool m_bIs32Bit{ false };
+
 		DWORD findPIDByName(std::wstring_view name);
+		bool resolveBitness();
 	public:
 		explicit Process(std::wstring_view name)
 			: m_pid{ findPIDByName(name) }
-			, m_name{ name }
-		{}
+			, m_name{ name } {
+			resolveBitness();
+		}
 
 		const std::wstring& getName() const noexcept { return m_name; }
 		DWORD getPID() const { return m_pid; }
@@ -29,6 +33,11 @@ namespace mem {
 		void suspend();
 		bool isSuspended() { return m_bIsSuspended; }
 		void resume();
+
+		uintptr_t getModuleBase(std::wstring_view name) const;
+		uintptr_t getProgramBase() const { return getModuleBase(getName()); }
+
+		bool is32Bit() const { return m_bIs32Bit; }
 	};
 }
 

@@ -4,7 +4,7 @@
 #include "common.h"
 
 #include "mem/Process.h"
-#include "mem/Meminfo.h"
+#include "mem/PageInfo.h"
 #include "mem/Exception.h"
 #include <map>
 #include <future>
@@ -101,7 +101,7 @@ namespace mem {
 
 		};
 
-		Meminfo* m_meminfo{ nullptr };
+		PageInfo* m_pageinfo{ nullptr };
 		Process* m_targetProcess{ nullptr };
 
 		bool m_bLiveMode{ false };
@@ -135,9 +135,9 @@ namespace mem {
 		SIZE_T dump_region_view(HANDLE handle, const RegionView& regionView);
 	public:
 		Memdump() = delete;
-		explicit Memdump(Meminfo* meminfo) noexcept
-			: m_meminfo{meminfo}
-			, m_targetProcess{ m_meminfo->getProcess() }
+		explicit Memdump(PageInfo* meminfo) noexcept
+			: m_pageinfo{meminfo}
+			, m_targetProcess{ m_pageinfo->getProcess() }
 		{}
 
 		const RegionContext getRegionContext(LPCVOID address) const;
@@ -145,7 +145,7 @@ namespace mem {
 		auto getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		auto getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
-		Meminfo* getMeminfo() const { return m_meminfo; }
+		PageInfo* getMeminfo() const { return m_pageinfo; }
 		Process* getProcess() const { return m_targetProcess; }
 		SIZE_T dump();
 		void setLiveMode() { m_bLiveMode = false; }

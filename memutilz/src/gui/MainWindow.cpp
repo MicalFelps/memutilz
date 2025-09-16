@@ -15,7 +15,7 @@ struct MainWindowPrivate {
     gui::Ui_MainWindow* ui;
 
     std::unique_ptr<mem::Process> proc;
-    std::unique_ptr<mem::Meminfo> meminfo;
+    std::unique_ptr<mem::PageInfo> pageinfo;
     std::shared_ptr<mem::Memdump> memdump;
 
     std::unique_ptr<ads::CDockManager> DockManager{ nullptr };
@@ -68,10 +68,10 @@ void MainWindowPrivate::initialize() {
     try {
         proc = std::make_unique<mem::Process>(L"ac_client.exe");
 
-        meminfo = std::make_unique<mem::Meminfo>(proc.get());
-        meminfo->findPageInfo();
+        pageinfo = std::make_unique<mem::PageInfo>(proc.get());
+        pageinfo->findPageInfo();
 
-        memdump = std::make_shared<mem::Memdump>(meminfo.get());
+        memdump = std::make_shared<mem::Memdump>(pageinfo.get());
         memdump->dump();
 
         HexWidget->setMemdump(memdump);
