@@ -26,7 +26,7 @@ int main(int argc, char** argv)
         freopen_s(&f, "CONOUT$", "w", stderr);
         freopen_s(&f, "CONIN$", "r", stdin);
 
-        mem::Process process{ L"explorer.exe" };
+        mem::Process process{ L"obsidian.exe" };
         mem::injection::ManualMap(process, "test.dll", true);
 
         std::cin.get();

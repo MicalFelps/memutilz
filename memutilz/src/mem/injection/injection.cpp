@@ -138,7 +138,7 @@ namespace mem {
 				throw mem::Exception("Failed to write MM_DATA");
 			}
 
-			std::cout << "[+] Manual Mapping Data at: 0x" << std::hex << reinterpret_cast<uintptr_t>(mmDataLoc) << '\n';
+			std::cout << "[!] Manual Mapping Data at: 0x" << std::hex << reinterpret_cast<uintptr_t>(mmDataLoc) << '\n';
 
 			// Writing the shellcode
 			LPVOID shellcodeLoc = VirtualAllocEx(hProc.get(), nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
@@ -148,14 +148,23 @@ namespace mem {
 				throw mem::Exception("Failed to allocate memory for shellcode");
 			}
 
-			if (!WriteProcessMemory(hProc.get(), shellcodeLoc, shellcode, 0x1000, nullptr)) {
+			std::cout << "[!] Shellcode at : 0x" << std::hex << reinterpret_cast<uintptr_t>(shellcodeLoc) << '\n';
+
+			// MSVC on x64 uses jump stubs
+			LPCVOID shellcodeAddr{ reinterpret_cast<LPCVOID>(shellcode) };
+			auto pShellcode = reinterpret_cast<BYTE*>(shellcode);
+			if (pShellcode[0] == 0xE9) {
+				auto pRelativeOffset = reinterpret_cast<uint32_t*>(pShellcode+=1);
+				shellcodeAddr = reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(shellcode) + *pRelativeOffset + 0x5);
+			}
+
+			if (!WriteProcessMemory(hProc.get(), shellcodeLoc, shellcodeAddr, 0x1000, nullptr)) {
 				VirtualFreeEx(hProc.get(), pBaseAddress, 0, MEM_RELEASE);
 				VirtualFreeEx(hProc.get(), mmDataLoc, 0, MEM_RELEASE);
 				VirtualFreeEx(hProc.get(), shellcodeLoc, 0, MEM_RELEASE);
 				throw mem::Exception("Failed to map shellcode to target process");
 			}
 
-			std::cout << "[+] Shellcode at : 0x" << std::hex << reinterpret_cast<uintptr_t>(shellcodeLoc) << '\n';
 			std::cout << "	SETUP DONE	" << '\n';
 #ifdef _DEBUG
 			std::cout << "Press 'Enter' to continue...\n";
@@ -267,10 +276,10 @@ namespace mem {
 #endif
 
 		// https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#special-sections
-
+		/*
 		#pragma optimize("", off)
 		#pragma runtime_checks("", off)
-		#pragma check_stack(off)
+		*/
 
 		void __stdcall shellcode(MM_Data* data) {
 			BYTE* pBaseAddress = reinterpret_cast<BYTE*>(data->baseAddress);
