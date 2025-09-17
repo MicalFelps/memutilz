@@ -7,16 +7,17 @@ namespace mem {
 	namespace injection {
 		using fp_LoadLibraryW =		HMODULE(WINAPI*)(LPCWSTR lpLibFileName);
 		using fp_GetProcAddress =	FARPROC(WINAPI*)(HMODULE hModule, LPCSTR lpProcName);
-		using fp_DLL_ENTRY =		BOOL(WINAPI*)(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
+		using fp_DLL_ENTRY =		BOOL(WINAPI*)(BYTE* hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
 		#ifdef _WIN64
 			using fp_RtlAddFunctionTable = BOOLEAN(__cdecl*)(PRUNTIME_FUNCTION FunctionTable, DWORD EntryCount, DWORD64 BaseAddress);
 		#endif
 		
 		enum MM_STATUS {
-			MM_SUCCESS = 1 << 0,
-			MM_FAILURE = 1 << 1,
-			MM_PENDING = 1 << 2
+			MM_PENDING		= 1 << 0,
+			MM_SUCCESS		= 1 << 1,
+			MM_FAILURE		= 1 << 2,
+			MM_NO_SEH_SUPP	= 1 << 3
 		};
 
 		typedef struct MM_Data {
@@ -27,6 +28,8 @@ namespace mem {
 				fp_RtlAddFunctionTable fpRtlAddFunctionTable;
 			#endif
 			uintptr_t baseAddress;
+			DWORD fdwReason;
+			LPVOID lpvReserved;
 			MM_STATUS status{ MM_PENDING };
 			bool supportSEH{ false };
 		} MM_DATA, *PMM_DATA;

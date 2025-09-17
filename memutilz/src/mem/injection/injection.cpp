@@ -2,6 +2,7 @@
 #include "../mem/Exception.h"
 #include <filesystem>
 #include <fstream>
+#include <windows.h>
 
 namespace fs = std::filesystem;
 
@@ -60,6 +61,10 @@ namespace mem {
 
 		bool ManualMap(Process& targetProc, std::string_view dllPath, bool supportSEH) {
 			auto fileBuffer = readPeFile(dllPath);
+			if (fileBuffer.size() == 0) {
+				return false;
+			}
+
 			BYTE* pBaseAddress = nullptr;
 
 			auto pOldNtHeader = reinterpret_cast<IMAGE_NT_HEADERS*>(fileBuffer.data() + reinterpret_cast<IMAGE_DOS_HEADER*>(fileBuffer.data())->e_lfanew);
@@ -151,16 +156,20 @@ namespace mem {
 			}
 
 			std::cout << "[+] Shellcode at : 0x" << std::hex << reinterpret_cast<uintptr_t>(shellcodeLoc) << '\n';
-
 			std::cout << "	SETUP DONE	" << '\n';
+#ifdef _DEBUG
+			std::cout << "Press 'Enter' to continue...\n";
+			std::cin.get();
+#endif
 			std::cout << "[!!] Creating Remote Thread" << '\n';
-
-			Handle hRemote{ CreateRemoteThread(hProc.get(), nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(shellcodeLoc), mmDataLoc, 0, nullptr) };
-			if (!hRemote) {
-				VirtualFreeEx(hProc.get(), pBaseAddress, 0, MEM_RELEASE);
-				VirtualFreeEx(hProc.get(), mmDataLoc, 0, MEM_RELEASE);
-				VirtualFreeEx(hProc.get(), shellcodeLoc, 0, MEM_RELEASE);
-				throw mem::Exception("Failed to create remote thread in target process");
+			{
+				Handle hRemote{ CreateRemoteThread(hProc.get(), nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(shellcodeLoc), mmDataLoc, 0, nullptr) };
+				if (!hRemote) {
+					VirtualFreeEx(hProc.get(), pBaseAddress, 0, MEM_RELEASE);
+					VirtualFreeEx(hProc.get(), mmDataLoc, 0, MEM_RELEASE);
+					VirtualFreeEx(hProc.get(), shellcodeLoc, 0, MEM_RELEASE);
+					throw mem::Exception("Failed to create remote thread in target process");
+				}
 			}
 
 			std::cout << "[+] Thread Created Successfully!" << '\n';
@@ -181,17 +190,11 @@ namespace mem {
 					VirtualFreeEx(hProc.get(), mmDataLoc, 0, MEM_RELEASE);
 					VirtualFreeEx(hProc.get(), shellcodeLoc, 0, MEM_RELEASE);
 					throw mem::Exception("Shellcode Failed :(");
+				} else if (checkFlag & MM_NO_SEH_SUPP) {
+					std::cout << "[-] Warning: SEH Support Failed\n";
 				}
-				
-				/*
-				1. SEH Support failure
 
-				if(checkFlag & MM_NO_SEHSUPPORT){
-					std::cout << "[-] SEH Exception Support Failed!\n";
-				}
-				*/
-
-				Sleep(100);
+				Sleep(50);
 			}
 
 			// Clear PE Headers
@@ -199,6 +202,8 @@ namespace mem {
 			if (!WriteProcessMemory(hProc.get(), pBaseAddress, nullBuffer.data(), 0x1000, nullptr)) {
 				throw mem::Exception("Failed to clear PE Headers");
 			}
+
+			std::cout << "[+] Cleared PE Headers\n";
 
 			// Clear Un-needed sections
 			pSectionHeader = IMAGE_FIRST_SECTION(pOldNtHeader);
@@ -216,7 +221,40 @@ namespace mem {
 				}
 			}
 
-			
+			// Change Protection Flags
+			pSectionHeader = IMAGE_FIRST_SECTION(pOldNtHeader);
+			for (size_t i = 0; i < pOldFileHeader->NumberOfSections; ++i, ++pSectionHeader) {
+				if (pSectionHeader->Misc.VirtualSize) {
+					DWORD old;
+					DWORD current = PAGE_READONLY;
+
+					if((pSectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE) > 0){
+						current = PAGE_READWRITE;
+					} else if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) > 0) {
+						current = PAGE_EXECUTE_READ;
+					}
+
+					if (VirtualProtectEx(hProc.get(), pBaseAddress + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, current, &old)) {
+						std::cout << '[' << (i + 1) << ']' << ' ' << pSectionHeader->Name << ": " << current << '\n';
+					} else {
+						throw mem::Exception("Failed to change memory protection");
+					}
+				}
+			}
+			DWORD old;
+			VirtualProtectEx(hProc.get(), pBaseAddress, IMAGE_FIRST_SECTION(pOldNtHeader)->VirtualAddress, PAGE_READONLY, &old);
+
+			if (!WriteProcessMemory(hProc.get(), shellcodeLoc, nullBuffer.data(), 0x1000, nullptr)) {
+				std::cerr << "[-] Warning: Failed to clear shellcode\n";
+			}
+			if (!VirtualFreeEx(hProc.get(), shellcodeLoc, 0, MEM_RELEASE)) {
+				std::cerr << "[-] Warning: Failed to free shellcode memory\n";
+			}
+			if (!VirtualFreeEx(hProc.get(), mmDataLoc, 0, MEM_RELEASE)) {
+				std::cerr << "[-] Warning: Failed to free MM_DATA memory\n";
+			}
+
+			return true;
 		}
 
 #define RELOC_FLAG32(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
@@ -228,6 +266,8 @@ namespace mem {
 #define RELOC_FLAG RELOC_FLAG32
 #endif
 
+		// https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#special-sections
+
 		#pragma optimize("", off)
 		#pragma runtime_checks("", off)
 		#pragma check_stack(off)
@@ -235,22 +275,112 @@ namespace mem {
 		void __stdcall shellcode(MM_Data* data) {
 			BYTE* pBaseAddress = reinterpret_cast<BYTE*>(data->baseAddress);
 			auto pOldNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<IMAGE_DOS_HEADER*>(data->baseAddress)->e_lfanew);
-			auto pOldOptheader = &pOldNtHeaders->OptionalHeader;
+			auto pOldOptHeader = &pOldNtHeaders->OptionalHeader;
 
 			auto fpLoadLibrary = data->fpLoadLibrary;
 			auto fpGetProcAddress = data->fpGetProcAddress;
 #ifdef WIN64
 			auto fpRtlAddFunctionTable = data->fpRtlAddFunctionTable;
 #endif
-			auto DllMain = reinterpret_cast<fp_DLL_ENTRY>(pBaseAddress + pOldOptheader->AddressOfEntryPoint);
+			auto DllMain = reinterpret_cast<fp_DLL_ENTRY>(pBaseAddress + pOldOptHeader->AddressOfEntryPoint);
 
-			// 1. Sanity Check for correct addresses of LoadLibrary and GetProcAddress
+			/*
+			Sanity check the addresses of LoadLibrary and GetProcAddress with pattern scanning
+			by walking the PEB and finding the export table of kernel32.dll
+			If they're hooked, simply exit and set MM_FAILURE
+			*/
 
-			// FIX RELOCATION
-			// FIX IAT
-			// FIX TLS CALLBACKS
+			// Handle Relocation
+			BYTE* baseDelta = pBaseAddress - pOldOptHeader->ImageBase;
+			if (baseDelta) {
+				if (pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size != 0) {
+					auto pRelocSection =	reinterpret_cast<IMAGE_BASE_RELOCATION*>(pBaseAddress + pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+					auto pRelocSectionEnd = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<uintptr_t>(pRelocSection) + pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
 
+					while (pRelocSection < pRelocSectionEnd && pRelocSection->SizeOfBlock != 0) {
+						size_t numberOfEntries = ((pRelocSection->SizeOfBlock) - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+						WORD* pEntry = reinterpret_cast<WORD*>(pRelocSection + 1);
 
+						for (size_t i = 0; i < numberOfEntries; ++i, ++pEntry) {
+							if (RELOC_FLAG(*pEntry)) {
+								uintptr_t* pAddressToPatch = reinterpret_cast<uintptr_t*>(pBaseAddress + pRelocSection->VirtualAddress + ((*pEntry) & 0xFFF));
+								*pAddressToPatch += reinterpret_cast<uintptr_t>(baseDelta);
+							}
+						}
+						pRelocSection = reinterpret_cast<IMAGE_BASE_RELOCATION*>(reinterpret_cast<BYTE*>(pRelocSection) + pRelocSection->SizeOfBlock);
+					}
+				}
+			}
+
+			// Handle imports
+			if (pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0) {
+				auto pImportDirTable = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBaseAddress + pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+				while (pImportDirTable->Name) {
+					LPCWSTR lpLibFileName = reinterpret_cast<LPCWSTR>(pBaseAddress + pImportDirTable->Name);
+					HINSTANCE hDll = fpLoadLibrary(lpLibFileName); // not sneaky :(
+					if (!hDll) {
+						data->status = MM_FAILURE;
+						return;
+					}
+
+					/*
+					OriginalFirstThunk points to the import lookup table, which is an array or RVAs or ordinals.
+					FirstThunk is the import address table, it's an exact copy of the OriginalFirstThunk,
+					before it's values get overwritten with actual pointers.
+					*/
+
+					auto pOrigThunk =	reinterpret_cast<uintptr_t*>(pBaseAddress + pImportDirTable->OriginalFirstThunk);
+					auto pFirstThunk =	reinterpret_cast<uintptr_t*>(pBaseAddress + pImportDirTable->FirstThunk);
+
+					if (!pImportDirTable->OriginalFirstThunk) {
+						pOrigThunk = pFirstThunk;
+					}
+
+					for (; *pOrigThunk; ++pOrigThunk, ++pFirstThunk) {
+						if (IMAGE_SNAP_BY_ORDINAL(*pOrigThunk)) {
+							*pFirstThunk = (uintptr_t)fpGetProcAddress(hDll, reinterpret_cast<LPCSTR>(*pOrigThunk & 0xFFFF));
+						} else { // Get by name
+							auto pHintNameTable = reinterpret_cast<IMAGE_IMPORT_BY_NAME*>(pBaseAddress + (*pOrigThunk));
+							*pFirstThunk = (uintptr_t)fpGetProcAddress(hDll, reinterpret_cast<LPCSTR>(pHintNameTable->Name));
+						}
+					}
+					++pImportDirTable;
+				}
+
+			}
+
+			// Handle TSL Callbacks
+			if(pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size != 0) {
+				auto pTLS = reinterpret_cast<IMAGE_TLS_DIRECTORY*>(pBaseAddress + pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+				auto fpCallback = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(pTLS->AddressOfCallBacks);
+				for (; fpCallback && *fpCallback; ++fpCallback) {
+					(*fpCallback)(pBaseAddress, DLL_PROCESS_ATTACH, nullptr);
+				}
+			}
+
+			// SEH Support
+
+			bool bExceptionSupportFailure = false;
+#ifdef WIN64
+			if (data->supportSEH) {
+				auto exceptionSection = pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION];
+				if (exceptionSection.Size != 0) {
+					if (!fpRtlAddFunctionTable(reinterpret_cast<IMAGE_RUNTIME_FUNCTION_ENTRY*>(pBaseAddress + exceptionSection.VirtualAddress),
+						exceptionSection.Size / sizeof(IMAGE_RUNTIME_FUNCTION_ENTRY),
+						(uintptr_t)pBaseAddress)) {
+
+						bExceptionSupportFailure = true;
+					}
+				}
+			}
+#endif
+			if (bExceptionSupportFailure) {
+				data->status = MM_NO_SEH_SUPP;
+			} else {
+				data->status = MM_SUCCESS;
+			}
+
+			DllMain(pBaseAddress, data->fdwReason, data->lpvReserved);
 		}
 	}
 } 

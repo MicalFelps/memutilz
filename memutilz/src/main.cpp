@@ -2,6 +2,7 @@
 #include "gui/MainWindow.h"
 #include "priv/privilege.h"
 
+#include "Process.h"
 #include "injection/injection.h"
 
 #include <windows.h>
@@ -24,8 +25,6 @@ int main(int argc, char** argv)
         freopen_s(&f, "CONOUT$", "w", stdout);
         freopen_s(&f, "CONOUT$", "w", stderr);
         freopen_s(&f, "CONIN$", "r", stdin);
-
-        auto tmp = mem::injection::readPeFile("C:\\Users\\mniki\\Downloads\\tmp.txt");
 
         std::cin.get();
         FreeConsole();
