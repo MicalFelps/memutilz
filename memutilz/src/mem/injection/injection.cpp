@@ -72,7 +72,7 @@ namespace mem {
 			auto pOldOptHeader = &pOldNtHeader->OptionalHeader;
 
 			// Here I'm assuming we're x64, if not we can check that the DLL is valid for that
-			if (targetProc.is32Bit() && !pOldFileHeader->Machine == IMAGE_FILE_MACHINE_I386) {
+			if (targetProc.is32Bit() && !(pOldFileHeader->Machine == IMAGE_FILE_MACHINE_I386)) {
 				std::cerr << "Can't inject an x64 DLL into a WoW process\n";
 				return false;
 			}
@@ -80,7 +80,7 @@ namespace mem {
 			std::cout << "[!] Loading File\n";
 
 			Handle hProc{ OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProc.getPID()) };
-			pBaseAddress = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc.get(), nullptr, pOldOptHeader->SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_WRITECOPY));
+			pBaseAddress = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc.get(), nullptr, pOldOptHeader->SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
 			if (!pBaseAddress) {
 				throw mem::Exception("Failed to allocate memory for DLL in target process");
@@ -104,7 +104,7 @@ namespace mem {
 						VirtualFreeEx(hProc.get(), pBaseAddress, 0, MEM_RELEASE);
 						throw mem::Exception("Failed to map sections to target process\n");
 					}
-					std::cout << '[' << (i + 1) << ']' << ' ' << "Mapped: " << pSectionHeader->Name << '\n';
+					std::cout << '[' << i << ']' << ' ' << "Mapped: " << pSectionHeader->Name << '\n';
 				}
 			}
 
