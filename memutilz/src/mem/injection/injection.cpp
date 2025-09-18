@@ -59,7 +59,7 @@ namespace mem {
 			return buffer;
 		}
 
-		bool ManualMap(Process& targetProc, std::string_view dllPath, bool supportSEH) {
+		bool ManualMap(Process& targetProc, std::string_view dllPath, DWORD fdwReason, LPVOID lpvReserved, bool supportSEH) {
 			auto fileBuffer = readPeFile(dllPath);
 			if (fileBuffer.size() == 0) {
 				return false;
@@ -116,7 +116,7 @@ namespace mem {
 			// to simply walk the PEB and resolving the address via the export table by
 			// indexing instead
 			MM_DATA data{};
-			data.fpLoadLibrary = LoadLibraryW;
+			data.fpLoadLibrary = LoadLibraryA;
 			data.fpGetProcAddress = GetProcAddress;
 #ifdef WIN64
 			data.fpRtlAddFunctionTable = (fp_RtlAddFunctionTable)RtlAddFunctionTable;
@@ -125,6 +125,8 @@ namespace mem {
 #endif
 			data.baseAddress = reinterpret_cast<uintptr_t>(pBaseAddress);
 			data.supportSEH = supportSEH;
+			data.fdwReason = fdwReason;
+			data.lpvReserved = lpvReserved;
 
 			BYTE* mmDataLoc = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc.get(), nullptr, sizeof(MM_DATA), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 			if (!mmDataLoc) {
@@ -149,6 +151,7 @@ namespace mem {
 			}
 
 			std::cout << "[!] Shellcode at : 0x" << std::hex << reinterpret_cast<uintptr_t>(shellcodeLoc) << '\n';
+			std::cout << "[!] .reload /i memutilz=" << std::hex << reinterpret_cast<uintptr_t>(shellcodeLoc) - 0x899D0 << ",1B96000" << '\n';
 
 			// MSVC on x64 uses jump stubs
 			LPCVOID shellcodeAddr{ reinterpret_cast<LPCVOID>(shellcode) };
@@ -181,7 +184,7 @@ namespace mem {
 				}
 			}
 
-			std::cout << "[+] Thread Created Successfully!" << '\n';
+			std::cout << "[+] Thread Created Successfully!" << '\n' << '\n';
 
 			MM_STATUS checkFlag = MM_PENDING;
 			while (checkFlag & MM_PENDING) {
@@ -212,18 +215,18 @@ namespace mem {
 				throw mem::Exception("Failed to clear PE Headers");
 			}
 
-			std::cout << "[+] Cleared PE Headers\n";
+			std::cout << "[-] Cleared PE Headers\n";
 
 			// Clear Un-needed sections
 			pSectionHeader = IMAGE_FIRST_SECTION(pOldNtHeader);
 			for (size_t i = 0; i < pOldFileHeader->NumberOfSections; ++i, ++pSectionHeader) {
 				if (pSectionHeader->Misc.VirtualSize) {
-					if(supportSEH ? false : strcmp((char*)pSectionHeader->Name, ".pdata") == 0 ||
+					if((!supportSEH && strcmp((char*)pSectionHeader->Name, ".pdata") == 0) ||
 						strcmp((char*)pSectionHeader->Name, ".rsrc") == 0 ||
-						strcmp((char*)pSectionHeader->Name, ".reloc") == 0) {
+						strcmp((char*)pSectionHeader->Name, ".reloc") == 0 ){
 
-						std::cout << '[' << (i + 1) << ']' << ' ' << "Clearing: " << pSectionHeader->Name << '\n';
-						if (!WriteProcessMemory(hProc.get(), pBaseAddress, nullBuffer.data(), pSectionHeader->Misc.VirtualSize, nullptr)) {
+						std::cout << "[-]" << ' ' << "Clearing: " << pSectionHeader->Name << '\n';
+						if (!WriteProcessMemory(hProc.get(), pBaseAddress + pSectionHeader->VirtualAddress, nullBuffer.data(), pSectionHeader->SizeOfRawData, nullptr)) {
 							throw mem::Exception("Failed to clear section during manual mapping");
 						}
 					}
@@ -243,9 +246,7 @@ namespace mem {
 						current = PAGE_EXECUTE_READ;
 					}
 
-					if (VirtualProtectEx(hProc.get(), pBaseAddress + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, current, &old)) {
-						std::cout << '[' << (i + 1) << ']' << ' ' << pSectionHeader->Name << ": " << current << '\n';
-					} else {
+					if (!VirtualProtectEx(hProc.get(), pBaseAddress + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, current, &old)) {
 						throw mem::Exception("Failed to change memory protection");
 					}
 				}
@@ -276,14 +277,13 @@ namespace mem {
 #endif
 
 		// https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#special-sections
-		/*
+
 		#pragma optimize("", off)
 		#pragma runtime_checks("", off)
-		*/
 
 		void __stdcall shellcode(MM_Data* data) {
 			BYTE* pBaseAddress = reinterpret_cast<BYTE*>(data->baseAddress);
-			auto pOldNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<IMAGE_DOS_HEADER*>(data->baseAddress)->e_lfanew);
+			auto pOldNtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(pBaseAddress + reinterpret_cast<IMAGE_DOS_HEADER*>((uintptr_t)pBaseAddress)->e_lfanew);
 			auto pOldOptHeader = &pOldNtHeaders->OptionalHeader;
 
 			auto fpLoadLibrary = data->fpLoadLibrary;
@@ -325,8 +325,9 @@ namespace mem {
 			if (pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0) {
 				auto pImportDirTable = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBaseAddress + pOldOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
 				while (pImportDirTable->Name) {
-					LPCWSTR lpLibFileName = reinterpret_cast<LPCWSTR>(pBaseAddress + pImportDirTable->Name);
+					LPCSTR lpLibFileName = reinterpret_cast<LPCSTR>(pBaseAddress + pImportDirTable->Name);
 					HINSTANCE hDll = fpLoadLibrary(lpLibFileName); // not sneaky :(
+
 					if (!hDll) {
 						data->status = MM_FAILURE;
 						return;
@@ -386,7 +387,7 @@ namespace mem {
 			if (bExceptionSupportFailure) {
 				data->status = MM_NO_SEH_SUPP;
 			} else {
-				data->status = MM_SUCCESS;
+				data->status = MM_SUCCESS; // crash here
 			}
 
 			DllMain(pBaseAddress, data->fdwReason, data->lpvReserved);

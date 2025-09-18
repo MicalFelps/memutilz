@@ -5,7 +5,7 @@
 
 namespace mem {
 	namespace injection {
-		using fp_LoadLibraryW =		HMODULE(WINAPI*)(LPCWSTR lpLibFileName);
+		using fp_LoadLibrary =		HMODULE(WINAPI*)(LPCSTR lpLibFileName);
 		using fp_GetProcAddress =	FARPROC(WINAPI*)(HMODULE hModule, LPCSTR lpProcName);
 		using fp_DLL_ENTRY =		BOOL(WINAPI*)(BYTE* hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 
@@ -21,21 +21,21 @@ namespace mem {
 		};
 
 		typedef struct MM_Data {
-			fp_LoadLibraryW fpLoadLibrary;
+			fp_LoadLibrary fpLoadLibrary;
 			fp_GetProcAddress fpGetProcAddress;
 			
 			#ifdef _WIN64
 				fp_RtlAddFunctionTable fpRtlAddFunctionTable;
 			#endif
 			uintptr_t baseAddress;
-			DWORD fdwReason;
-			LPVOID lpvReserved;
 			MM_STATUS status{ MM_PENDING };
 			bool supportSEH{ false };
+			DWORD fdwReason;
+			LPVOID lpvReserved;
 		} MM_DATA, *PMM_DATA;
 		
 		std::vector<BYTE> readPeFile(std::string_view peFile);
-		bool ManualMap(Process& targetProc, std::string_view dllPath, bool supportSEH);
+		bool ManualMap(Process& targetProc, std::string_view dllPath, DWORD fdwReason = DLL_PROCESS_ATTACH, LPVOID lpvReserved = nullptr, bool supportSEH = true);
 		void __stdcall shellcode(MM_Data* data);
 	}
 }
