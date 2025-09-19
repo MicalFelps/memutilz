@@ -1,18 +1,15 @@
 project(agent LANGUAGES CXX C)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/minhook)
+
 file(GLOB AGENT_SOURCES CONFIGURE_DEPENDS
     src/dllmain.cpp
     src/pch.cpp
-    src/minhook/*.c
-    src/minhook/hde/*.c
 )
 
 file(GLOB AGENT_HEADERS CONFIGURE_DEPENDS
     hdr/framework.h
     hdr/pch.h
-    hdr/minhook/*.h
-    src/minhook/*.h
-    src/minhook/hde/*.h
 )
 
 # Create the DLL
@@ -33,15 +30,14 @@ set_target_properties(agent PROPERTIES
 # Include directories
 target_include_directories(agent PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/minhook
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/minhook
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/minhook/hde
 )
 
 # Precompiled headers setup
 target_precompile_headers(agent PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/hdr/pch.h
 )
+
+target_link_libraries(agent PRIVATE minhook)
 
 # Compiler definitions to match MSVC settings
 target_compile_definitions(agent PRIVATE

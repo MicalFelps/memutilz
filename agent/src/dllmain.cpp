@@ -3,9 +3,12 @@
 
 #include <Windows.h>
 #include <iostream>
+#include <MinHook.h>
 
 int main() {
     if (AllocConsole()) {
+        MH_Initialize();
+
         FILE* f{};
 
         freopen_s(&f, "CONOUT$", "w", stdout);
@@ -14,8 +17,11 @@ int main() {
 
         std::cout << "We've snuck inside the process!\n";
 
+        
+
         std::cin.get();
         FreeConsole();
+        MH_Uninitialize();
     }
 }
 
