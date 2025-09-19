@@ -1,6 +1,1 @@
-Start working on agent.dll
-  it should take care of setting up pipes and listening for "commands" in the form of packets
-  packets contain the following information:
-  1. which function to call, whether in it's own code or from another dll
-  2. which parameters to pass in
-  3. a request ID to match request to reponse
+Figure out coms

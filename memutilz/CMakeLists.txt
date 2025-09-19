@@ -12,6 +12,7 @@ find_package(Microsoft.Windows.CppWinRT QUIET)
 
 # Source files
 set(MEMUTILZ_SOURCES
+    src/coms/coms.cpp
     src/main.cpp
     src/gui/MainWindow.cpp
     src/gui/Ui_MainWindow.cpp
@@ -29,6 +30,7 @@ set(MEMUTILZ_SOURCES
 
 # Header files
 set(MEMUTILZ_HEADERS
+    hdr/coms/coms.h
     hdr/gui/common.h
     hdr/gui/constants.h
     hdr/gui/MainWindow.h

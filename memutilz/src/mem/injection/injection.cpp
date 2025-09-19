@@ -104,7 +104,7 @@ namespace mem {
 						VirtualFreeEx(hProc.get(), pBaseAddress, 0, MEM_RELEASE);
 						throw mem::Exception("Failed to map sections to target process\n");
 					}
-					std::cout << '[' << i << ']' << ' ' << "Mapped: " << pSectionHeader->Name << '\n';
+					std::cout << '[' << i << ']' << ' ' << "Mapped: " << pSectionHeader->Name << " @ 0x" << reinterpret_cast<uintptr_t>(pBaseAddress) + pSectionHeader->VirtualAddress << '\n';
 				}
 			}
 
