@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         try {
             mem::Process process{ L"obsidian.exe" };
             std::cout << "--- [PID] " << process.getPID() << " ---" << '\n';
-            mem::injection::ManualMap(process, "test.dll", true);
+            mem::injection::ManualMap(process, "agent.dll", true);
         }
         catch (mem::Exception& e) {
             std::cerr << e.full_msg() << '\n';
