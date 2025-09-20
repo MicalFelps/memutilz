@@ -66,7 +66,7 @@ DWORD WINAPI Main(HMODULE hMod) {
         freopen_s(&f, "CONOUT$", "w", stderr);
         freopen_s(&f, "CONIN$", "r", stdin);
     }
-    std::cout << "We've snuck inside the obsidian process!\n";
+    std::cout << "We've snuck inside the process!\n";
 
     if (MH_Initialize() != MH_OK) {
         std::cerr << "[!] MH_Initialize Failed...\n";\
