@@ -267,6 +267,10 @@ namespace mem {
 			return true;
 		}
 
+		void UnManualMap(Process& targetProc, std::string_view dllPath, uintptr_t baseAddress) {
+
+		}
+
 #define RELOC_FLAG32(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_HIGHLOW)
 #define RELOC_FLAG64(RelInfo) ((RelInfo >> 0x0C) == IMAGE_REL_BASED_DIR64)
 

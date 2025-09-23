@@ -3,13 +3,7 @@
 #include "priv/privilege.h"
 
 #include "Process.h"
-#include "injection/injection.h"
-
-#include <windows.h>
-#include <cstdio>
-#include <io.h>
-#include <fcntl.h>
-#include <iostream>
+#include "coms/coms.h"
 
 #include <windows.h>
 #include <cstdio>
@@ -29,7 +23,8 @@ int main(int argc, char** argv)
         try {
             mem::Process process{ L"obsidian.exe" };
             std::cout << "--- [PID] " << process.getPID() << " ---" << '\n';
-            mem::injection::ManualMap(process, "agent.dll", true);
+
+            coms::InitializePipeComms(process);
         }
         catch (mem::Exception& e) {
             std::cerr << e.full_msg() << '\n';
@@ -38,11 +33,9 @@ int main(int argc, char** argv)
             std::cerr << "Unknown Error" << '\n';
         }
 
-
         std::cin.get();
         FreeConsole();
-    }
-    else {
+    } else {
         MessageBox(NULL, L"Failed to alloc console...", L"Error", MB_ICONERROR);
     }
 

@@ -3,13 +3,11 @@ project(agent LANGUAGES CXX C)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/minhook)
 
 file(GLOB AGENT_SOURCES CONFIGURE_DEPENDS
-    src/coms/coms.cpp
     src/dllmain.cpp
     src/pch.cpp
 )
 
 file(GLOB AGENT_HEADERS CONFIGURE_DEPENDS
-    hdr/coms/coms.h
     hdr/framework.h
     hdr/pch.h
 )

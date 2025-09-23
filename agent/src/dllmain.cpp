@@ -24,7 +24,13 @@ LPVOID WINAPI hkVirtualAllocEx(
     DWORD  flAllocationType,
     DWORD  flProtect ) {
 
-    std::cout << "[Call] hkVirtualAllocEx(dwSize: " << dwSize << ");" << '\n';
+    std::cout << "[Call] hkVirtualAllocEx(\n" 
+        << "  hProcess: "         << hProcess          << ",\n"
+        << "  lpAddress: "        << lpAddress         << ",\n"
+        << "  dwSize: "           << dwSize            << ",\n"
+        << "  flAllocationType: " << flAllocationType  << ",\n"
+        << "  flProtect: "        << flProtect         << "\n"
+        << ");" << '\n';
 
     if (oVirtualAllocEx) {
         return oVirtualAllocEx(hProcess, lpAddress, dwSize, flAllocationType, flProtect);
@@ -48,7 +54,12 @@ LPVOID WINAPI hkVirtualAlloc(
     DWORD  flAllocationType,
     DWORD  flProtect) {
 
-    std::cout << "[Call] hkVirtualAlloc(dwSize: " << dwSize << ");" << '\n';
+    std::cout << "[Call] hkVirtualAlloc(\n"
+        << "  lpAddress: "          << "\t\t\t" << lpAddress            << ",\n"
+        << "  dwSize: "             << "\t\t\t" << dwSize               << ",\n"
+        << "  flAllocationType: "   << "\t\t" << flAllocationType     << ",\n"
+        << "  flProtect: "          << "\t\t\t" << flProtect            << "\n"
+        << ");" << '\n';
 
     if (oVirtualAlloc) {
         return oVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
@@ -59,17 +70,36 @@ LPVOID WINAPI hkVirtualAlloc(
 // -----------------------------------------------------------------
 
 DWORD WINAPI Main(HMODULE hMod) {
-    if (AllocConsole()) {
-        FILE* f{};
+    HANDLE hPipe = CreateFile(
+        L"\\\\.\\pipe\\coms",
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        nullptr,
+        OPEN_EXISTING,
+        0,
+        nullptr
+    );
 
-        freopen_s(&f, "CONOUT$", "w", stdout);
-        freopen_s(&f, "CONOUT$", "w", stderr);
-        freopen_s(&f, "CONIN$", "r", stdin);
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        std::cerr << "Failed to connect to pipe...\n";
+        return -1;
     }
-    std::cout << "We've snuck inside the process!\n";
+
+    DWORD other_pid;
+    DWORD bytesRead;
+    if (ReadFile(hPipe, &other_pid, sizeof(DWORD), &bytesRead, nullptr)) {
+        if (AttachConsole(other_pid)) {
+            FILE* pFile = nullptr;
+            freopen_s(&pFile, "CONOUT$", "w", stdout);
+            freopen_s(&pFile, "CONOUT$", "w", stderr);
+            freopen_s(&pFile, "CONIN$", "r", stdin);
+
+            //std::ios::sync_with_stdio(true);
+        } else { return -1; }
+    }
 
     if (MH_Initialize() != MH_OK) {
-        std::cerr << "[!] MH_Initialize Failed...\n";\
+        std::cerr << "[!] MH_Initialize Failed...\n";
         std::cin.get();
 
         return -1;
@@ -94,12 +124,13 @@ DWORD WINAPI Main(HMODULE hMod) {
         return -1;
     }
 
+    std::cout << "   Press 'Enter' to quit...\n";
+
     std::cin.get();
 
     MH_DisableHook(MH_ALL_HOOKS);
     MH_RemoveHook(&hkVirtualAlloc);
     MH_Uninitialize();
-    FreeConsole();
 
     return 0;
 }

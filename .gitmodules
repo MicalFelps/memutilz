@@ -4,6 +4,3 @@
 [submodule "agent/3rdParty/minhook"]
 	path = agent/3rdParty/minhook
 	url = https://github.com/TsudaKageyu/minhook.git
-[submodule "agent/3rdParty/libffi"]
-	path = agent/3rdParty/libffi
-	url = https://github.com/libffi/libffi.git

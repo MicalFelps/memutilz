@@ -23,6 +23,7 @@ set(MEMUTILZ_SOURCES
     src/mem/injection/injection.cpp
     src/mem/Disassembler.cpp
     src/mem/Memdump.cpp
+    src/mem/Memscan.cpp
     src/mem/PageInfo.cpp
     src/mem/Process.cpp
     src/priv/privilege.cpp
@@ -47,6 +48,7 @@ set(MEMUTILZ_HEADERS
     hdr/mem/Exception.h
     hdr/mem/Handle.h
     hdr/mem/Memdump.h
+    hdr/mem/Memscan.h
     hdr/mem/PageInfo.h
     hdr/mem/Process.h
     hdr/priv/privilege.h
