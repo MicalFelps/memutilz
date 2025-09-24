@@ -266,7 +266,7 @@ namespace mem {
 
 	void Disassembler::findExecutablePages() {
 		m_memdump->dump(); // update memory
-		std::vector<MEMORY_BASIC_INFORMATION> pages = m_memdump->getMeminfo()->getPages();
+		std::vector<MEMORY_BASIC_INFORMATION> pages = m_memdump->getPageinfo()->getPages();
 
 		for (const auto& mbi : pages) {
 			if (mbi.State == MEM_COMMIT && (mbi.Protect & mem::PAGE_EXECUTE_READ_FLAGS)) {

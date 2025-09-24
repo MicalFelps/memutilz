@@ -31,7 +31,7 @@ namespace mem {
 		SIZE_T size{ 0 };
 	};
 	struct RegionView {
-		std::vector<std::pair<LPCVOID, MemoryRegion*>> m_regions;
+		std::vector<std::pair<LPCVOID, const MemoryRegion*>> m_regions;
 
 		RegionView(auto b, auto e) {
 			for (auto it = b; it != e; ++it) {
@@ -41,9 +41,11 @@ namespace mem {
 
 		RegionView() = default;
 
-		void addRegion(const std::pair<LPCVOID, MemoryRegion*>& region) {
+		void addRegion(const std::pair<LPCVOID, const MemoryRegion*>& region) {
 			m_regions.push_back(region);
 		}
+
+		void clear() { m_regions.clear(); }
 
 		auto begin() const { return m_regions.begin(); }
 		auto end() const { return m_regions.end(); }
@@ -142,14 +144,30 @@ namespace mem {
 
 		const RegionContext getRegionContext(LPCVOID address) const;
 		const MemoryRegion* getRegion(LPCVOID address) const;
+		const auto& getAllRegions() { return m_regions; }
+		const auto& getSortedRegions() { return m_sortedByGroupSize; }
 		auto getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		auto getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
+
+		const auto& getSnapshotBuffers() const { return m_snapshotBuffers; }
+
 		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
-		PageInfo* getMeminfo() const { return m_pageinfo; }
+		template<typename T>
+		T readValueAt(LPCVOID address) const;
+
+		PageInfo* getPageinfo() const { return m_pageinfo; }
 		Process* getProcess() const { return m_targetProcess; }
 		SIZE_T dump();
 		void setLiveMode() { m_bLiveMode = false; }
 	};
+
+	template<typename T>
+	inline T Memdump::readValueAt(LPCVOID address) const {
+		auto result = readBytesAt(address, sizeof(T));
+		T ret{};
+		std::memcpy(&ret, result.data, sizeof(T));
+		return ret;
+	}
 }
 
 #endif

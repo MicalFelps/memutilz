@@ -2,6 +2,7 @@
 #include "mem/Memdump.h"
 #include "mem/Exception.h"
 #include "Memdump.h"
+#include "Memscan.h"
 
 namespace mem {
 	constexpr SIZE_T operator"" _MB(unsigned long long mb) {
