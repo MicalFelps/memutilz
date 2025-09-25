@@ -286,6 +286,7 @@ namespace mem {
 				it = prev;
 				break;
 			}
+			it = prev;
 		}
 
 		return it;

@@ -145,7 +145,6 @@ namespace mem {
 		const RegionContext getRegionContext(LPCVOID address) const;
 		const MemoryRegion* getRegion(LPCVOID address) const;
 		const auto& getAllRegions() { return m_regions; }
-		const auto& getSortedRegions() { return m_sortedByGroupSize; }
 		auto getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		auto getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 

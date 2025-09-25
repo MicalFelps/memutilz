@@ -144,6 +144,8 @@ namespace mem {
             static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
             static_assert(sizeof(T) <= 32, "Value is too big for efficient scanning");
 
+            opt.alignment = alignof(T);
+
             std::vector<BYTE> bytes(sizeof(T));
             std::memcpy(bytes.data(), &value, sizeof(T));
             std::vector<BYTE> mask(sizeof(T), 0xFF); // no wildcards
@@ -160,14 +162,12 @@ namespace mem {
 
         ScanResult ScanString(
             std::string_view str,
-            ScanOptions opt,
-            bool caseSensitive = true);
+            ScanOptions opt);
 
         // Wide string scanning
         ScanResult ScanWideString(
             std::wstring_view wstr,
-            ScanOptions opt,
-            bool caseSensitive = true);
+            ScanOptions opt);
     };
 }
 

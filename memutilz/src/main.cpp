@@ -3,6 +3,7 @@
 #include "priv/privilege.h"
 
 #include "Process.h"
+#include "mem/constants.h"
 #include "mem/Memscan.h"
 #include "coms/coms.h"
 
@@ -49,8 +50,10 @@ int main(int argc, char** argv)
         freopen_s(&f, "CONIN$", "r", stdin);
 
         try {
-
-            using namespace mem;
+            using ScanResult = mem::Memscan::ScanResult;
+            using Pattern = mem::Memscan::Pattern;
+            using ScanOptions = mem::Memscan::ScanOptions;
+            
             mem::Process process{ L"obsidian.exe" };
             std::cout << "--- [PID] " << process.getPID() << " ---" << '\n' << '\n';
 
@@ -60,7 +63,15 @@ int main(int argc, char** argv)
 
             dumper.dump();
 
-            mem::Memscan::ScanResult result = scanner.ScanPattern(mem::Memscan::Pattern::fromString("4D 5A"), mem::Memscan::ScanOptions{});
+            // 48 83 EC 28 E8 ?? ?? ?? ?? 48 83 C4 28
+            ScanOptions opt{
+                mem::PAGE_READ_FLAGS,
+                1,
+                true,
+            };
+            ScanResult result = scanner.ScanPattern(Pattern::fromString("\x48\x83\xEC\x28\xE8\xFF\xFF\xFF\xFF\x48\x83\xC4\x28", "xxxxx????xxxx"), opt);
+            // ScanResult result = scanner.ScanPattern(Pattern::fromString("48 83 EC 28 E8 ?? ?? ?? ?? 48 83 C4 28"), opt);
+            // ScanResult result = scanner.ScanValue<uintptr_t>(5, opt);
             std::cout << "Pattern found at:\n";
 
             for (uintptr_t address : result.addresses) {

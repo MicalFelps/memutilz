@@ -95,7 +95,7 @@ namespace mem{
                     bDoubleCharWildcard = true;
                 }
                 m_bHasWildcards = true;
-                return;
+                break;
             }
         }
         
@@ -345,12 +345,23 @@ namespace mem{
             return;
 
         m_filteredRegions.clear();
-        const auto& allRegions = m_memdump->getSortedRegions();
+        const auto& allRegions = m_memdump->getAllRegions();
+
+        std::vector<std::pair<LPCVOID, const MemoryRegion*>> filteredRegions;
 
         for (const auto& region : allRegions) {
-            if (region.second->m_protection & pageProtectionFlags) {
-                m_filteredRegions.addRegion(std::make_pair(region.first, region.second));
+            if (region.second.m_protection & pageProtectionFlags) {
+                filteredRegions.emplace_back(region.first, &region.second);
             }
+        }
+
+        std::sort(filteredRegions.begin(), filteredRegions.end(),
+            [](const auto& a, const auto& b) {
+                return a.second->m_size > b.second->m_size;
+            });
+
+        for (const auto& region : filteredRegions) {
+            m_filteredRegions.addRegion(region);
         }
     }
     void Memscan::computeThreadCount() {
@@ -454,22 +465,24 @@ namespace mem{
         return results;
     }
 
-
-
-
     Memscan::ScanResult Memscan::ScanBytes(const BYTE* bytes, size_t length, ScanOptions opt) {
-        return ScanResult();
+        std::vector<BYTE> vBytes{ bytes, bytes + length };
+        std::vector<BYTE> vMask(length, 0xFF);
+
+        Pattern pattern(std::move(vBytes), std::move(vMask));
+        return ScanPattern(pattern, opt);
     }
 
-    Memscan::ScanResult Memscan::ScanString(std::string_view str, ScanOptions opt, bool caseSensitive)
-    {
-        return ScanResult();
+    Memscan::ScanResult Memscan::ScanString(std::string_view str, ScanOptions opt) {
+        std::string search{ str };
+
+        return ScanBytes(reinterpret_cast<const BYTE*>(search.c_str()), search.length(), opt);
     }
 
-    Memscan::ScanResult Memscan::ScanWideString(std::wstring_view wstr, ScanOptions opt, bool caseSensitive)
-    {
-        return ScanResult();
+    Memscan::ScanResult Memscan::ScanWideString(std::wstring_view wstr, ScanOptions opt) {
+        std::wstring wsearch{ wstr };
+
+        return ScanBytes(reinterpret_cast<const BYTE*>(wsearch.c_str()),
+            wsearch.length() * sizeof(wchar_t), opt);
     }
-
-
 }
