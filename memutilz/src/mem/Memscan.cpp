@@ -11,7 +11,7 @@ namespace mem{
         , m_mask{mask}
     {
         if (bytes.size() != mask.size())
-            std::invalid_argument("[WARN] Pattern's length and mask length don't match!");
+            throw std::invalid_argument("[WARN] Pattern's length and mask length don't match!");
 
         m_bHasWildcards = std::any_of(bytes.begin(), bytes.end(),
             [](BYTE b) {return b == 0x00; });
@@ -53,6 +53,8 @@ namespace mem{
         m_bHasWildcards = other.m_bHasWildcards;
         m_simdFriendly = other.m_simdFriendly;
         m_simdBlocks = other.m_simdBlocks;
+
+        return *this;
     }
 
     // String Parsing
@@ -62,75 +64,53 @@ namespace mem{
         } else { return Pattern(str); }
     }
     void Memscan::Pattern::parseOldFormat(std::string_view pattern, std::string_view mask) {
-        std::string filtered;
-
-        // account for '\x'
-        for (size_t i = 0; i < pattern.size(); ++i) {
-            if (i + 1 < pattern.size() && pattern[i] == '\\' && pattern[i + 1] == 'x') {
-                ++i;
-                continue;
-            }
-            if (pattern[i] != ' ' && pattern[i] != ',') {
-                filtered += pattern[i];
-            }
-        }
-
-        if (filtered.size() % 2 != 0) {
-            throw std::invalid_argument("[WARN] Pattern has incomplete byte");
-        }
-
-        size_t expectedSize = filtered.size() / 2;
-        if (mask.size() != expectedSize) {
+        if (pattern.size() != mask.size()) {
             throw std::invalid_argument("[WARN] Mask length must match pattern length");
         }
 
-        m_bytes.reserve(expectedSize);
-        m_mask.reserve(expectedSize);
+        m_bytes.reserve(pattern.size());
+        m_mask.reserve(mask.size());
 
-        // Convert to bytes
-        for (size_t i = 0; i < filtered.size(); i += 2) {
-            char high = filtered[i];
-            char low = filtered[i + 1];
-
-            BYTE highNibble = hexTable[static_cast<BYTE>(high)];
-            BYTE lowNibble = hexTable[static_cast<BYTE>(low)];
-
-            if (highNibble == 0xFF || lowNibble == 0xFF) {
-                throw std::invalid_argument("[WARN] Invalid hex character in pattern");
-            }
-
-            m_bytes.push_back((highNibble << 4) | lowNibble);
+        for (char b : pattern) {
+            m_bytes.push_back(static_cast<BYTE>(b));
         }
-
-        for (size_t i = 0; i < mask.size(); ++i) {
-            char c = mask[i];
+        
+        for (char c : mask) {
             if (c == 'x') {
                 m_mask.push_back(0xFF);
-            }
-            else if (c == '?') {
+            } else if (c == '?') {
                 m_mask.push_back(0x00);
                 m_bHasWildcards = true;
-            }
-            else {
+            } else {
                 throw std::invalid_argument("[WARN] Mask must only contain 'x' and '?' characters.");
             }
         }
     }
     void Memscan::Pattern::parseInlineFormat(std::string_view inlinePattern) {
+        bool bDoubleCharWildcard = false;
+
+        for (size_t i = 0; i < inlinePattern.size(); ++i) {
+            if (inlinePattern[i] == '?') {
+                if (i + 1 < inlinePattern.size() && inlinePattern[i + 1] == '?') {
+                    bDoubleCharWildcard = true;
+                }
+                m_bHasWildcards = true;
+                return;
+            }
+        }
+        
         std::string filtered;
 
-        // Remove separators and whitespace, convert to uppercase
-        for (size_t i = 0; i < inlinePattern.size(); ++i) {
-            char c = inlinePattern[i];
 
-            // Skip \x separators
-            if ((i + 1) < inlinePattern.size() && c == '\\' && inlinePattern[i + 1] == 'x') {
-                i++; // Skip the 'x' part of '\x'
-                continue;
-            }
-
+        for (char c : inlinePattern) {
             // Skip whitespace and common separators
             switch (c) {
+            case '?': {
+                if (!bDoubleCharWildcard) {
+                    filtered += "??";
+                } else { filtered += '?'; }
+                continue;
+            }
             case ' ':
             case '\t':
             case '\n':
@@ -143,14 +123,6 @@ namespace mem{
             }
         }
 
-        if (filtered.size() % 2 != 0) {
-            throw std::invalid_argument("[WARN] Pattern has incomplete byte");
-        }
-
-        size_t expectedSize = filtered.size() / 2;
-        m_bytes.reserve(expectedSize);
-        m_mask.reserve(expectedSize);
-
         for (size_t i = 0; i < filtered.size(); i += 2) {
             char high = filtered[i];
             char low = filtered[i + 1];
@@ -158,7 +130,7 @@ namespace mem{
             if (high == '?' && low == '?') {
                 m_bytes.push_back(0x00);
                 m_mask.push_back(0x00);
-                m_bHasWildcards = true;
+
             }
             else if (high != '?' && low != '?') {
                 BYTE highNibble = hexTable[static_cast<unsigned char>(high)];
@@ -176,6 +148,7 @@ namespace mem{
             }
         }
     }
+
 
     // Matching and SIMD
     void Memscan::Pattern::checkSimdCompatibility() {
@@ -363,6 +336,8 @@ namespace mem{
 
         other.m_memdump = nullptr;
         other.m_pageinfo = nullptr;
+
+        return *this;
     }
 
     void Memscan::filterRegions(DWORD pageProtectionFlags) {
@@ -454,23 +429,21 @@ namespace mem{
         const ScanOptions& opt) const {
 
         std::vector<uintptr_t> results;
-        const auto& snapshotBuffers = this->m_memdump->getSnapshotBuffers();
 
         for (const auto&[baseAddress, region] : regionView) {
-            const BYTE* data = reinterpret_cast<BYTE*>(snapshotBuffers[region->m_buffer_idx].m_address);
-            size_t dataSize = region->m_size;
-            uintptr_t realAddress = reinterpret_cast<uintptr_t>(baseAddress);
+            const auto& mv = m_memdump->readBytesAt(baseAddress, region->m_size);
 
-            size_t searchEnd = dataSize - pattern.size() + 1;
+            uintptr_t realAddress = reinterpret_cast<uintptr_t>(baseAddress);
+            size_t searchEnd = mv.size - pattern.size() + 1;
 
             for (size_t i = 0; i < searchEnd; i += opt.alignment) {
                 bool matches = false;
 
                 if (opt.useSIMD && pattern.isSimdFriendly()) {
-                    matches = pattern.matchSimd(data + i);
+                    matches = pattern.matchSimd(mv.data + i);
                 }
                 else {
-                    matches = pattern.match(data + i);
+                    matches = pattern.match(mv.data + i);
                 }
 
                 if (matches) {
@@ -480,6 +453,9 @@ namespace mem{
         }
         return results;
     }
+
+
+
 
     Memscan::ScanResult Memscan::ScanBytes(const BYTE* bytes, size_t length, ScanOptions opt) {
         return ScanResult();

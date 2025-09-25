@@ -49,6 +49,8 @@ int main(int argc, char** argv)
         freopen_s(&f, "CONIN$", "r", stdin);
 
         try {
+
+            using namespace mem;
             mem::Process process{ L"obsidian.exe" };
             std::cout << "--- [PID] " << process.getPID() << " ---" << '\n' << '\n';
 
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
 
             dumper.dump();
 
-            mem::Memscan::ScanResult result = scanner.ScanPattern(mem::Memscan::Pattern::fromString("48 89 5C 24 18 55 48 8B EC 48 83 EC 30 48 8B 05 ?? ?? ?? ?? 48 BB"), mem::Memscan::ScanOptions{});
+            mem::Memscan::ScanResult result = scanner.ScanPattern(mem::Memscan::Pattern::fromString("4D 5A"), mem::Memscan::ScanOptions{});
             std::cout << "Pattern found at:\n";
 
             for (uintptr_t address : result.addresses) {
@@ -66,6 +68,9 @@ int main(int argc, char** argv)
             }
             
             std::cin.get();
+        }
+        catch (std::invalid_argument& e) {
+            std::cerr << e.what() << '\n';
         }
         catch (mem::Exception& e) {
             std::cerr << e.full_msg() << '\n';

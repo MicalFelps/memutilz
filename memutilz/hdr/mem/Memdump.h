@@ -149,8 +149,6 @@ namespace mem {
 		auto getFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 		auto getNextFirstRegion(std::map<LPCVOID, MemoryRegion>::iterator it) const;
 
-		const auto& getSnapshotBuffers() const { return m_snapshotBuffers; }
-
 		MemoryView readBytesAt(LPCVOID address, SIZE_T amount);
 		template<typename T>
 		T readValueAt(LPCVOID address) const;

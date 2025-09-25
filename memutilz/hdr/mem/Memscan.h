@@ -28,26 +28,6 @@ namespace mem {
     constexpr auto hexTable = initHexTable();
 
     class Memscan{
-        class Pattern;
-
-        struct ThreadConfig {
-            SIZE_T max_size_mb;
-            SIZE_T thread_count;
-        };
-        static constexpr ThreadConfig configs[] = {
-            {50, 1},
-            {100, 2},
-            {500, 4},
-            {UINT64_MAX, 8}
-        };
-
-        Memdump* m_memdump; // this should really be std::shared_ptr<Memdump> but hey what could go wrong
-        PageInfo* m_pageinfo; // same here...
-        RegionView m_filteredRegions;
-
-        size_t m_threadCount{ 1 };
-        std::unordered_map<uintptr_t, class Pattern> m_patternCache; // nice if we're scanning multiple times
-
     public:
         class Pattern {
             std::vector<BYTE> m_bytes;
@@ -92,7 +72,7 @@ namespace mem {
 
         private:
             void parseOldFormat(std::string_view pattern, std::string_view mask);
-            void parseInlineFormat(std::string_view inlinePattern); // 
+            void parseInlineFormat(std::string_view inlinePattern);
             void checkSimdCompatibility();
         };
 
@@ -110,6 +90,25 @@ namespace mem {
         };
 
     private:
+        struct ThreadConfig {
+            SIZE_T max_size_mb;
+            SIZE_T thread_count;
+        };
+        static constexpr ThreadConfig configs[] = {
+            {50, 1},
+            {100, 2},
+            {500, 4},
+            {UINT64_MAX, 8}
+        };
+
+
+        Memdump* m_memdump; // this should really be std::shared_ptr<Memdump> but hey what could go wrong
+        PageInfo* m_pageinfo; // same here...
+        RegionView m_filteredRegions;
+
+        size_t m_threadCount{ 1 };
+        std::unordered_map<uintptr_t, class Pattern> m_patternCache; // nice if we're scanning multiple times
+
         void filterRegions(DWORD pageProtectionFlags = PAGE_READ_FLAGS);
         void computeThreadCount();
         std::vector<RegionView> divideRegionsBySize() const;
