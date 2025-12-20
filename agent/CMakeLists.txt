@@ -1,64 +1,56 @@
-project(agent LANGUAGES CXX C)
+add_library(agent SHARED)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/minhook)
-
-file(GLOB AGENT_SOURCES CONFIGURE_DEPENDS
-    src/dllmain.cpp
-    src/pch.cpp
-)
-
-file(GLOB AGENT_HEADERS CONFIGURE_DEPENDS
-    hdr/framework.h
-    hdr/pch.h
-)
-
-# Create the DLL
-add_library(agent SHARED
-    ${AGENT_SOURCES}
-    ${AGENT_HEADERS}
-)
+### Library Properties
 
 set_target_properties(agent PROPERTIES
     OUTPUT_NAME "agent"
-
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${SOLUTION_DIR}/${PLATFORM}/bin/Debug/${CMAKE_PROJECT_NAME}"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${SOLUTION_DIR}/${PLATFORM}/bin/Release/${CMAKE_PROJECT_NAME}"
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${SOLUTION_DIR}/${PLATFORM}/bin/Debug/${CMAKE_PROJECT_NAME}"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${SOLUTION_DIR}/${PLATFORM}/bin/Release/${CMAKE_PROJECT_NAME}"
+    PREFIX ""
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
+
+# Use C++20
+target_compile_features(agent PRIVATE cxx_std_20)
 
 # Include directories
-target_include_directories(agent PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr
+target_include_directories(agent
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hdr>
+        $<INSTALL_INTERFACE:include>
 )
 
-# Precompiled headers setup
-target_precompile_headers(agent PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/pch.h
+### Sources
+
+set(AGENT_SOURCES
 )
 
-target_link_libraries(agent PRIVATE minhook)
-
-# Compiler definitions to match MSVC settings
-target_compile_definitions(agent PRIVATE
-    UNICODE
-    _UNICODE
-    MEMWATCH_EXPORTS
-    _WINDOWS
-    _USRDLL
-    $<$<CONFIG:Debug>:_DEBUG>
-    $<$<CONFIG:Release>:NDEBUG>
-    $<$<PLATFORM_ID:Win32>:WIN32>
+target_sources(agent
+    PRIVATE
+        ${MEMUTILZ_SOURCES}
 )
 
-# Compiler options to match MSVC settings
-target_compile_options(agent PRIVATE
-    $<$<CONFIG:Debug>:/W3 /sdl /Zi>
-    $<$<CONFIG:Release>:/W3 /sdl /O2 /Oi /Gy>
+### Compiler Options
+
+if(MSVC)
+    target_compile_options(agent PRIVATE
+        /W4           # High warning level
+        /permissive-  # Strict conformance
+        /MP           # Parallel compilation
+    )
+endif()
+
+target_compile_definitions(agent
+    PRIVATE
+        UNICODE
+        _UNICODE
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Release>:NDEBUG>
 )
 
-# Linker options to match MSVC settings
-set_target_properties(agent PROPERTIES
-    LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS /DEBUG"
-    LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF"
+### Dependancies
+
+target_link_libraries(agent PRIVATE
+    kernel32
+    user32
+    psapi
+    ntdll
 )

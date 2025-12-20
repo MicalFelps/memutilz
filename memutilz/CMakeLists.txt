@@ -1,131 +1,96 @@
-project(memutilz VERSION 1.0.0 LANGUAGES CXX)
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/Qt-Advanced-Docking-System)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/capstone)
-
-# Find QT 6.9.2
+# Qt6 - System-installed only
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-qt_standard_project_setup()
+# qt_standard_project_setup()
 
-# Find CppWinRT (if needed)
-find_package(Microsoft.Windows.CppWinRT QUIET)
+# QADS - always fetch for consistency
+if(MEMUTILZ_FETCH_DEPENDENCIES)
+    FetchContent_Declare(
+        qtadvanceddocking
+        GIT_REPOSITORY https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
+        GIT_TAG 4.4.1
+    )
+    FetchContent_MakeAvailable(qtadvanceddocking)
 
-# Source files
-set(MEMUTILZ_SOURCES
-    src/coms/coms.cpp
-    src/main.cpp
-    src/gui/MainWindow.cpp
-    src/gui/Ui_MainWindow.cpp
-    src/gui/MemoryView/AssemblyTableModel.cpp
-    src/gui/MemoryView/AssemblyView.cpp
-    src/gui/MemoryView/Hexview.cpp
-    src/hash/xxhash.c
-    src/mem/injection/injection.cpp
-    src/mem/Disassembler.cpp
-    src/mem/Memdump.cpp
-    src/mem/Memscan.cpp
-    src/mem/PageInfo.cpp
-    src/mem/Process.cpp
-    src/priv/privilege.cpp
-)
+    # Create Alias
+    if(NOT TARGET ads::qtadvanceddocking)
+        add_library(ads::qtadvanceddocking ALIAS qtadvanceddocking)
+    endif()
+    if(NOT TARGET ads::ads)
+        add_library(ads::ads ALIAS qtadvanceddocking)
+    endif()
+endif()
 
-# Header files
-set(MEMUTILZ_HEADERS
-    hdr/coms/coms.h
-    hdr/gui/common.h
-    hdr/gui/constants.h
-    hdr/gui/MainWindow.h
-    hdr/gui/Ui_MainWindow.h
-    hdr/gui/MemoryView/IMemoryView.h
-    hdr/gui/MemoryView/AssemblyTableModel.h
-    hdr/gui/MemoryView/AssemblyView.h
-    hdr/gui/MemoryView/Hexview.h
-    hdr/hash/xxhash.h
-    hdr/mem/injection/injection.h
-    hdr/mem/common.h
-    hdr/mem/constants.h
-    hdr/mem/Disassembler.h
-    hdr/mem/Exception.h
-    hdr/mem/Handle.h
-    hdr/mem/Memdump.h
-    hdr/mem/Memscan.h
-    hdr/mem/PageInfo.h
-    hdr/mem/Process.h
-    hdr/priv/privilege.h
-)
+if(NOT TARGET ads::qtadvanceddocking)
+    message(FATAL_ERROR "Qt Advanced Docking System (ads::qtadvanceddocking) not found. Enable MEMUTILZ_FETCH_DEPS or install it manually.")
+endif()
 
-# resource files
-file(GLOB MEMUTILZ_RESOURCES rsrc/*.qrc)
+# Platform Specific
 
-add_executable(memutilz
-    ${MEMUTILZ_SOURCES}
-    ${MEMUTILZ_HEADERS}
-    ${MEMUTILZ_RESOURCES}
-    rsrc/memutilz.rc
-)
+if(WIN32)
+    set(GUI_TYPE WIN32)
+elseif(APPLE)
+    set(GUI_TYPE MACOSX_BUNDLE)
+else()
+    set(GUI_TYPE "")
+endif()
 
-set_target_properties(memutilz PROPERTIES
+### Executable
+
+add_executable(memutilz_ui ${GUI_TYPE})
+
+set_target_properties(memutilz_ui PROPERTIES
+    OUTPUT_NAME "memutilz"
+
     AUTOMOC ON
     AUTOUIC ON
     AUTORCC ON
 )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+### Properties
 
-set_target_properties(memutilz PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    OUTPUT_NAME "memutilz"
+# Use C++20
+target_compile_features(memutilz_ui PRIVATE cxx_std_20)
 
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${SOLUTION_DIR}/${PLATFORM}/bin/Debug/${CMAKE_PROJECT_NAME}"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${SOLUTION_DIR}/${PLATFORM}/bin/Release/${CMAKE_PROJECT_NAME}"
-
-    # For some reason AUTOUIC can't find the ui/ dir on it's own
-    # AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
+target_include_directories(memutilz_ui
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/hdr
 )
 
-# Include directories
-target_include_directories(memutilz PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/gui
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/gui/MemoryView
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/mem
-    ${CMAKE_CURRENT_SOURCE_DIR}/hdr/utilz
+### Sources
+
+set(MEMUTILZ_SOURCES
 )
 
-target_compile_options(memutilz PRIVATE
-    $<$<CONFIG:Debug>:/W3 /sdl /Zi /MP /EHsc>
-    $<$<CONFIG:Release>:/W3 /sdl /MP /O2 /Oi /Gy /EHsc>
+target_sources(memutilz_ui
+    PRIVATE
+        ${MEMUTILZ_SOURCES}
 )
 
-target_compile_definitions(memutilz PRIVATE
-    UNICODE
-    _UNICODE
-    $<$<CONFIG:Debug>:_DEBUG>
-    $<$<CONFIG:Release>:NDEBUG>
+### Dependancies
+
+target_link_libraries(memutilz_ui
+    PRIVATE
+        memutilz_lib
+        ads::qtadvanceddocking
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
 )
 
-# Link Qt libraries
-target_link_libraries(memutilz PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
-    qtadvanceddocking-qt6
-    capstone
-)
+### Compiler Options
 
-if(WIN32)
-    add_custom_command(TARGET memutilz POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:qtadvanceddocking-qt6>
-        $<TARGET_FILE_DIR:memutilz>
+if(MSVC)
+    target_compile_options(memutilz_ui PRIVATE
+        /W4           # High warning level
+        /permissive-  # Strict conformance
+        /MP           # Parallel compilation
     )
 endif()
 
-if(Microsoft.Windows.CppWinRT_FOUND)
-    target_link_libraries(memutilz PRIVATE Microsoft.Windows.CppWinRT)
-endif()
-
-set_target_properties(memutilz PROPERTIES
-    LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS /DEBUG"
-    LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF"
+target_compile_definitions(memutilz
+    PRIVATE
+        UNICODE
+        _UNICODE
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Release>:NDEBUG>
 )
