@@ -2,18 +2,27 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <DockManager.h>
+#include <DockWidget.h>
+#include <DockAreaWidget.h>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+struct MainWindowPrivate;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 private:
-    Ui::MainWindow* ui;
+    void createMenuBar();
+    void createDockWidgets();
+    
+    // Ads components
+    ads::CDockManager* dockManager = nullptr;
+    ads::CDockAreaWidget* centralArea = nullptr;
+protected:
+    // later if you want to save the state of anything
+    // virtual void closeEvent(QCloseEvent* parent = nullptr) override;
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
+    virtual ~MainWindow() = default;
 };
 
 #endif

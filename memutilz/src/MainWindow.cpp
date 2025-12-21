@@ -1,14 +1,23 @@
 #include "MainWindow.h"
-#include "ui_MainWindow.h"
+
+#include <QMenuBar>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
+    : QMainWindow(parent) {
+    
+    dockManager = new ads::CDockManager(this);
+    setCentralWidget(dockManager);
+
+    createMenuBar();
+    createDockWidgets();
+
+    setWindowTitle(QApplication::instance()->applicationName());
 }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
+void MainWindow::createMenuBar() {
+    QMenu* fileMenu = menuBar()->addMenu("&File");
+}
+
+void MainWindow::createDockWidgets() {
 }

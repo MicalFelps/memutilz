@@ -55,7 +55,7 @@ set(MEMUTILZ_SOURCES
 
 set(MEMUTILZ_RESOURCES
     rsrc/MainWindow.qrc
-    rsrc/MainWindow.ui
+    # rsrc/MainWindow.ui
     rsrc/memutilz.rc
 )
 
@@ -72,7 +72,7 @@ set_target_properties(memutilz_ui PROPERTIES
     AUTORCC ON
 
     # Helps AUTOUIC find the ui file
-    AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/rsrc"
+    # AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/rsrc"
 )
 
 ### Dependancies
@@ -116,5 +116,21 @@ if(WIN32)
             "${_qt6_bin_dir}/windeployqt.exe"
             "$<TARGET_FILE:memutilz_ui>"
         COMMENT "Running windeployqt on Windows..."
+    )
+
+    add_custom_command(TARGET memutilz_ui POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:qtadvanceddocking-qt6>
+            $<TARGET_FILE_DIR:memutilz_ui>
+        COMMENT "Moving qtadvanceddocking-qt6.dll to output directory"
+    )
+
+    # NEW: Robust PDB copy (only if PDB exists)
+    add_custom_command(TARGET memutilz_ui POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_PDB_FILE:qtadvanceddocking-qt6>
+            $<TARGET_FILE_DIR:memutilz_ui>
+        COMMENT "Moving qtadvanceddocking-qt6.pdb to output directory"
+        VERBATIM
     )
 endif()
