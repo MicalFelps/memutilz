@@ -18,14 +18,23 @@ target_include_directories(agent
         $<INSTALL_INTERFACE:include>
 )
 
+target_precompile_headers(agent PRIVATE "hdr/pch.h")
+
 ### Sources
 
+set(AGENT_HEADERS
+    
+)
+
 set(AGENT_SOURCES
+    src/dllmain.cpp
+    src/pch.cpp
 )
 
 target_sources(agent
     PRIVATE
-        ${MEMUTILZ_SOURCES}
+        ${AGENT_HEADERS}
+        ${AGENT_SOURCES}
 )
 
 ### Compiler Options

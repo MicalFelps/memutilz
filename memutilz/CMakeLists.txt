@@ -3,25 +3,15 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 # qt_standard_project_setup()
 
 # QADS - always fetch for consistency
-if(MEMUTILZ_FETCH_DEPENDENCIES)
+if(MEMUTILZ_FETCH_DEPS)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
     FetchContent_Declare(
         qtadvanceddocking
         GIT_REPOSITORY https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
         GIT_TAG 4.4.1
     )
     FetchContent_MakeAvailable(qtadvanceddocking)
-
-    # Create Alias
-    if(NOT TARGET ads::qtadvanceddocking)
-        add_library(ads::qtadvanceddocking ALIAS qtadvanceddocking)
-    endif()
-    if(NOT TARGET ads::ads)
-        add_library(ads::ads ALIAS qtadvanceddocking)
-    endif()
-endif()
-
-if(NOT TARGET ads::qtadvanceddocking)
-    message(FATAL_ERROR "Qt Advanced Docking System (ads::qtadvanceddocking) not found. Enable MEMUTILZ_FETCH_DEPS or install it manually.")
 endif()
 
 # Platform Specific
@@ -40,10 +30,6 @@ add_executable(memutilz_ui ${GUI_TYPE})
 
 set_target_properties(memutilz_ui PROPERTIES
     OUTPUT_NAME "memutilz"
-
-    AUTOMOC ON
-    AUTOUIC ON
-    AUTORCC ON
 )
 
 ### Properties
@@ -58,12 +44,35 @@ target_include_directories(memutilz_ui
 
 ### Sources
 
+set(MEMUTILZ_HEADERS
+    hdr/MainWindow.h
+)
+
 set(MEMUTILZ_SOURCES
+    src/main.cpp
+    src/MainWindow.cpp
+)
+
+set(MEMUTILZ_RESOURCES
+    rsrc/MainWindow.qrc
+    rsrc/MainWindow.ui
+    rsrc/memutilz.rc
 )
 
 target_sources(memutilz_ui
     PRIVATE
+        ${MEMUTILZ_HEADERS}
         ${MEMUTILZ_SOURCES}
+        ${MEMUTILZ_RESOURCES}
+)
+
+set_target_properties(memutilz_ui PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
+
+    # Helps AUTOUIC find the ui file
+    AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/rsrc"
 )
 
 ### Dependancies
@@ -71,7 +80,7 @@ target_sources(memutilz_ui
 target_link_libraries(memutilz_ui
     PRIVATE
         memutilz_lib
-        ads::qtadvanceddocking
+        qtadvanceddocking-qt6
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -87,10 +96,25 @@ if(MSVC)
     )
 endif()
 
-target_compile_definitions(memutilz
+target_compile_definitions(memutilz_ui
     PRIVATE
         UNICODE
         _UNICODE
         $<$<CONFIG:Debug>:_DEBUG>
         $<$<CONFIG:Release>:NDEBUG>
 )
+
+### POST-BUILD
+
+if(WIN32)
+    get_target_property(_qt6_qmake_location Qt6::qmake IMPORTED_LOCATION)
+    get_filename_component(_qt6_bin_dir "${_qt6_qmake_location}" DIRECTORY)
+    
+    # Run windeployqt
+    add_custom_command(TARGET memutilz_ui POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E env PATH="${_qt6_bin_dir}" 
+            "${_qt6_bin_dir}/windeployqt.exe"
+            "$<TARGET_FILE:memutilz_ui>"
+        COMMENT "Running windeployqt on Windows..."
+    )
+endif()

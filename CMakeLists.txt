@@ -87,7 +87,7 @@ endif()
 ### Subdirectories
 
 if(WIN32)
-    # add_subdirectory(agent)     # Injectable DLL for windows (only)
+    add_subdirectory(agent)     # Injectable DLL for windows (only)
 else()
     message(STATUS "Skipping agent.dll (Windows only)")
 endif()
@@ -95,5 +95,5 @@ endif()
 add_subdirectory(lib)       # Main library (static/shared)
 
 if(MEMUTILZ_BUILD_UI)
-    # add_subdirectory(memutilz)  # QT executable (UI app)
+    add_subdirectory(memutilz)  # QT executable (UI app)
 endif()

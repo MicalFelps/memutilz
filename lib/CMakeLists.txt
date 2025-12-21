@@ -18,11 +18,17 @@ target_include_directories(memutilz_lib
 
 ### Sources
 
+set(MEMUTILZ_HEADERS
+    hdr/MemorySource.h
+)
+
 set(MEMUTILZ_SOURCES
+    src/MemorySource.cpp
 )
 
 target_sources(memutilz_lib 
     PRIVATE
+        ${MEMUTILZ_HEADERS}
         ${MEMUTILZ_SOURCES}
 )
 
