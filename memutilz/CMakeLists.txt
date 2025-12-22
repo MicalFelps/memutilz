@@ -1,5 +1,5 @@
 # Qt6 - System-installed only
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets GuiPrivate)
 # qt_standard_project_setup()
 
 # QADS - always fetch for consistency
@@ -45,12 +45,24 @@ target_include_directories(memutilz_ui
 ### Sources
 
 set(MEMUTILZ_HEADERS
+    hdr/Colours.h
     hdr/MainWindow.h
+    hdr/Options.h
+    hdr/SidePanel/math.h
+    hdr/SidePanel/PanelLeftSide.h
+    hdr/SidePanel/SidePanel.h
+    hdr/SidePanel/SidePanelHelpers.h
+    hdr/SidePanel/SidePanelState.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/MainWindow.cpp
+    src/SidePanel/math.cpp
+    src/SidePanel/PanelLeftSide.cpp
+    src/SidePanel/SidePanel.cpp
+    src/SidePanel/SidePanelHelpers.cpp
+    src/SidePanel/SidePanelState.cpp
 )
 
 set(MEMUTILZ_RESOURCES
@@ -109,7 +121,7 @@ target_compile_definitions(memutilz_ui
 if(WIN32)
     get_target_property(_qt6_qmake_location Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(_qt6_bin_dir "${_qt6_qmake_location}" DIRECTORY)
-    
+
     # Run windeployqt
     add_custom_command(TARGET memutilz_ui POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E env PATH="${_qt6_bin_dir}" 

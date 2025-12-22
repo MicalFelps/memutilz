@@ -11,18 +11,16 @@ struct MainWindowPrivate;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 private:
-    void createMenuBar();
-    void createDockWidgets();
-    
-    // Ads components
-    ads::CDockManager* dockManager = nullptr;
-    ads::CDockAreaWidget* centralArea = nullptr;
+    // void createDockWidgets();
+
 protected:
     // later if you want to save the state of anything
     // virtual void closeEvent(QCloseEvent* parent = nullptr) override;
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     virtual ~MainWindow() = default;
+public slots:
+    //bool openFile(const QString& fileName);
 };
 
 #endif

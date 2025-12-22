@@ -1,23 +1,22 @@
 #include "MainWindow.h"
+#include "SidePanel/PanelLeftSide.h"
 
-#include <QMenuBar>
-#include <QApplication>
+#include <QLabel>
+
+// #include <QStackedWidget>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
-    
-    dockManager = new ads::CDockManager(this);
-    setCentralWidget(dockManager);
 
-    createMenuBar();
-    createDockWidgets();
+    auto* panel_left = new PanelLeftSide(this);
+    // panel_left->setOpenEasingCurve(QEasingCurve::OutCubic);
+    // panel_left->setCloseEasingCurve(QEasingCurve::OutCubic);
+    panel_left->init();
 
-    setWindowTitle(QApplication::instance()->applicationName());
-}
+    QLabel* label = new QLabel("Left");
+    label->setAlignment(Qt::AlignCenter);
 
-void MainWindow::createMenuBar() {
-    QMenu* fileMenu = menuBar()->addMenu("&File");
-}
+    panel_left->setWidgetResizable(true);
+    panel_left->setWidget(label);
 
-void MainWindow::createDockWidgets() {
 }
