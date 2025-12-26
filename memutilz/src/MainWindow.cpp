@@ -1,22 +1,38 @@
 #include "MainWindow.h"
-#include "SidePanel/PanelLeftSide.h"
+#include "Colors.h"
+#include "SideBar/SideBar.h"
+#include "SideBar/IconButton.h"
 
-#include <QLabel>
-
+#include <QPlainTextEdit>
 // #include <QStackedWidget>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
 
-    auto* panel_left = new PanelLeftSide(this);
-    // panel_left->setOpenEasingCurve(QEasingCurve::OutCubic);
-    // panel_left->setCloseEasingCurve(QEasingCurve::OutCubic);
-    panel_left->init();
+    setMinimumSize(250, 50);
 
-    QLabel* label = new QLabel("Left");
-    label->setAlignment(Qt::AlignCenter);
+    _content = new QPlainTextEdit(this);
+    dynamic_cast<QPlainTextEdit*>(_content)->setPlainText(QString("AAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
 
-    panel_left->setWidgetResizable(true);
-    panel_left->setWidget(label);
+    resize(1600, 900);
+    _sidebar = new SideBar(this, SideBar::ExpandMode::Hover, _content);
+    _sidebar->setOverlapWithContent(false);
 
+    IconButton* files =     new IconButton(QIcon(":/MainWindow/icons/files.svg"), "Files & Processes", _sidebar);
+    IconButton* view =      new IconButton(QIcon(":/MainWindow/icons/eye.svg"), "Memory View", _sidebar);
+    IconButton* settings =  new IconButton(QIcon(":/MainWindow/icons/settings.svg"), "Settings", _sidebar);
+    settings->setSelectable(false);
+
+    _sidebar->addTopButton(files);
+    _sidebar->addTopButton(view);
+    _sidebar->addBottomButton(settings);
+
+    _sidebar->initConnections();
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event) {
+    QMainWindow::resizeEvent(event);
+
+    _sidebar->setGeometry(0, 0, _sidebar->width(), this->height());
+    _content->setGeometry(QRect{ _content->pos(), this->size() });
 }

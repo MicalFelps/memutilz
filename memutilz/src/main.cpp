@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
     a.setStyle("fusion");
 
     MainWindow w;
-    w.resize(1600, 900);
     w.show();
     return a.exec();
 }

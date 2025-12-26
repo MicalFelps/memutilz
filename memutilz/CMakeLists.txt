@@ -1,5 +1,5 @@
 # Qt6 - System-installed only
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets GuiPrivate)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 # qt_standard_project_setup()
 
 # QADS - always fetch for consistency
@@ -45,24 +45,21 @@ target_include_directories(memutilz_ui
 ### Sources
 
 set(MEMUTILZ_HEADERS
-    hdr/Colours.h
+    hdr/Colors.h
     hdr/MainWindow.h
     hdr/Options.h
-    hdr/SidePanel/math.h
-    hdr/SidePanel/PanelLeftSide.h
-    hdr/SidePanel/SidePanel.h
-    hdr/SidePanel/SidePanelHelpers.h
-    hdr/SidePanel/SidePanelState.h
+    hdr/SideBar/Config.h
+    hdr/SideBar/IconButton.h
+    hdr/SideBar/SideBar.h
+    hdr/SideBar/SideBarState.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/MainWindow.cpp
-    src/SidePanel/math.cpp
-    src/SidePanel/PanelLeftSide.cpp
-    src/SidePanel/SidePanel.cpp
-    src/SidePanel/SidePanelHelpers.cpp
-    src/SidePanel/SidePanelState.cpp
+    src/SideBar/IconButton.cpp
+    src/SideBar/SideBar.cpp
+    src/SideBar/SideBarState.cpp
 )
 
 set(MEMUTILZ_RESOURCES

@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/MainWindow">
         <file>memutilz.ico</file>
+        <file>icons/eye.svg</file>
+        <file>icons/options.svg</file>
+        <file>icons/files.svg</file>
+        <file>icons/left_arrow.svg</file>
+        <file>icons/right_arrow.svg</file>
+        <file>icons/settings.svg</file>
     </qresource>
 </RCC>
