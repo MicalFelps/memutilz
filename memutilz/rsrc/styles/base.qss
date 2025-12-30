@@ -1,0 +1,7 @@
+* {
+    font-family: "JetBrains Mono";
+    font-size: 12pt;
+}
+QWidget {
+    background-color: palette(window);
+}

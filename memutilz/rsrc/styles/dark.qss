@@ -1,0 +1,29 @@
+@import "base.qss";
+
+QMainWindow, QWidget {
+    background-color: #121212;
+    color: #FFFFFF;
+}
+
+IconButton {
+    background-color: #cc4400;  /* normal */
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+}
+
+IconButton:hover {
+    background-color: #0044cc;  /* hover */
+}
+
+IconButton:pressed {
+    background-color: #aa4400;  /* pressed */
+}
+
+IconButton:checked {
+    background-color: #114400;  /* checked state, if checkable */
+    color: white;
+}
+
+IconButton:checked:hover {
+    background-color: #114400;
+}

@@ -45,21 +45,16 @@ target_include_directories(memutilz_ui
 ### Sources
 
 set(MEMUTILZ_HEADERS
-    hdr/Colors.h
     hdr/MainWindow.h
     hdr/Options.h
-    hdr/SideBar/Config.h
-    hdr/SideBar/IconButton.h
-    hdr/SideBar/SideBar.h
-    hdr/SideBar/SideBarState.h
+    hdr/Widgets/IconButton.h
+    hdr/Widgets/Metrics.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/MainWindow.cpp
-    src/SideBar/IconButton.cpp
-    src/SideBar/SideBar.cpp
-    src/SideBar/SideBarState.cpp
+    src/Widgets/IconButton.cpp
 )
 
 set(MEMUTILZ_RESOURCES

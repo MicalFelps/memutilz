@@ -1,11 +1,19 @@
 <RCC>
-    <qresource prefix="/MainWindow">
-        <file>memutilz.ico</file>
-        <file>icons/eye.svg</file>
-        <file>icons/options.svg</file>
-        <file>icons/files.svg</file>
-        <file>icons/left_arrow.svg</file>
-        <file>icons/right_arrow.svg</file>
-        <file>icons/settings.svg</file>
+    <qresource prefix="/icons">
+        <file alias="memutilz.ico">memutilz.ico</file>
+        <file alias="eye.svg">icons/eye.svg</file>
+        <file alias="options.svg">icons/options.svg</file>
+        <file alias="files.svg">icons/files.svg</file>
+        <file alias="left_arrow.svg">icons/left_arrow.svg</file>
+        <file alias="right_arrow.svg">icons/right_arrow.svg</file>
+        <file alias="settings.svg">icons/settings.svg</file>
+    </qresource>
+
+    <qresource prefix="/styles">
+        <file alias="dark.qss">styles/dark.qss</file>
+    </qresource>
+
+    <qresource prefix="/fonts">
+        <file alias="JetBrainsMono.ttf">fonts/JetBrainsMono-Regular.ttf</file>
     </qresource>
 </RCC>
