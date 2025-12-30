@@ -9,21 +9,21 @@ class IconButton : public QToolButton {
 	Q_OBJECT
 
 public:
-	enum class TextTruncateMode { Clip, NoClip, HideIfClip, Ellipsis };
+	enum class TextTruncateMode { Clip, NoClip, Ellipsis };
 	enum class TextWrapMode { NoWrap, WrapToFit };
 
 	Q_ENUM(TextTruncateMode)
 	Q_ENUM(TextWrapMode)
 
-	Q_PROPERTY(TextTruncateMode textTruncateMode READ textTruncateMode WRITE setTextTruncateMode)
-	Q_PROPERTY(TextWrapMode     textWrapMode     READ textWrapMode     WRITE setTextWrapMode)
-	Q_PROPERTY(int              horizontalMargin READ horizontalMargin WRITE setHorizontalMargin)
-	Q_PROPERTY(int              verticalMargin   READ verticalMargin   WRITE setVerticalMargin)
-	Q_PROPERTY(int              iconTextSpacing  READ iconTextSpacing  WRITE setIconTextSpacing)
-	Q_PROPERTY(int				menuIndicatorSpacing READ menuIndicatorSpacing WRITE setMenuIndicatorSpacing)
-	Q_PROPERTY(int              iconScalePercent READ iconScalePercent WRITE setIconScalePercent)
-	Q_PROPERTY(bool				reserveIconSpace READ reserveIconSpace WRITE setReserveIconSpace)
-	Q_PROPERTY(QColor           checkedBarColor  READ checkedBarColor  WRITE setCheckedBarColor)
+	Q_PROPERTY(TextTruncateMode textTruncateMode		READ textTruncateMode		WRITE setTextTruncateMode)
+	Q_PROPERTY(TextWrapMode     textWrapMode			READ textWrapMode			WRITE setTextWrapMode)
+	Q_PROPERTY(int				horizontalPadding		READ horizontalPadding		WRITE setHorizontalPadding)
+	Q_PROPERTY(int				verticalPadding			READ verticalPadding		WRITE setVerticalPadding)
+	Q_PROPERTY(int              iconTextSpacing			READ iconTextSpacing		WRITE setIconTextSpacing)
+	Q_PROPERTY(int				menuIndicatorSpacing	READ menuIndicatorSpacing	WRITE setMenuIndicatorSpacing)
+	Q_PROPERTY(int              iconScalePercent		READ iconScalePercent		WRITE setIconScalePercent)
+	Q_PROPERTY(bool				reserveIconSpace		READ reserveIconSpace		WRITE setReserveIconSpace)
+	Q_PROPERTY(QColor           checkedBarColor			READ checkedBarColor		WRITE setCheckedBarColor)
 
 	explicit IconButton(const QIcon& icon = QIcon(), const QString& text = QString(), QWidget* parent = nullptr);
 	virtual ~IconButton() = default;
@@ -32,7 +32,7 @@ public:
 	void setTextTruncateMode(TextTruncateMode mode) {
 		if (_truncateMode != mode) {
 			_truncateMode = mode;
-			updateGeometry(); // signal size hints might have changed
+			updateGeometry();
 			update();
 		}
 	}
@@ -41,25 +41,23 @@ public:
 	void setTextWrapMode(TextWrapMode mode) {
 		if (_wrapMode != mode) {
 			_wrapMode = mode;
-			updateGeometry(); // signal size hints might have changed
-			update();
-		}
-	}
-
-	int horizontalMargin() const { return _horizontalMargin; }
-	void setHorizontalMargin(int margin) {
-		if (_horizontalMargin != margin) {
-			_horizontalMargin = qMax(0, margin);
 			updateGeometry();
 			update();
 		}
 	}
 
-	int verticalMargin() const { return _verticalMargin; }
-	void setVerticalMargin(int margin) {
-		if (_verticalMargin != margin) {
-			_verticalMargin = qMax(0, margin);
-			updateGeometry();
+	int horizontalPadding() const { return _horizontalPadding; }
+	void setHorizontalPadding(int padding) {
+		if (_horizontalPadding != padding) {
+			_horizontalPadding = qMax(0, padding);
+			update();
+		}
+	}
+
+	int verticalPadding() const { return _verticalPadding; }
+	void setVerticalPadding(int padding) {
+		if (_verticalPadding != padding) {
+			_verticalPadding = qMax(0, padding);
 			update();
 		}
 	}
@@ -113,15 +111,15 @@ public:
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 private:
-	TextTruncateMode _truncateMode{ TextTruncateMode::NoClip };
+	TextTruncateMode _truncateMode{ TextTruncateMode::Clip };
 	TextWrapMode _wrapMode{ TextWrapMode::WrapToFit };
-	int _horizontalMargin		{ 10 };
-	int _verticalMargin			{ 10 };
-	int _iconTextSpacing		{ 5 };
-	int _menuIndicatorSpacing	{ 5 };
+	int _horizontalPadding		{ 0 };
+	int _verticalPadding		{ 0 };
+	int _iconTextSpacing		{ 4 };
+	int _menuIndicatorSpacing	{ 2 };
 	int _iconScalePercent		{ 90 };
 	bool _reserveIconSpace		{ true };
-	QColor _checkedBarColor		{QColor()};
+	QColor _checkedBarColor		{QColor("#b35312")};
 };
 
 #endif

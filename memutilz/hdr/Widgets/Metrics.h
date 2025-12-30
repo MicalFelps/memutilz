@@ -3,10 +3,12 @@
 
 namespace Ui {
     namespace IconButton {
+        inline constexpr int baseIconSize = 25;
         inline constexpr int minSize = 5;
         inline constexpr int minScaledIconSize = 10;
-        inline constexpr int baseIconSize = 25;
         inline constexpr int minWrapWidth = 25;
+        
+        inline constexpr int arrowRectSize = 8;
     }
 
     namespace Sidebar {

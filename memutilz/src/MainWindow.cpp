@@ -4,14 +4,30 @@
 
 #include <QStyleOption>
 
+#include <QMenu>
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
 
     setMinimumSize(250, 50);
     resize(1600, 900);
 
-    IconButton* files = new IconButton(QIcon(":/icons/files.svg"), "Explorer", this);
-    files->resize(400, 400);
+    IconButton* files = new IconButton(QIcon(":/icons/files.svg"), "bazinga", this);
+    files->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    files->setIconScalePercent(80);
+    files->setHorizontalPadding(0);
+    files->setVerticalPadding(10);
+    files->setIconTextSpacing(10);
+    files->setPopupMode(QToolButton::MenuButtonPopup); // you'll have to do this
+    QMenu* menu = new QMenu(files);
+    menu->addAction("Open", this, [] { qDebug() << "Open clicked"; });
+    menu->addAction("Rename", this, [] { qDebug() << "Rename clicked"; });
+    menu->addAction("Delete", this, [] { qDebug() << "Delete clicked"; });
+    files->setMenu(menu);
+    //files->setCheckable(true);  // Cleaner than connect
+    // Avoid fixed size to let sizeHint() breathe
+    files->resize(50, 150);  // Remove or increase width
+    files->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     /*
     

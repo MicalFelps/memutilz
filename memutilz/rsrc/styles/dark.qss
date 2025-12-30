@@ -9,6 +9,7 @@ IconButton {
     background-color: #cc4400;  /* normal */
     border: 1px solid #cccccc;
     border-radius: 4px;
+    color: #ffffff;
 }
 
 IconButton:hover {

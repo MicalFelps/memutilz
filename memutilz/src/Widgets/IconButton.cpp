@@ -12,27 +12,26 @@ IconButton::IconButton(const QIcon& icon, const QString& text, QWidget* parent)
 	setIcon(icon);
 	setText(text);
 	setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	setPopupMode(QToolButton::InstantPopup);
 }
 
 QSize IconButton::minimumSizeHint() const {
-	int styleMargin = style()->pixelMetric(QStyle::PM_ButtonMargin, nullptr, this);
-	int horizontalMargin = _horizontalMargin + styleMargin;
-	int verticalMargin = _verticalMargin + styleMargin;
+	QStyleOptionToolButton opt;
+	initStyleOption(&opt);
 
-	int minIconScaled{ qMax(
-		Ui::IconButton::minScaledIconSize,
-		Ui::IconButton::baseIconSize * _iconScalePercent / 100) };
+	QSize styleBase = style()->sizeFromContents(QStyle::CT_ToolButton, &opt, QSize(0, 0), this);
+
 	bool hasIcon = !icon().isNull();
-	int minIconW = (hasIcon || _reserveIconSpace) ? minIconScaled : 0;
-	int minIconH = (hasIcon || _reserveIconSpace) ? minIconScaled : 0;
+	int minScaledIconSize = qMax(
+		Ui::IconButton::minScaledIconSize,
+		Ui::IconButton::baseIconSize * _iconScalePercent / 100);
+	int minIconW = (hasIcon || _reserveIconSpace) ? minScaledIconSize : 0;
+	int minIconH = minIconW;
 
-	int minW = Ui::IconButton::minSize + 2 * horizontalMargin;
-	int minH = Ui::IconButton::minSize + 2 * verticalMargin;
+	styleBase = styleBase.expandedTo(QSize(Ui::IconButton::minSize, Ui::IconButton::minSize));
 
 	// none case
-	if (text().isEmpty() && !hasIcon && !_reserveIconSpace) {
-		return QSize(minW, minH);
-	}
+	if (text().isEmpty() && !hasIcon && !_reserveIconSpace) { return styleBase; }
 
 	// handle text calculations
 	QFontMetrics fm{ font() };
@@ -41,24 +40,10 @@ QSize IconButton::minimumSizeHint() const {
 	int minTextH = 0;
 
 	if (!t.isEmpty()) {
-		int fullTextW = fm.horizontalAdvance(t);
-		int longestPartW = 0;
-		int ellipsisW = 0;
-
-		QStringList parts = t.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-		for (const QString& part : parts) {
-			longestPartW = qMax(longestPartW, fm.horizontalAdvance(part));
-		}
-
-		if (_truncateMode == TextTruncateMode::Ellipsis) {
-			ellipsisW = fm.horizontalAdvance("...");
-		}
-
-		Qt::ToolButtonStyle orientation = toolButtonStyle();
-		bool isHorizontal = (orientation != Qt::ToolButtonTextUnderIcon);
+		bool isHorizontal = (toolButtonStyle() != Qt::ToolButtonTextUnderIcon);
 
 		// mutually exclusive constraints on TextWrapMode and TextTruncateMode
-		// based on orientation / text position
+		// based on orientation (text position)
 		TextWrapMode wrapMode = _wrapMode;
 		TextTruncateMode truncateMode = _truncateMode;
 		if (isHorizontal && wrapMode == TextWrapMode::WrapToFit) {
@@ -67,17 +52,21 @@ QSize IconButton::minimumSizeHint() const {
 			truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
 		}
 
+		// Cases
 		if (wrapMode == TextWrapMode::WrapToFit) { // vertical text
-			minTextW = qMax(Ui::IconButton::minWrapWidth, longestPartW + ellipsisW);
+			int longestPartW = 0;
+
+			QStringList parts = t.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+			for (const QString& part : parts) {
+				longestPartW = qMax(longestPartW, fm.horizontalAdvance(part));
+			}
+
+			minTextW = qMax(Ui::IconButton::minWrapWidth, longestPartW);
 			QRect bound = fm.boundingRect(QRect(0, 0, minTextW, INT_MAX), 
 				Qt::TextWordWrap | Qt::AlignLeft, t);
 			minTextH = bound.height();
-		} else { // NoWrap
-			if (truncateMode == TextTruncateMode::NoClip) {
-				minTextW = fullTextW;
-			} else {
-				minTextW = ellipsisW; // 0 if not ellipsis, which is what we want
-			}
+		} else { // horizontal text (NoWrap)
+			minTextW = truncateMode == TextTruncateMode::NoClip ? fm.horizontalAdvance(t) : 0;
 			minTextH = fm.height();
 		}
 	}
@@ -86,18 +75,16 @@ QSize IconButton::minimumSizeHint() const {
 	Qt::ToolButtonStyle orientation = toolButtonStyle();
 	int totalMinW = 0;
 	int totalMinH = 0;
-	int iconTextSpacing = (minTextW > 0 && minIconW > 0) ? _iconTextSpacing : 0;
+	int iconTextSpacing = (minIconW > 0 && minTextW > 0) ? _iconTextSpacing : 0;
 	if (orientation == Qt::ToolButtonTextUnderIcon) { // vertical
-		totalMinW = qMax(minIconW, minTextW) + 2 * horizontalMargin;
-		totalMinH = minIconH + iconTextSpacing + minTextH + 2 * verticalMargin;
+		totalMinW = qMax(minIconW, minTextW);
+		totalMinH = minIconH + iconTextSpacing + minTextH;
 	} else { // horizontal
-		totalMinW = minIconW + iconTextSpacing + minTextW + 2 * horizontalMargin;
-		totalMinH = qMax(minIconH, minTextH) + 2 * verticalMargin;
+		totalMinW = minIconW + iconTextSpacing + minTextW;
+		totalMinH = qMax(minIconH, minTextH);
 	}
 
 	if (menu() != nullptr) {
-		QStyleOptionToolButton opt;
-		opt.initFrom(this);
 		int indicatorSize = style()->pixelMetric(QStyle::PM_MenuButtonIndicator, &opt, this);
 		if (orientation == Qt::ToolButtonTextUnderIcon) {
 			totalMinH += indicatorSize + _menuIndicatorSpacing;
@@ -107,8 +94,7 @@ QSize IconButton::minimumSizeHint() const {
 		}
 	}
 
-	// force a minimum
-	return QSize(qMax(totalMinW, minW), qMax(totalMinH, minH));
+	return styleBase.expandedTo(QSize(totalMinW, totalMinH));
 }
 QSize IconButton::sizeHint() const {
 	QSize minimum = minimumSizeHint();
@@ -119,10 +105,6 @@ QSize IconButton::sizeHint() const {
 		QFontMetrics fm{ font() };
 		int fullTextW = fm.horizontalAdvance(text());
 		
-		if (_truncateMode == TextTruncateMode::Ellipsis) {
-			fullTextW -= fm.horizontalAdvance("...");
-		}
-
 		if (toolButtonStyle() == Qt::ToolButtonTextBesideIcon) {
 			if (_truncateMode != TextTruncateMode::NoClip) {
 				preferredW += fullTextW;
@@ -137,6 +119,7 @@ QSize IconButton::sizeHint() const {
 	QStyleOptionToolButton opt;
 	opt.initFrom(this);
 	opt.text = text();
+	opt.icon = icon();
 	opt.iconSize = QSize(minIconScaled, minIconScaled);
 
 	if (menu() != nullptr) {
@@ -144,8 +127,7 @@ QSize IconButton::sizeHint() const {
 	}
 	
 	QSize contentSize(preferredW, preferredH);
-	QSize polished = style()->sizeFromContents(QStyle::CT_ToolButton, &opt, contentSize, this);
-	return polished.expandedTo(minimumSizeHint());
+	return style()->sizeFromContents(QStyle::CT_ToolButton, &opt, contentSize, this);
 }
 
 // ---------------------------------------------------------
@@ -161,8 +143,9 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	opt.initFrom(this);
 
 	// add menu features
-	if (menu() != nullptr) {
-		opt.features |= QStyleOptionToolButton::MenuButtonPopup;
+	bool hasMenu = menu() != nullptr;
+	if (hasMenu) {
+		opt.features |= QStyleOptionToolButton::HasMenu;
 	}
 
 	// current state
@@ -174,24 +157,57 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	style()->drawPrimitive(QStyle::PE_PanelButtonTool, &opt, &p, this);
 
 	// Get content area excluding margins added by style
-	QRect contentRect = style()->subControlRect(QStyle::CC_ToolButton, &opt,
+	QRect buttonRect = style()->subControlRect(QStyle::CC_ToolButton, &opt,
 												QStyle::SC_ToolButton, this);
-
 	// Adjust content rect ignoring our added margins
-	int styleMargin = style()->pixelMetric(QStyle::PM_ButtonMargin, nullptr, this);
-	int horizontalMargin = _horizontalMargin + styleMargin;
-	int verticalMargin = _verticalMargin + styleMargin;
-	contentRect.adjust(horizontalMargin, verticalMargin, -horizontalMargin, -verticalMargin);
+	QRect contentRect = buttonRect.adjusted(_horizontalPadding, _verticalPadding, -_horizontalPadding, -_verticalPadding);
 
 	// Icon calculations
-	int iconSize = qMax(Ui::IconButton::minScaledIconSize, Ui::IconButton::baseIconSize * _iconScalePercent / 100);
+	int iconSize = qMin(contentRect.width(), contentRect.height());
+	int scaledIconSize = iconSize * _iconScalePercent / 100;
 	bool hasIcon = !icon().isNull();
 	bool showIcon = hasIcon || _reserveIconSpace;
+
 	bool isHorizontal = (toolButtonStyle() == Qt::ToolButtonTextBesideIcon);
 
 	QRect iconRect{ QRect() };
 	if (showIcon) {
-		iconRect = QRect(contentRect.left(), contentRect.top(), iconSize, iconSize);
+		if (isHorizontal) {
+			iconRect = QRect(
+				contentRect.left(),
+				contentRect.top() + (contentRect.height() - scaledIconSize) / 2,
+				scaledIconSize,
+				scaledIconSize);
+		}
+		else {
+			iconRect = QRect(
+				contentRect.left() + (contentRect.width() - scaledIconSize) / 2,
+				contentRect.top(),
+				scaledIconSize,
+				scaledIconSize
+			);
+		}
+	}
+
+	// Menu arrow calculations
+	QRect arrowRect{ QRect() };
+	if (hasMenu) {
+		if (isHorizontal) {
+			arrowRect = QRect(
+				contentRect.left() + contentRect.width() - Ui::IconButton::arrowRectSize,
+				contentRect.top(),
+				Ui::IconButton::arrowRectSize,
+				contentRect.height()
+			);
+		}
+		else {
+			arrowRect = QRect(
+				contentRect.left(),
+				contentRect.top() + contentRect.height() - Ui::IconButton::arrowRectSize,
+				contentRect.width(),
+				Ui::IconButton::arrowRectSize
+			);
+		}
 	}
 
 	// Text calculations
@@ -214,7 +230,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	if (!t.isEmpty()) {
 		if (isHorizontal) {
 			int textX = showIcon ? iconRect.right() + _iconTextSpacing : contentRect.left();
-			textRect = QRect(textX, contentRect.top(), contentRect.right() - textX, contentRect.height());
+			int arrowRectW = hasMenu ? arrowRect.width() + _menuIndicatorSpacing : 0;
+			textRect = QRect(textX, contentRect.top(), contentRect.right() - textX - arrowRectW, contentRect.height());
 
 			if (truncateMode != TextTruncateMode::NoClip) {
 				int availableW = textRect.width();
@@ -223,9 +240,6 @@ void IconButton::paintEvent(QPaintEvent* event) {
 				if (fullTextW > availableW) {
 					if (truncateMode == TextTruncateMode::Ellipsis) {
 						displayText = fm.elidedText(t, Qt::ElideRight, availableW);
-					}
-					else if (truncateMode == TextTruncateMode::HideIfClip) {
-						displayText = "";
 					}
 					else { // longest prefix that fits
 						// Do binary search for efficiency
@@ -247,7 +261,8 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		}
 		else { // vertical
 			int textY = showIcon ? iconRect.bottom() + _iconTextSpacing : contentRect.top();
-			textRect = QRect(contentRect.left(), textY, contentRect.width(), contentRect.height() - textY);
+			int arrowRectH = hasMenu ? arrowRect.height() + _menuIndicatorSpacing : 0;
+			textRect = QRect(contentRect.left(), textY, contentRect.width(), contentRect.height() - textY - arrowRectH);
 
 			if (wrapMode == TextWrapMode::WrapToFit) {
 				p.setPen(palette().color(QPalette::ButtonText));
@@ -263,10 +278,10 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	}
 
 	// Draw Icon
-	if (hasIcon) {
+	if (hasIcon && scaledIconSize > Ui::IconButton::minScaledIconSize) {
 		QIcon::Mode mode = isEnabled() ? QIcon::Normal : QIcon::Disabled;
-		if (hovered) mode = QIcon::Active;
 		if (pressed || checked) mode = QIcon::Selected;
+		if (hovered) mode = QIcon::Active;
 
 		icon().paint(&p, iconRect, Qt::AlignCenter, mode);
 	}
@@ -282,19 +297,21 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		const int barWidth = 4;
 		qreal barRadius = barWidth / 2.0;
 		QRectF barRect{ QRectF() };
+		int barLength = scaledIconSize / 2;
 		if (isHorizontal) {
-			barRect = QRectF(0, contentRect.height() - (iconSize / 2), barWidth, iconSize);
+			barRect = QRectF(0, buttonRect.top() + (buttonRect.height() - barLength) / 2, barWidth, barLength);
 		}
 		else {
-			barRect = QRectF(contentRect.width() - (iconSize / 2), 0, iconSize, barWidth);
+			barRect = QRectF(buttonRect.left() + (buttonRect.width() - barLength) / 2, 0, barLength, barWidth);
 		}
 		p.setPen(Qt::NoPen);
 		p.setBrush(_checkedBarColor);
 		p.drawRoundedRect(barRect, barRadius, barRadius);
 	}
-
+	
 	// Draw menu arrow
-	if (menu() != nullptr) {
-		style()->drawPrimitive(QStyle::PE_IndicatorButtonDropDown, &opt, &p, this);
+	if (hasMenu) {
+		opt.rect = arrowRect;
+		style()->drawPrimitive(QStyle::PE_IndicatorArrowDown, &opt, &p,this);
 	}
 }
