@@ -6,6 +6,8 @@
 #include <DockWidget.h>
 #include <DockAreaWidget.h>
 
+#include "Widgets/SideBar.h"
+
 struct MainWindowPrivate;
 
 class MainWindow : public QMainWindow {
@@ -24,8 +26,8 @@ protected:
     virtual void resizeEvent(QResizeEvent* event) override;
 
 private:
-    // SideBar* _sidebar{ nullptr };
-    // QWidget* _content{ nullptr };
+    SideBar* _sidebar{ nullptr };
+    QWidget* _content{ nullptr };
     // void createDockWidgets();
 };
 

@@ -2,18 +2,25 @@
     <qresource prefix="/icons">
         <file alias="memutilz.ico">memutilz.ico</file>
         <file alias="eye.svg">icons/eye.svg</file>
-        <file alias="options.svg">icons/options.svg</file>
         <file alias="files.svg">icons/files.svg</file>
         <file alias="left_arrow.svg">icons/left_arrow.svg</file>
         <file alias="right_arrow.svg">icons/right_arrow.svg</file>
         <file alias="settings.svg">icons/settings.svg</file>
+        <file alias="3bars.svg">icons/3bars.svg</file>
     </qresource>
-
     <qresource prefix="/styles">
         <file alias="dark.qss">styles/dark.qss</file>
     </qresource>
-
     <qresource prefix="/fonts">
-        <file alias="JetBrainsMono.ttf">fonts/JetBrainsMono-Regular.ttf</file>
+        <file alias="Inter_18pt-Regular.ttf">fonts/Inter_18pt-Regular.ttf</file>
+        <file alias="Inter_18pt-Bold.ttf">fonts/Inter_18pt-Bold.ttf</file>
+        <file alias="Inter_18pt-Italic.ttf">fonts/Inter_18pt-Italic.ttf</file>
+        <file alias="Inter_18pt-BoldItalic.ttf">fonts/Inter_18pt-BoldItalic.ttf</file>
+        <file alias="Inter_18pt-SemiBold">fonts/Inter_18pt-SemiBold.ttf</file>
+        <file alias="Inter_18pt-SemiBoldItalic.ttf">fonts/Inter_18pt-SemiBoldItalic.ttf</file>
+        <file alias="SourceCodePro-Regular.ttf">fonts/SourceCodePro-Regular.ttf</file>
+        <file alias="SourceCodePro-Bold.ttf">fonts/SourceCodePro-Bold.ttf</file>
+        <file alias="SourceCodePro-Italic.ttf">fonts/SourceCodePro-Italic.ttf</file>
+        <file alias="SourceCodePro-BoldItalic.ttf">fonts/SourceCodePro-BoldItalic.ttf</file>
     </qresource>
 </RCC>

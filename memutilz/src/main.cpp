@@ -7,17 +7,35 @@
 #include <QStyleFactory>
 #include <QFile>
 
+static void loadFonts() {
+
+    QStringList fontFiles = {
+        // Inter (UI)
+        ":/fonts/Inter_18pt-Regular.ttf",
+        ":/fonts/Inter_18pt-Bold.ttf",
+        ":/fonts/Inter_18pt-Italic.ttf",
+        ":/fonts/Inter_18pt-BoldItalic.ttf",
+        ":/fonts/Inter_18pt-SemiBold",
+        ":/fonts/Inter_18pt-SemiBoldItalic.ttf",
+
+        // Monospace
+        ":/fonts/SourceCodePro-Regular.ttf",
+        ":/fonts/SourceCodePro-Bold.ttf",
+        ":/fonts/SourceCodePro-Italic.ttf",
+        ":/fonts/SourceCodePro-BoldItalic.ttf"
+    };
+
+
+    for (const auto& file : fontFiles) {
+        int fontId = QFontDatabase::addApplicationFont(file);
+        if (fontId == -1) qWarning() << "Failed to load:" << file;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
-
-    int fontId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono-Regular.ttf");
-    if (fontId < 0) {
-        qWarning() << "Failed to load JetBrains Mono!";
-    } else {
-        QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
-        a.setFont(QFont(family));
-    }
+    loadFonts();
 
     QCoreApplication::setApplicationName("Memutilz");
     QCoreApplication::setApplicationVersion("2.0.0");

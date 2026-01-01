@@ -49,12 +49,14 @@ set(MEMUTILZ_HEADERS
     hdr/Options.h
     hdr/Widgets/IconButton.h
     hdr/Widgets/Metrics.h
+    hdr/Widgets/SideBar.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/MainWindow.cpp
     src/Widgets/IconButton.cpp
+    src/Widgets/SideBar.cpp
 )
 
 set(MEMUTILZ_RESOURCES

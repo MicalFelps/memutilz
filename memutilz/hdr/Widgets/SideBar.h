@@ -2,49 +2,46 @@
 #define SIDEBAR_H
 
 #include <QWidget>
-#include <functional>
 #include <QTimer>
 #include <QPropertyAnimation>
 
-#include "SideBar/Config.h"
-#include "SideBar/SideBarState.h"
 #include "IconButton.h"
 
 class SideBar : public QWidget {
 	Q_OBJECT
+
 public:
-	using HandlerWidgetT = IconButton;
+	using HandlerWidget = IconButton;
 
 	enum class ExpandMode {
 		Click,
 		Hover
 	};
 
-	using UpdateHandlerFn = std::function<void(const SideBarState, HandlerWidgetT*)>;
-	UpdateHandlerFn _updateHandler;
+	enum class State {
+		Opening = 0,
+		Opened,
+		Closing,
+		Closed
+	};
 
 	explicit SideBar(
-		QWidget* parent = nullptr,
+		QWidget* contentWidget = nullptr,
 		ExpandMode mode = ExpandMode::Hover,
-		QWidget* contentWidget = nullptr);
+		QWidget* parent = nullptr);
 	virtual ~SideBar() = default;
-
-	void initConnections();
 
 	void collapseNow() { collapse(false); }
 	void expandNow() { expand(false); }
-
-	bool getOverlapWithContent() const { return _overlapWithContent; }
-	void setOverlapWithContent(bool overlap);
 
 	void addTopButton(IconButton* button);
 	void addBottomButton(IconButton* button);
 	// void removeButton(IconButton* button);
 
-	IconButton* getSelectedButton() const { return _currSelection; }
+	IconButton* selectedButton() const { return _currSelection; }
 
 signals:
-	void stateChanged(SideBarState state);
+	void stateChanged(State state);
 	void selectionChanged(IconButton* button);
 
 protected:
@@ -57,8 +54,8 @@ private slots:
 	void onHandlerClicked();
 private:
 	ExpandMode _expandMode{ ExpandMode::Hover };
-	SideBarState _state{ SideBarState::Closed };
-	void setState(const SideBarState state);
+	State _state{ State::Closed };
+	void setState(const State state);
 
 	QList<IconButton*> _topButtons{ QList<IconButton*>() };
 	QList<IconButton*> _bottomButtons{ QList<IconButton*>() };
@@ -68,10 +65,8 @@ private:
 	bool _hovering{ false };
 	QPropertyAnimation* _animation{ nullptr };
 
-	HandlerWidgetT* _handler{ nullptr };
+	HandlerWidget* _handler{ nullptr };
 	IconButton* _currSelection{ nullptr };
-
-	bool _overlapWithContent{ true };
 
 	void expand(bool animate = true);
 	void collapse(bool animate = true);

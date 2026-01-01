@@ -2,6 +2,7 @@
 #include <QRegularExpression>
 #include <QStyleOptionToolButton>
 #include <QPainter>
+#include <QMouseEvent>
 
 #include "Widgets/IconButton.h"
 #include "Widgets/Metrics.h"
@@ -136,8 +137,9 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	Q_UNUSED(event);
 
 	QPainter p{ this };
+	p.setRenderHint(QPainter::TextAntialiasing, true);
 	p.setRenderHint(QPainter::Antialiasing);
-	p.setRenderHint(QPainter::SmoothPixmapTransform);
+	p.setRenderHint(QPainter::SmoothPixmapTransform, false);
 
 	QStyleOptionToolButton opt;
 	opt.initFrom(this);
@@ -174,7 +176,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	if (showIcon) {
 		if (isHorizontal) {
 			iconRect = QRect(
-				contentRect.left(),
+				contentRect.left() + (contentRect.height() - scaledIconSize) / 2,
 				contentRect.top() + (contentRect.height() - scaledIconSize) / 2,
 				scaledIconSize,
 				scaledIconSize);
@@ -182,7 +184,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		else {
 			iconRect = QRect(
 				contentRect.left() + (contentRect.width() - scaledIconSize) / 2,
-				contentRect.top(),
+				contentRect.top() + (contentRect.width() - scaledIconSize) / 2,
 				scaledIconSize,
 				scaledIconSize
 			);
@@ -190,25 +192,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	}
 
 	// Menu arrow calculations
-	QRect arrowRect{ QRect() };
-	if (hasMenu) {
-		if (isHorizontal) {
-			arrowRect = QRect(
-				contentRect.left() + contentRect.width() - Ui::IconButton::arrowRectSize,
-				contentRect.top(),
-				Ui::IconButton::arrowRectSize,
-				contentRect.height()
-			);
-		}
-		else {
-			arrowRect = QRect(
-				contentRect.left(),
-				contentRect.top() + contentRect.height() - Ui::IconButton::arrowRectSize,
-				contentRect.width(),
-				Ui::IconButton::arrowRectSize
-			);
-		}
-	}
+	QRect arrowRect{ calculateArrowRect(contentRect)};
 
 	// Text calculations
 	QString t = text();
@@ -216,7 +200,6 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	QString displayText = t;
 
 	QFontMetrics fm{ font() };
-	p.setFont(font());
 
 	TextWrapMode wrapMode = _wrapMode;
 	TextTruncateMode truncateMode = _truncateMode;
@@ -279,11 +262,12 @@ void IconButton::paintEvent(QPaintEvent* event) {
 
 	// Draw Icon
 	if (hasIcon && scaledIconSize > Ui::IconButton::minScaledIconSize) {
-		QIcon::Mode mode = isEnabled() ? QIcon::Normal : QIcon::Disabled;
-		if (pressed || checked) mode = QIcon::Selected;
-		if (hovered) mode = QIcon::Active;
+		qreal offset = ((qMin(contentRect.width(), contentRect.height()) - scaledIconSize) % 2 == 0) ? 0 : 0.5;
+		QPixmap pm = icon().pixmap(iconRect.size());
+		QRectF target = iconRect;
 
-		icon().paint(&p, iconRect, Qt::AlignCenter, mode);
+		target.translate(offset, offset);
+		p.drawPixmap(target, pm, pm.rect());
 	}
 
 	// Draw text
@@ -297,7 +281,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		const int barWidth = 4;
 		qreal barRadius = barWidth / 2.0;
 		QRectF barRect{ QRectF() };
-		int barLength = scaledIconSize / 2;
+		int barLength = scaledIconSize;
 		if (isHorizontal) {
 			barRect = QRectF(0, buttonRect.top() + (buttonRect.height() - barLength) / 2, barWidth, barLength);
 		}
@@ -313,5 +297,65 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	if (hasMenu) {
 		opt.rect = arrowRect;
 		style()->drawPrimitive(QStyle::PE_IndicatorArrowDown, &opt, &p,this);
+	}
+}
+void IconButton::mousePressEvent(QMouseEvent* event) {
+	if (popupMode() == QToolButton::MenuButtonPopup && menu()) {
+		QRect arrowRect = calculateArrowRect();
+
+		if (arrowRect.contains(event->pos())) {
+			showMenu();
+			return;
+		}
+
+		QToolButton::setPopupMode(QToolButton::DelayedPopup);
+		QToolButton::mousePressEvent(event);
+		QToolButton::setPopupMode(QToolButton::MenuButtonPopup);
+
+		return;
+	}
+	QToolButton::mousePressEvent(event);
+}
+
+// ---------------------------------------------------------
+
+QRect IconButton::calculateArrowRect(QRect contentRect) {
+	if (!menu()) {
+		return {};
+	}
+
+	if (contentRect.isNull()) {
+		QStyleOptionToolButton opt;
+		opt.initFrom(this);
+
+		// using the same rect
+		contentRect = style()->subControlRect(
+			QStyle::CC_ToolButton, &opt,
+			QStyle::SC_ToolButton, this
+		).adjusted(
+			_horizontalPadding,
+			_verticalPadding,
+			-_horizontalPadding,
+			-_verticalPadding
+		);
+	}
+
+	const int s = Ui::IconButton::arrowRectSize;
+
+	if (toolButtonStyle() == Qt::ToolButtonTextBesideIcon) {
+		return QRect{
+			contentRect.right() - s,
+			contentRect.top(),
+			s,
+			contentRect.height()
+		};
+	}
+	else {
+		return QRect{
+			contentRect.left(),
+			contentRect.bottom() - s,
+			contentRect.width(),
+			s
+		};
 	}
 }

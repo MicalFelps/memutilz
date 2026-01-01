@@ -110,16 +110,19 @@ public:
 	virtual QSize sizeHint() const override;
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void mousePressEvent(QMouseEvent* event) override;
 private:
+	QRect calculateArrowRect(QRect contentRect = QRect());
+
 	TextTruncateMode _truncateMode{ TextTruncateMode::Clip };
 	TextWrapMode _wrapMode{ TextWrapMode::WrapToFit };
 	int _horizontalPadding		{ 0 };
 	int _verticalPadding		{ 0 };
-	int _iconTextSpacing		{ 4 };
+	int _iconTextSpacing		{ 10 };
 	int _menuIndicatorSpacing	{ 2 };
-	int _iconScalePercent		{ 90 };
+	int _iconScalePercent		{ 80 };
 	bool _reserveIconSpace		{ true };
-	QColor _checkedBarColor		{QColor("#b35312")};
+	QColor _checkedBarColor		{QColor("#ffffff")};
 };
 
 #endif

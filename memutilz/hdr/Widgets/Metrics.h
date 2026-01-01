@@ -11,11 +11,12 @@ namespace Ui {
         inline constexpr int arrowRectSize = 8;
     }
 
-    namespace Sidebar {
-        inline constexpr int collapsedWidth = 50;
+    namespace SideBar {
+        inline constexpr int buttonHeight = 50;
+        inline constexpr int collapsedWidth = buttonHeight;
         inline constexpr int expandedWidth = 250;
         inline constexpr int hoverDelay = 500;
-        inline constexpr int animDuration = 250; // milliseconds
+        inline constexpr int animDuration = 500; // milliseconds
     }
 }
 

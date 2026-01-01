@@ -1,26 +1,21 @@
-#include "Colors.h"
-#include "SideBar/SideBar.h"
-#include "SideBar/SideBarState.h"
+#include "Widgets/Metrics.h"
+#include "Widgets/SideBar.h"
 
 #include <Chrono>
 #include <QStyle>
 
-SideBar::SideBar(QWidget* parent, ExpandMode mode, QWidget* contentWidget)
-	: QWidget(parent)
-	, _expandMode{mode}
-	, _contentWidget{contentWidget}
+SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
+	: _contentWidget{ contentWidget }
+	, _expandMode{ mode }
+	, QWidget( parent )
 {
 	setMouseTracking(true);
-	setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 	setAutoFillBackground(true);
+	setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-	setMinimumWidth(config::collapsedWidth);
-	setMaximumWidth(config::expandedWidth);
+	setMinimumWidth(Ui::SideBar::collapsedWidth);
+	setMaximumWidth(Ui::SideBar::expandedWidth);
 	resize(QSize(minimumWidth(), parent->height()));
-
-	QPalette p = palette();
-	p.setColor(QPalette::Window, Colors::Surface); // background
-	setPalette(p);
 
 	if (_expandMode == ExpandMode::Hover) {
 		_hoverTimer = new QTimer(this);
@@ -37,61 +32,33 @@ SideBar::SideBar(QWidget* parent, ExpandMode mode, QWidget* contentWidget)
 	}
 
 	_animation = new QPropertyAnimation(this, "geometry", this);
-	_animation->setDuration(config::animDuration);
+	_animation->setDuration(Ui::SideBar::animDuration);
 	_animation->setEasingCurve(QEasingCurve::Type::OutCubic);
 
-	this->_updateHandler = [](const SideBarState state, HandlerWidgetT* handler)
-		{
-			Q_UNUSED(state);
-			Q_UNUSED(handler);
-		};
+	connect(_animation, &QPropertyAnimation::finished, this, [this]() {
+		if (_state == State::Opening) {
+			setState(State::Opened);
+		}
+		else if (_state == State::Closing) {
+			setState(State::Closed);
+		}
+		});
 
 	if (_expandMode == ExpandMode::Click) {
-		_handler = new IconButton(QIcon(":/MainWindow/icons/options.svg"), QString(), this);
-		_handler->setSelectable(false);
+		_handler = new IconButton(QIcon(":/icons/3bars.svg"), QString(), this);
+		_handler->setCheckable(false);
 		addTopButton(_handler);
+
+		connect(_handler, &IconButton::clicked, this, [this]() {
+			onHandlerClicked();
+			});
 	}
-	
-	// Change the geometry of the content widget, since we start collapsed
-	// It doesn't really matter what _overlapWithContent is
+
+	// Change the geometry of the content widget, we start collapsed
 	if (_contentWidget) {
 		QRect target { parent->geometry() };
 		target.setWidth(target.width() - minimumWidth());
 		target.moveTopLeft(this->rect().topRight());
-		_contentWidget->setGeometry(target);
-	}
-}
-
-void SideBar::initConnections() {
-	if (_expandMode == ExpandMode::Click) {
-		connect(_handler, &IconButton::clicked, this, [this]() {
-			onHandlerClicked();
-			});
-
-		connect(this, &SideBar::stateChanged, _handler, [this](SideBarState state) {
-			_updateHandler(state, _handler);
-			});
-	}
-
-	connect(_animation, &QPropertyAnimation::finished, this, [this]() {
-		if (_state == SideBarState::Opening) {
-			setState(SideBarState::Opened);
-		} else if (_state == SideBarState::Closing) {
-			setState(SideBarState::Closed);
-		}
-	});
-}
-
-// ---------------------------------------------------------
-
-void SideBar::setOverlapWithContent(bool overlap) {
-	_overlapWithContent = overlap;
-
-	// update geometry once, then let resize recycle the logic
-	if (!_overlapWithContent) {
-		QRect target{ _contentWidget->rect() };
-		target.setSize({ parentWidget()->width() - width(), parentWidget()->height() });
-		target.moveTopLeft(rect().topRight());
 		_contentWidget->setGeometry(target);
 	}
 }
@@ -102,7 +69,7 @@ void SideBar::addTopButton(IconButton* button) {
 	if (!button || _topButtons.contains(button)) return;
 
 	QRect r = this->rect();
-	r.setSize(QSize(width(), config::iconSize));
+	r.setSize(QSize(width(), Ui::SideBar::buttonHeight));
 	_topButtons.isEmpty() ?
 		r.moveTopLeft(QPoint(0, 0))
 		: r.moveTopLeft(_topButtons.last()->geometry().bottomLeft());
@@ -129,7 +96,7 @@ void SideBar::addTopButton(IconButton* button) {
 }
 void SideBar::addBottomButton(IconButton* button) {
 	QRect r = this->rect();
-	r.setSize(QSize(width(), config::iconSize));
+	r.setSize(QSize(width(), Ui::SideBar::buttonHeight));
 	_bottomButtons.isEmpty() ?
 		r.moveBottomLeft(rect().bottomLeft())
 		: r.moveBottomLeft(_bottomButtons.last()->geometry().topLeft());
@@ -148,10 +115,9 @@ void SideBar::enterEvent(QEnterEvent* event) {
 	QWidget::enterEvent(event);
 	_hovering = true;
 	if (_expandMode == ExpandMode::Hover) {
-		_hoverTimer->start(config::hoverDelay);
+		_hoverTimer->start(Ui::SideBar::hoverDelay);
 	}
 }
-
 void SideBar::leaveEvent(QEvent* event) {
 	QWidget::leaveEvent(event); 
 	_hovering = false;
@@ -159,7 +125,6 @@ void SideBar::leaveEvent(QEvent* event) {
 		_hoverTimer->start(0);
 	}
 }
-
 void SideBar::resizeEvent(QResizeEvent* event) {
 	QWidget::resizeEvent(event);
 
@@ -178,7 +143,7 @@ void SideBar::resizeEvent(QResizeEvent* event) {
 		lastBottomRect = b->geometry().topLeft();
 	}
 
-	if (!_overlapWithContent) {
+	if (_contentWidget) {
 		QRect target{ _contentWidget->rect() };
 		target.setSize({ parentWidget()->width() - width(), parentWidget()->height() });
 		target.moveTopLeft(rect().topRight());
@@ -189,26 +154,23 @@ void SideBar::resizeEvent(QResizeEvent* event) {
 // --------------------- SLOTS ---------------------
 
 void SideBar::onNewSelection(IconButton* selectedButton) {
-	if (!selectedButton->isSelectable()) return; 
+	if (!selectedButton->isCheckable()) return; 
 
 	if (_currSelection && _currSelection != selectedButton) {
-		_currSelection->setSelected(false);
+		_currSelection->setChecked(false);
 	}
 	_currSelection = selectedButton;
-	_currSelection->setSelected(true);
+	_currSelection->setChecked(true);
 	emit selectionChanged(_currSelection);
 }
-
 void SideBar::onHandlerClicked() {
-	qDebug() << to_str(_state);
-
-	if (_state == SideBarState::Closed
-		|| _state == SideBarState::Closing)
+	if (_state == State::Closed
+		|| _state == State::Closing)
 	{
 		expand(true);
 	}
-	else if (_state == SideBarState::Opened
-		|| _state == SideBarState::Opening)
+	else if (_state == State::Opened
+		|| _state == State::Opening)
 	{
 		collapse(true);
 	}
@@ -216,22 +178,22 @@ void SideBar::onHandlerClicked() {
 
 // -------------------- PRIVATE --------------------
 
-void SideBar::setState(const SideBarState state) {
+void SideBar::setState(const State state) {
 	if (_state == state) return;
 	_state = state;
 	emit stateChanged(_state);
 }
 
 void SideBar::expand(bool animate) {
-	if (_state == SideBarState::Opened || _state == SideBarState::Opening) return;
+	if (_state == State::Opened || _state == State::Opening) return;
 
 	_animation->stop();
 
 	if (!animate) {
 		QRect r = geometry();
-		r.setWidth(config::expandedWidth);
+		r.setWidth(Ui::SideBar::expandedWidth);
 		setGeometry(r);
-		setState(SideBarState::Opened);
+		setState(State::Opened);
 		return;
 	}
 
@@ -243,25 +205,23 @@ void SideBar::expand(bool animate) {
 	_animation->setEndValue(target);
 	_animation->start();
 
-	setState(SideBarState::Opening);
+	setState(State::Opening);
 }
 void SideBar::collapse(bool animate) {
-	if (_state == SideBarState::Closed || _state == SideBarState::Closing) return;
+	if (_state == State::Closed || _state == State::Closing) return;
 
 	_animation->stop();
 
 	if (!animate) {
 		QRect r = geometry();
-		r.setWidth(config::collapsedWidth);
+		r.setWidth(Ui::SideBar::collapsedWidth);
 		setGeometry(r);
-		setState(SideBarState::Closed);
+		setState(State::Closed);
 		return;
 	}
 
 	QRect geom{ geometry() };
 	QRect target{ geom };
-
-	qDebug() << minimumWidth();
 
 	target.setWidth(minimumWidth());
 
@@ -269,5 +229,5 @@ void SideBar::collapse(bool animate) {
 	_animation->setEndValue(target);
 	_animation->start();
 
-	setState(SideBarState::Closing);
+	setState(State::Closing);
 }

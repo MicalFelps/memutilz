@@ -1,30 +1,23 @@
-@import "base.qss";
+* {
+    font-family: "Inter 18pt";
+    font-size: 10pt;
+    color: #ffffff
+}
 
-QMainWindow, QWidget {
-    background-color: #121212;
-    color: #FFFFFF;
+QWidget {
+    background-color: #0b0b0b;
+    border: 1px solid transparent;
+}
+
+QMainWindow {
+    background-color: #101010
 }
 
 IconButton {
-    background-color: #cc4400;  /* normal */
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    color: #ffffff;
+    background-color: #101010;  /* normal */
+    border: 1px solid transparent;
 }
 
 IconButton:hover {
-    background-color: #0044cc;  /* hover */
-}
-
-IconButton:pressed {
-    background-color: #aa4400;  /* pressed */
-}
-
-IconButton:checked {
-    background-color: #114400;  /* checked state, if checkable */
-    color: white;
-}
-
-IconButton:checked:hover {
-    background-color: #114400;
+    background-color: #8585EE;  /* hover */
 }
