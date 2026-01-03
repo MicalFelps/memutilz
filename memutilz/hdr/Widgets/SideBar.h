@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QPropertyAnimation>
+#include <QFrame>
 
 #include "IconButton.h"
 
@@ -45,6 +46,7 @@ signals:
 	void selectionChanged(IconButton* button);
 
 protected:
+	virtual void paintEvent(QPaintEvent* event) override;
 	virtual void enterEvent(QEnterEvent* event) override;
 	virtual void leaveEvent(QEvent* event) override;
 	virtual void resizeEvent(QResizeEvent* event) override; // to update handler
@@ -67,6 +69,8 @@ private:
 
 	HandlerWidget* _handler{ nullptr };
 	IconButton* _currSelection{ nullptr };
+
+	QFrame* _separatorLine{ nullptr };
 
 	void expand(bool animate = true);
 	void collapse(bool animate = true);

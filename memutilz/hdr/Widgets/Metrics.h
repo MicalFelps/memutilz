@@ -8,15 +8,17 @@ namespace Ui {
         inline constexpr int minScaledIconSize = 10;
         inline constexpr int minWrapWidth = 25;
         
-        inline constexpr int arrowRectSize = 8;
+        inline constexpr float indicatorWidthFactor = 0.5;
+        inline constexpr float indicatorHeightFactor = 0.3;
     }
 
     namespace SideBar {
         inline constexpr int buttonHeight = 50;
         inline constexpr int collapsedWidth = buttonHeight;
+
         inline constexpr int expandedWidth = 250;
         inline constexpr int hoverDelay = 500;
-        inline constexpr int animDuration = 500; // milliseconds
+        inline constexpr int animDuration = 5000; // milliseconds
     }
 }
 

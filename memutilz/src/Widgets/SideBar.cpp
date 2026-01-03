@@ -4,6 +4,9 @@
 #include <Chrono>
 #include <QStyle>
 
+#include <QPainter>
+#include <QStyleOption>
+
 SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 	: _contentWidget{ contentWidget }
 	, _expandMode{ mode }
@@ -12,6 +15,8 @@ SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 	setMouseTracking(true);
 	setAutoFillBackground(true);
 	setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+
+	setAttribute(Qt::WA_StyledBackground, true);
 
 	setMinimumWidth(Ui::SideBar::collapsedWidth);
 	setMaximumWidth(Ui::SideBar::expandedWidth);
@@ -61,6 +66,11 @@ SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 		target.moveTopLeft(this->rect().topRight());
 		_contentWidget->setGeometry(target);
 	}
+
+	_separatorLine = new QFrame(this);
+	_separatorLine->setObjectName("sidebarSeparator");
+	_separatorLine->setFrameShape(QFrame::HLine);
+	_separatorLine->setFrameShadow(QFrame::Sunken);
 }
 
 // ---------------------------------------------------------
@@ -70,10 +80,11 @@ void SideBar::addTopButton(IconButton* button) {
 
 	QRect r = this->rect();
 	r.setSize(QSize(width(), Ui::SideBar::buttonHeight));
-	_topButtons.isEmpty() ?
-		r.moveTopLeft(QPoint(0, 0))
-		: r.moveTopLeft(_topButtons.last()->geometry().bottomLeft());
-	
+	_topButtons.isEmpty() 
+		? r.moveTop(0)
+		: r.moveTop(_topButtons.last()->geometry().bottom() + 1);
+
+
 	button->setGeometry(r);
 	_topButtons.append(button);
 
@@ -93,13 +104,15 @@ void SideBar::addTopButton(IconButton* button) {
 	{
 		onNewSelection(button);
 	}
+
+	_separatorLine->raise();
 }
 void SideBar::addBottomButton(IconButton* button) {
 	QRect r = this->rect();
 	r.setSize(QSize(width(), Ui::SideBar::buttonHeight));
-	_bottomButtons.isEmpty() ?
-		r.moveBottomLeft(rect().bottomLeft())
-		: r.moveBottomLeft(_bottomButtons.last()->geometry().topLeft());
+	_bottomButtons.isEmpty()
+		? r.moveBottom(rect().bottom())
+		: r.moveBottom(_bottomButtons.last()->geometry().top() - 1);
 
 	button->setGeometry(r);
 	_bottomButtons.append(button);
@@ -107,10 +120,34 @@ void SideBar::addBottomButton(IconButton* button) {
 	connect(button, &IconButton::clicked, this, [this, button]() {
 		onNewSelection(button);
 	});
+
+	_separatorLine->raise();
 }
 
 // ------------------- PROTECTED -------------------
 
+void SideBar::paintEvent(QPaintEvent* event) {
+	Q_UNUSED(event);
+
+	QPainter p(this);
+
+	QStyleOption opt;
+	opt.initFrom(this);
+
+	// background and border
+	style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+
+	const int topY = _bottomButtons.last()->y();
+	const int bottomY = _topButtons.last()->y() + _topButtons.last()->height();
+
+	const bool overlap = (topY <= bottomY);
+
+	if (overlap) {
+		_separatorLine->setGeometry(0, topY, width(), 1);
+	}
+
+	_separatorLine->setVisible(overlap);
+}
 void SideBar::enterEvent(QEnterEvent* event) {
 	QWidget::enterEvent(event);
 	_hovering = true;
@@ -132,15 +169,15 @@ void SideBar::resizeEvent(QResizeEvent* event) {
 		b->setGeometry({QPoint(b->pos()), QSize(width(), b->height())});
 	}
 
-	QPoint lastBottomRect{rect().bottomLeft()};
+	int lastBottomY{rect().bottom()};
 
 	for (auto& b : _bottomButtons) {
 		QRect r{};
 		r.setSize(QSize(width(), b->height()));
-		r.moveBottomLeft(lastBottomRect);
+		r.moveBottom(lastBottomY);
 
 		b->setGeometry(r);
-		lastBottomRect = b->geometry().topLeft();
+		lastBottomY = b->geometry().top() - 1;
 	}
 
 	if (_contentWidget) {

@@ -13,11 +13,35 @@ QMainWindow {
     background-color: #101010
 }
 
+SideBar{
+    background-color: #101010;
+}
+
+#sidebarSeparator {
+    background-color: palette(text);
+}
+
 IconButton {
-    background-color: #101010;  /* normal */
+    background-color: #101010;
     border: 1px solid transparent;
 }
 
 IconButton:hover {
-    background-color: #8585EE;  /* hover */
+    background-color: #181818;
+    border: 1px solid #ffffff;
+}
+
+IconButton[group="sidebar"]:hover {
+    background-color: #181818;
+    border: none;
+}
+
+IconButton:focus {
+    background-color: #121212;
+    border: 1px dotted #ffffff;
+}
+
+
+IconButton:checked:focus {
+    border: none;
 }
