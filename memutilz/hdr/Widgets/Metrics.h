@@ -18,7 +18,7 @@ namespace Ui {
 
         inline constexpr int expandedWidth = 250;
         inline constexpr int hoverDelay = 500;
-        inline constexpr int animDuration = 5000; // milliseconds
+        inline constexpr int animDuration = 500; // milliseconds
     }
 }
 

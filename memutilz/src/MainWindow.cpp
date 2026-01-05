@@ -7,6 +7,7 @@
 // #include <QStyleOption>
 
 #include <QMenu>
+#include "Widgets/Metrics.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
@@ -48,16 +49,19 @@ MainWindow::MainWindow(QWidget* parent)
     _sidebar->addBottomButton(settings);
     _sidebar->addBottomButton(bottom);
 
-    IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "Testing", _content);
+    IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "Test A or T", _content);
     test->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    test->resize(50, 75);
+    test->resize(200, 80);
+    test->setHorizontalPadding(100);
     test->move(10, 10);
+    test->setIconScalePercent(20);
 
     QMenu* menu = new QMenu(test);
     QAction* action = menu->addAction("Fake action");
     menu->addAction(action);
 
     test->setMenu(menu);
+
 
     connect(action, &QAction::triggered, this, []() {
         qDebug() << "Fake action triggered!";

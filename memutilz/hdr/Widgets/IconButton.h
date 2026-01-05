@@ -129,6 +129,10 @@ public:
 		}
 	}
 
+	QRect iconPaintRect() const { return _iconPaintRect; }
+	QRect textPaintRect() const { return _textPaintRect; }
+	QRect menuPaintRect() const { return _menuPaintRect; }
+
 	void setMenu(QMenu* menu) {
 		QToolButton::setMenu(menu);
 
@@ -157,7 +161,7 @@ private:
 	bool _reserveIconSpace		{ true };
 	QColor _checkedBarColor		{QColor("#ffffff")};
 
-	MenuIndicatorLayout _menuIndicatorLayout{ MenuIndicatorLayout::Separate };
+	MenuIndicatorLayout _menuIndicatorLayout{ MenuIndicatorLayout::Compact };
 
 	QRect _iconHitRect{ QRect() };
 	QRect _textHitRect{ QRect() };

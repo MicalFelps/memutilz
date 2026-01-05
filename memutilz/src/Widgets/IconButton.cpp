@@ -17,7 +17,6 @@ IconButton::IconButton(const QIcon& icon, const QString& text, QWidget* parent)
 	setIcon(icon);
 	setText(text);
 	setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	setPopupMode(QToolButton::InstantPopup);
 
 	setFocusPolicy(Qt::TabFocus);
 
@@ -60,30 +59,24 @@ QSize IconButton::minimumSizeHint() const {
 	// menu metrics
 	const int indicatorW = qRound(fm.height() * Ui::IconButton::indicatorWidthFactor);
 	const int indicatorH = qRound(fm.height() * Ui::IconButton::indicatorHeightFactor);
-	const int spacing = fm.horizontalAdvance(' ');
+	const int spacing = indicatorW;
 	const int extraIndicatorW = indicatorW + spacing;
 
 	// constraints
-	/*
-	horizontal
-	- no wrap
-	- if menu, no clipping
-	vertical
-	- forces noclip
-	*/
 	TextWrapMode wrapMode = _wrapMode;
 	TextTruncateMode truncateMode = _truncateMode;
 	MenuIndicatorLayout menuIndicatorLayout = _menuIndicatorLayout;
 
-	if (isHorizontal && wrapMode == TextWrapMode::WrapToFit) {
+	if (isHorizontal) {
 		if (wrapMode == TextWrapMode::WrapToFit) wrapMode = TextWrapMode::NoWrap; // prefer no wrap in horizontal
 		if (hasMenu && _menuIndicatorLayout == MenuIndicatorLayout::Compact) {
 			truncateMode = TextTruncateMode::NoClip;
-			menuIndicatorLayout = MenuIndicatorLayout::Separate;
 		}
 	}
-	else if (!isHorizontal && truncateMode != TextTruncateMode::NoClip) {
-		truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
+	else {
+		if (truncateMode != TextTruncateMode::NoClip) {
+			truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
+		}
 	}
 
 	// --- Text Calculations ---
@@ -97,9 +90,9 @@ QSize IconButton::minimumSizeHint() const {
 		else {
 			// Layout
 			QTextLayout layout{ text(), font() };
-
 			QTextOption opt;
-			opt.setAlignment(Qt::AlignLeft);
+
+			opt.setAlignment(isHorizontal ? Qt::AlignLeft : Qt::AlignHCenter);
 			opt.setWrapMode(
 				wrapMode == TextWrapMode::WrapToFit
 				? QTextOption::WordWrap
@@ -107,14 +100,13 @@ QSize IconButton::minimumSizeHint() const {
 
 			layout.setTextOption(opt);
 
+
 			layout.beginLayout();
 
-			qreal longestLineW = 0;
+			qreal requiredW = 0;
+			qreal requiredH = 0;
 			qreal lastLineW = 0;
-			qreal textH = 0;
-
-			// width constraints
-			const qreal lineWidth =
+			const qreal fixedLineW =
 				(wrapMode == TextWrapMode::WrapToFit)
 				? Ui::IconButton::minWrapWidth
 				: std::numeric_limits<qreal>::max();
@@ -125,25 +117,19 @@ QSize IconButton::minimumSizeHint() const {
 					break;
 				}
 
-				line.setLineWidth(lineWidth);
+				line.setLineWidth(fixedLineW);
 				lastLineW = line.naturalTextWidth();
-				longestLineW = qMax(longestLineW, lastLineW);
-				textH += line.height();
-
-				// force single line
-				if (wrapMode == TextWrapMode::NoWrap) break;
+				requiredW = qMax(requiredW, lastLineW);
+				requiredH += line.height();
 			}
 
 			layout.endLayout();
 
-			minTextW = qCeil(longestLineW);
-			minTextH = qCeil(textH);
+			minTextW = qCeil(requiredW);
+			minTextH = qCeil(requiredH);
 
 			if (wrapMode == TextWrapMode::WrapToFit) {
 				minTextW = qMax(Ui::IconButton::minWrapWidth, minTextW);
-			}
-			else {
-				minTextW = fm.horizontalAdvance(text());
 			}
 
 			if (hasMenu && (menuIndicatorLayout == MenuIndicatorLayout::Compact)) {
@@ -167,8 +153,7 @@ QSize IconButton::minimumSizeHint() const {
 	}
 
 	// we've already accounted for this in text if compact
-	if (hasMenu
-		&& (menuIndicatorLayout == MenuIndicatorLayout::Separate)) {
+	if (hasMenu && (menuIndicatorLayout == MenuIndicatorLayout::Separate)) {
 		if (isHorizontal) {
 			totalMinW += indicatorW + _menuIndicatorSpacing;
 		}
@@ -176,25 +161,11 @@ QSize IconButton::minimumSizeHint() const {
 			totalMinH += indicatorH + _menuIndicatorSpacing;
 		}
 	}
+
 	return minimum.expandedTo(QSize(totalMinW, totalMinH)) + chrome;
 }
 QSize IconButton::sizeHint() const {
-	QSize minimum = minimumSizeHint();
-	int preferredW = minimum.width();
-	int preferredH = minimum.height();
-
-	if (!text().isEmpty()) {
-		QFontMetrics fm{ font() };
-		int fullTextW = fm.horizontalAdvance(text());
-		
-		if (toolButtonStyle() == Qt::ToolButtonTextBesideIcon) {
-			if (_truncateMode != TextTruncateMode::NoClip) {
-				preferredW += fullTextW;
-			}
-		}
-	}
-
-	return QSize(preferredW, preferredH);
+	return minimumSizeHint();
 }
 
 // ---------------------------------------------------------
@@ -219,91 +190,43 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	}
 
 	bool hasIcon = !icon().isNull();
-	bool showIcon = hasIcon || _reserveIconSpace;
+	bool hasText = !text().isEmpty();
+
 	bool isHorizontal = (toolButtonStyle() == Qt::ToolButtonTextBesideIcon);
 
-	QRect buttonRect = rect();
-	QRect contentRect = buttonRect.adjusted(_horizontalPadding, _verticalPadding, -_horizontalPadding, -_verticalPadding);
-
-	int iconSize = qMin(contentRect.width(), contentRect.height());
-	int scaledIconSize = iconSize * _iconScalePercent / 100;
+	QFontMetrics fm{ font() };
+	const int spacing = qRound(fm.height() * Ui::IconButton::indicatorWidthFactor);
+	const int extraIndicatorW = _menuPaintRect.width() + spacing;
 
 	// Draw base panel (background, hover, border, etc)
 	style()->drawPrimitive(QStyle::PE_PanelButtonTool, &opt, &p, this);
 
-	// Text
+	// ---------------------------------------------------------
+
 	TextWrapMode wrapMode = _wrapMode;
 	TextTruncateMode truncateMode = _truncateMode;
 	MenuIndicatorLayout menuIndicatorLayout = _menuIndicatorLayout;
 
-	if (isHorizontal && wrapMode == TextWrapMode::WrapToFit) {
+	if (isHorizontal) {
 		if (wrapMode == TextWrapMode::WrapToFit) wrapMode = TextWrapMode::NoWrap; // prefer no wrap in horizontal
 		if (hasMenu && _menuIndicatorLayout == MenuIndicatorLayout::Compact) {
 			truncateMode = TextTruncateMode::NoClip;
-			menuIndicatorLayout = MenuIndicatorLayout::Separate;
 		}
 	}
-	else if (!isHorizontal && truncateMode != TextTruncateMode::NoClip) {
-		truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
-	}
-
-	QFontMetrics fm{ font() };
-	QString t{ text() };
-	QString displayText{ t };
-
-	if (!displayText.isEmpty() && isHorizontal) {
+	else {
 		if (truncateMode != TextTruncateMode::NoClip) {
-			int availableW = _textPaintRect.width();
-			int textW = fm.horizontalAdvance(displayText);
-
-			if (truncateMode == TextTruncateMode::Ellipsis) {
-				displayText = fm.elidedText(t, Qt::ElideRight, availableW);
-			} else {
-				int low = 0;
-				int high = t.length();
-				while (low < high) {
-					int mid = (low + high + 1) / 2;
-					if (fm.horizontalAdvance(t.left(mid)) <= availableW) {
-						low = mid;
-					}
-					else {
-						high = mid - 1;
-					}
-				}
-				displayText = t.left(low);
-			}
+			truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
 		}
 	}
 
-	QTextLayout layout(displayText, font());
-
+	QTextLayout layout{ text(), font()};
 	QTextOption textOpt;
-	if (isHorizontal) {
-		textOpt.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-	} else {
-		textOpt.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-	}
-
-	textOpt.setWrapMode(
-		wrapMode == TextWrapMode::WrapToFit
-		? QTextOption::WordWrap
-		: QTextOption::NoWrap);
-
+	textOpt.setAlignment(Qt::AlignLeft);
+	textOpt.setWrapMode(wrapMode == TextWrapMode::WrapToFit ? QTextOption::WordWrap : QTextOption::NoWrap);
 	layout.setTextOption(textOpt);
 
-
-
 	layout.beginLayout();
-
-	qreal longestLineW = 0;
-	qreal lastLineW = 0;
-	qreal textH = 0;
-
-	// width constraints
-	const qreal lineWidth =
-		(wrapMode == TextWrapMode::WrapToFit)
-		? Ui::IconButton::minWrapWidth
-		: std::numeric_limits<qreal>::max();
+	qreal y = 0;
 
 	while (true) {
 		QTextLine line = layout.createLine();
@@ -311,15 +234,42 @@ void IconButton::paintEvent(QPaintEvent* event) {
 			break;
 		}
 
-		line.setLineWidth(lineWidth);
-		longestLineW = qMax(longestLineW, line.naturalTextWidth());
-		textH += line.height();
+		line.setLineWidth(_textPaintRect.width());
 
-		// force single line
-		if (wrapMode == TextWrapMode::NoWrap) break;
+		qreal lineBottom = y + line.height();
+		if (lineBottom > _textPaintRect.height()) break;
+
+		line.setPosition(QPointF(0, y));
+		y = lineBottom;
 	}
 
 	layout.endLayout();
+
+	if (!isHorizontal) {
+		for (int i = 0; i < layout.lineCount(); ++i) {
+			QTextLine line = layout.lineAt(i);
+
+			qreal lineW = line.naturalTextWidth();
+			QPointF pos = line.position();
+
+			if (hasMenu
+				&& menuIndicatorLayout == MenuIndicatorLayout::Compact
+				&& i == (layout.lineCount() - 1)) {
+
+				int lastLineW = line.naturalTextWidth();
+				lastLineW += extraIndicatorW;
+
+				if (lastLineW <= _textPaintRect.width()) {
+					pos.rx() = (_textPaintRect.width() - lastLineW) / 2;
+				}
+
+				line.setPosition(pos);
+			}
+			else {
+				pos.setX((_textPaintRect.width() - lineW) / 2);
+			}
+		}
+	}
 
 	// ---------------------------------------------------------
 
@@ -327,7 +277,6 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		p.setOpacity(0.35);
 	}
 
-	// Draw Icon
 	if (hasIcon
 		&& _iconPaintRect.size().width() > Ui::IconButton::minScaledIconSize
 		&& _iconPaintRect.size().height() > Ui::IconButton::minScaledIconSize) {
@@ -335,22 +284,19 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		icon().paint(&p, _iconPaintRect, Qt::AlignCenter);
 	}
 
-	// Draw text
-	if (!displayText.isEmpty()) {
+	if (hasText
+		&& _textPaintRect.size().width() > 0
+		&& _textPaintRect.size().height() > 0) {
+
 		p.setPen(palette().color(QPalette::ButtonText));
 		layout.draw(&p, QPointF(_textPaintRect.left(), _textPaintRect.top()));
 	}
 
-	// Draw menu arrow
-	if (hasMenu) {
-		QRect target = _textPaintRect;
-		target.setX(42);
-		target.setY(target.y() + 7);
-		target.setWidth(_menuPaintRect.width());
-		target.setHeight(_menuPaintRect.height());
+	if (hasMenu
+		&& _menuPaintRect.size().width() > 0
+		&& _menuPaintRect.size().height() > 0) {
 
-		drawMenuIndicator(p, target, 2);
-		qDebug() << "Menu Rect:" << target;
+		drawMenuIndicator(p, _menuPaintRect, 2);
 	}
 
 	// Draw checked bar
@@ -358,12 +304,12 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		const int barWidth = 4;
 		qreal barRadius = barWidth / 2.0;
 		QRectF barRect{ QRectF() };
-		int barLength = scaledIconSize;
+		int barLength = _iconPaintRect.size().width();
 		if (isHorizontal) {
-			barRect = QRectF(0, buttonRect.top() + (buttonRect.height() - barLength) / 2, barWidth, barLength);
+			barRect = QRectF(0, rect().top() + (rect().height() - barLength) / 2, barWidth, barLength);
 		}
 		else {
-			barRect = QRectF(buttonRect.left() + (buttonRect.width() - barLength) / 2, 0, barLength, barWidth);
+			barRect = QRectF(rect().left() + (rect().width() - barLength) / 2, 0, barLength, barWidth);
 		}
 		p.setPen(Qt::NoPen);
 		p.setBrush(_checkedBarColor);
@@ -412,13 +358,13 @@ void IconButton::updateRectLayout() {
 	int scaledIconSize = iconSize * _iconScalePercent / 100;
 
 	// Text
-	QFontMetrics fm{ font() };
+	QFontMetricsF fm{ font() };
 	QTextLayout layout{ text(), font() };
 
 	// Menu
 	const int indicatorW = qRound(fm.height() * Ui::IconButton::indicatorWidthFactor);
 	const int indicatorH = qRound(fm.height() * Ui::IconButton::indicatorHeightFactor);
-	const int spacing = fm.horizontalAdvance(' ');
+	const int spacing = indicatorW;
 	const int extraIndicatorW = indicatorW + spacing;
 
 	// constraints
@@ -426,15 +372,16 @@ void IconButton::updateRectLayout() {
 	TextTruncateMode truncateMode = _truncateMode;
 	MenuIndicatorLayout menuIndicatorLayout = _menuIndicatorLayout;
 
-	if (isHorizontal && wrapMode == TextWrapMode::WrapToFit) {
+	if (isHorizontal) {
 		if (wrapMode == TextWrapMode::WrapToFit) wrapMode = TextWrapMode::NoWrap; // prefer no wrap in horizontal
 		if (hasMenu && _menuIndicatorLayout == MenuIndicatorLayout::Compact) {
 			truncateMode = TextTruncateMode::NoClip;
-			menuIndicatorLayout = MenuIndicatorLayout::Separate;
 		}
 	}
-	else if (!isHorizontal && truncateMode != TextTruncateMode::NoClip) {
-		truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
+	else {
+		if (truncateMode != TextTruncateMode::NoClip) {
+			truncateMode = TextTruncateMode::NoClip; // prefer full wrap in vertical
+		}
 	}
 
 	// ----- Paint Rectangles -----
@@ -443,49 +390,113 @@ void IconButton::updateRectLayout() {
 	_textPaintRect = QRect();
 	_menuPaintRect = QRect();
 
+	_iconHitRect = QRect();
+	_textHitRect = QRect();
+	_menuHitRect = QRect();
+
 	if (showIcon) {
-		if (isHorizontal) {
-			_iconPaintRect = QRect(
-				contentRect.left() + (contentRect.height() - scaledIconSize) / 2,
-				contentRect.top() + (contentRect.height() - scaledIconSize) / 2,
-				scaledIconSize,
-				scaledIconSize);
+
+		// --- IconPaintRect ---
+
+		if (scaledIconSize >= Ui::IconButton::minScaledIconSize
+			&& contentRect.width() >= scaledIconSize
+			&& contentRect.height() >= scaledIconSize) {
+
+			if (isHorizontal) {
+				if (contentRect.height() >= scaledIconSize) {
+					_iconPaintRect = QRect(
+						contentRect.left() + (contentRect.height() - scaledIconSize) / 2,
+						contentRect.top() + (contentRect.height() - scaledIconSize) / 2,
+						scaledIconSize,
+						scaledIconSize);
+				}
+			}
+			else {
+				_iconPaintRect = QRect(
+					contentRect.left() + (contentRect.width() - scaledIconSize) / 2,
+					contentRect.top() + (contentRect.width() - scaledIconSize) / 2,
+					scaledIconSize,
+					scaledIconSize
+				);
+			}
 		}
-		else {
-			_iconPaintRect = QRect(
-				contentRect.left() + (contentRect.width() - scaledIconSize) / 2,
-				contentRect.top() + (contentRect.width() - scaledIconSize) / 2,
-				scaledIconSize,
-				scaledIconSize
+
+		// --- IconHitRect ---
+
+		if (scaledIconSize > 0) {
+			_iconHitRect = buttonRect;
+			if (isHorizontal) {
+				_iconHitRect.setWidth(_horizontalPadding + qMin(scaledIconSize, contentRect.width()));
+				int textX = scaledIconSize + (hasText ? _iconTextSpacing : 0);
+				buttonRect.adjust(textX, 0, 0, 0);
+				if (!buttonRect.isValid()) return;
+			}
+			else {
+				_iconHitRect.setHeight(_verticalPadding + qMin(scaledIconSize, contentRect.height()));
+				int textY = scaledIconSize + (hasText ? _iconTextSpacing : 0);
+				buttonRect.adjust(0, textY, 0, 0);
+				if (!buttonRect.isValid()) return;
+			}
+		}
+	}
+
+	if (hasMenu && menuIndicatorLayout == MenuIndicatorLayout::Separate) {
+		_menuHitRect = buttonRect;
+
+		if (isHorizontal) {
+			if (contentRect.width() < _menuIndicatorSpacing + indicatorW
+				&& contentRect.height() < indicatorH) {
+				_menuHitRect = buttonRect;
+				return;
+			}
+
+			_menuPaintRect = QRect(
+				contentRect.right() - indicatorW,
+				(contentRect.height() - indicatorH) / 2,
+				indicatorW,
+				indicatorH
 			);
+
+			_menuHitRect.adjust(_menuHitRect.width() - (_horizontalPadding + indicatorW + _menuIndicatorSpacing), 0, 0, 0);
+			int menuX = buttonRect.right() - _menuHitRect.x();
+			buttonRect.adjust(0, 0, -menuX, 0);
+			if (!buttonRect.isValid()) return;
+		}
+		else { // vertical
+			if (contentRect.width() < indicatorW
+				&& contentRect.height() < _menuIndicatorSpacing + indicatorH) {
+				_menuHitRect = buttonRect;
+				return;
+			}
+
+			_menuPaintRect = QRect(
+				(contentRect.right() - indicatorW) / 2,
+				contentRect.bottom() - indicatorH,
+				indicatorW,
+				indicatorH
+			);
+
+			_menuHitRect.adjust(0, _menuHitRect.height() - (_verticalPadding + indicatorH + _menuIndicatorSpacing), 0, 0);
+			int menuY = buttonRect.bottom() - _menuHitRect.y();
+			buttonRect.adjust(0, 0, 0, -menuY);
+			if (!buttonRect.isValid()) return;
 		}
 	}
 
 	if (hasText) {
-		int width = 0;
-		int height = 0;
+		_textHitRect = buttonRect;
 
+		QTextLayout layout{ text(), font() };
 		QTextOption opt;
 		opt.setAlignment(Qt::AlignLeft);
-		opt.setWrapMode(
-			wrapMode == TextWrapMode::WrapToFit
-			? QTextOption::WordWrap
-			: QTextOption::NoWrap);
-
+		opt.setWrapMode(wrapMode == TextWrapMode::WrapToFit ? QTextOption::WordWrap : QTextOption::NoWrap);
 		layout.setTextOption(opt);
 
+		qreal maxWidth = contentRect.width();
+		qreal maxHeight = contentRect.height();
+
 		layout.beginLayout();
-
-		QList <QTextLine> lines;
-		qreal longestLineW = 0;
-		qreal lastLineW = 0;
-		qreal textH = 0;
-
-		// width constraints
-		const qreal lineWidth =
-			(wrapMode == TextWrapMode::WrapToFit)
-			? Ui::IconButton::minWrapWidth
-			: std::numeric_limits<qreal>::max();
+		qreal y = 0;
 
 		while (true) {
 			QTextLine line = layout.createLine();
@@ -493,146 +504,64 @@ void IconButton::updateRectLayout() {
 				break;
 			}
 
-			line.setLineWidth(lineWidth);
-			lastLineW = line.naturalTextWidth();
-			longestLineW = qMax(longestLineW, lastLineW);
-			textH += line.height();
-			lines.append(line);
+			line.setLineWidth(maxWidth);
 
-			// force single line
-			if (wrapMode == TextWrapMode::NoWrap) break;
+			qreal lineBottom = y + line.height();
+			if (lineBottom > maxHeight) break;
+
+			line.setPosition(QPointF(0, y));
+			y = lineBottom;
 		}
 
 		layout.endLayout();
 
-		width = qCeil(longestLineW);
-		height = qCeil(textH);
+		QRectF bounds = layout.boundingRect();
+		int textW = qCeil(bounds.width());
+		int textH = qCeil(bounds.height());
 
-		if (wrapMode == TextWrapMode::WrapToFit) {
-			width = qMax(Ui::IconButton::minWrapWidth, width);
-		}
-		else {
-			width = fm.horizontalAdvance(text());
-		}
-
-		if (hasMenu && (menuIndicatorLayout == MenuIndicatorLayout::Compact)) {
-			width = qMax(width, qCeil(lastLineW) + extraIndicatorW);
-		}
+		_textPaintRect = QRect(0, 0, textW, textH);
+		_textPaintRect.moveCenter(contentRect.center());
 
 		if (isHorizontal) {
-			height = qMin(contentRect.height(), height);
-			int textX = showIcon ? _iconPaintRect.right() + _iconTextSpacing : contentRect.left();
-			int textY = (contentRect.height() - height) / 2;
-
-			_textPaintRect = QRect(textX, textY, width, height);
+			_textPaintRect.moveLeft(_iconPaintRect.right() + _iconTextSpacing);
 		}
 		else {
-			width = qMin(contentRect.width(), width);
-			int textX = (contentRect.width() - width) / 2;
-			int textY = showIcon ? _iconPaintRect.bottom() + _iconTextSpacing : contentRect.top();
-
-			_textPaintRect = QRect(textX, textY, width, height);
+			_textPaintRect.moveTop(_iconPaintRect.bottom() + _iconTextSpacing);
 		}
 
-		/*
-		Figure out menuPaintRect while here
-		*/
+		if (!isHorizontal) {
+			for (int i = 0; i < layout.lineCount(); ++i) {
+				QTextLine line = layout.lineAt(i);
 
-		const QTextLine& lastLine = lines.last();
-		int lastCharIndex = text().length() - 1;
+				qreal lineW = line.naturalTextWidth();
+				QPointF pos = line.position();
 
-		qreal x = lastLine.naturalTextWidth() + spacing;
-		qreal y = lastLine.y();
+				if (hasMenu
+					&& menuIndicatorLayout == MenuIndicatorLayout::Compact
+					&& i == (layout.lineCount() - 1)) {
 
-		_menuPaintRect = QRect(x, y, indicatorH, indicatorW);
-	}
+					int lastLineW = line.naturalTextWidth();
+					lastLineW += extraIndicatorW;
 
-	if (hasMenu) {
-		if (isHorizontal) {
-			if (!hasText
-				|| !(_truncateMode == TextTruncateMode::NoClip)) {
-				_menuIndicatorLayout = MenuIndicatorLayout::Separate;
+					if (lastLineW <= _textPaintRect.width()) {
+						pos.rx() = (_textPaintRect.width() - lastLineW) / 2;
+					}
+
+					line.setPosition(pos);
+
+					_menuPaintRect = QRect(
+						_textPaintRect.left() + line.x() + lineW + spacing,
+						_textPaintRect.top() + y - (line.height() / 2),
+						indicatorW,
+						indicatorH);
+				}
+				else {
+					pos.setX((_textPaintRect.width() - lineW) / 2);
+				}
 			}
-
-			if (_menuIndicatorLayout == MenuIndicatorLayout::Separate) {
-				_menuPaintRect = QRect(
-					contentRect.right() - indicatorW,
-					contentRect.center().y() - (indicatorH / 2),
-					indicatorW,
-					indicatorH);
-			}
-		}
-		else {
-			if (!hasText
-				|| !(_truncateMode == TextTruncateMode::NoClip)) {
-				_menuIndicatorLayout = MenuIndicatorLayout::Separate;
-			}
-
-			if (_menuIndicatorLayout == MenuIndicatorLayout::Separate) {
-				_menuPaintRect = QRect(
-					contentRect.bottom() - indicatorH,
-					contentRect.center().x() - (indicatorW / 2),
-					indicatorW,
-					indicatorH);
-			}
-		}
-	}
-
-	// ----- Hit Rectangles -----
-
-	_iconHitRect = QRect();
-	_textHitRect = QRect();
-	_menuHitRect = QRect();
-
-	if (isHorizontal) {
-		if (_iconPaintRect.x() > 0 && _iconPaintRect.y() > 0) {
-			_iconHitRect = buttonRect;
-			_iconHitRect.setWidth(_horizontalPadding + _iconPaintRect.width());
-		}
-
-		if (_textPaintRect.x() > 0 && _textPaintRect.y() > 0) {
-			_textHitRect = buttonRect;
-
-			int textX = showIcon ? _iconHitRect.right() : buttonRect.left();
-			_textHitRect.moveLeft(textX);
-
-			int spacing = showIcon ? _iconTextSpacing : 0;
-			_textHitRect.setWidth(_textPaintRect.width() + spacing);
-		}
-
-		if (_menuPaintRect.x() > 0 && _menuPaintRect.y() > 0
-			&& _menuIndicatorLayout == MenuIndicatorLayout::Separate) {
-
-			_menuHitRect = buttonRect;
-			_menuHitRect.setWidth(indicatorW + _menuIndicatorSpacing);
-			_menuHitRect.moveRight(buttonRect.right());
-		}
-	} else {
-		if (_iconPaintRect.x() > 0 && _iconPaintRect.y() > 0) {
-			_iconHitRect = buttonRect;
-			_iconHitRect.setHeight(_verticalPadding + _iconPaintRect.height());
-		}
-
-		if (_textPaintRect.x() > 0 && _textPaintRect.y() > 0) {
-			_textHitRect = buttonRect;
-
-			int textY = showIcon ? _iconHitRect.bottom() : buttonRect.top();
-			_textHitRect.moveTop(textY);
-
-			int spacing = showIcon ? _iconTextSpacing : 0;
-			_textHitRect.setHeight(_textPaintRect.height() + spacing);
-		}
-
-		if (_menuPaintRect.x() > 0 && _menuPaintRect.y() > 0
-			&& _menuIndicatorLayout == MenuIndicatorLayout::Separate) {
-
-			_menuHitRect = buttonRect;
-			_menuHitRect.setHeight(indicatorH + _menuIndicatorSpacing);
-			_menuHitRect.moveBottom(buttonRect.bottom());
 		}
 	}
 }
-
 void IconButton::drawMenuIndicator(QPainter& p, const QRect& r, qreal thickness) {
 	QPainterPath path;
 
