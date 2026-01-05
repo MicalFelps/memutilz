@@ -49,10 +49,14 @@ MainWindow::MainWindow(QWidget* parent)
     _sidebar->addBottomButton(settings);
     _sidebar->addBottomButton(bottom);
 
+    for (auto& b : buttons) {
+        IconButton::Padding padding(20, 0, 0, 0);
+        b->setPadding(padding);
+    }
+
     IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "Test A or T", _content);
     test->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     test->resize(200, 80);
-    test->setHorizontalPadding(100);
     test->move(10, 10);
     test->setIconScalePercent(20);
 
