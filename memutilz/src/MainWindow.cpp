@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget* parent)
     for (auto& b : buttons) {
         b->setIconScalePercent(50);
         b->setIconTextSpacing(20);
+        b->setPadding({20, 0, 0, 0});
         b->setProperty("group", "sidebar");
     }
 
@@ -49,16 +50,12 @@ MainWindow::MainWindow(QWidget* parent)
     _sidebar->addBottomButton(settings);
     _sidebar->addBottomButton(bottom);
 
-    for (auto& b : buttons) {
-        IconButton::Padding padding(20, 0, 0, 0);
-        b->setPadding(padding);
-    }
-
     IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "Test A or T", _content);
     test->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    test->resize(200, 80);
+    test->resize(50, 100);
     test->move(10, 10);
-    test->setIconScalePercent(20);
+    test->setIconScalePercent(80);
+    test->setPadding(IconButton::Padding(0, 10, 0, 0));
 
     QMenu* menu = new QMenu(test);
     QAction* action = menu->addAction("Fake action");
