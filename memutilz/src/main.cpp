@@ -51,6 +51,24 @@ int main(int argc, char* argv[])
 
     a.setStyle(QStyleFactory::create("Fusion"));
 
+    QPalette dark;
+
+    dark.setColor(QPalette::Window, QColor("#0b0b0b"));
+    dark.setColor(QPalette::Base, QColor("#101010"));
+    dark.setColor(QPalette::AlternateBase, QColor("#181818"));
+
+    dark.setColor(QPalette::Button, QColor("#101010"));
+    dark.setColor(QPalette::Mid, QColor("#121212"));
+
+    dark.setColor(QPalette::Text, QColor("#ffffff"));
+    dark.setColor(QPalette::ButtonText, QColor("#ffffff"));
+    dark.setColor(QPalette::WindowText, QColor("#ffffff"));
+
+    dark.setColor(QPalette::Highlight, QColor("#ffffff"));
+    dark.setColor(QPalette::HighlightedText, QColor("#000000"));
+
+    a.setPalette(dark);
+
     QFile style(":/styles/dark.qss");
     style.open(QFile::ReadOnly);
     QString styleSheet = style.readAll();

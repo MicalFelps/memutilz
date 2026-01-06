@@ -33,29 +33,28 @@ MainWindow::MainWindow(QWidget* parent)
     buttons.append(bottom);
     buttons.append(settings);
 
-    for (auto& b : buttons) {
-        b->setIconScalePercent(50);
-        b->setIconTextSpacing(20);
-        b->setPadding({20, 0, 0, 0});
-        b->setProperty("group", "sidebar");
-    }
-
     files->setCheckable(true);
     view->setCheckable(true);
 
-    // view->setDisabled(true);
+    bottom->setDisabled(true);
 
     _sidebar->addTopButton(files);
     _sidebar->addTopButton(view);
     _sidebar->addBottomButton(settings);
     _sidebar->addBottomButton(bottom);
 
-    IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "Test A or T", _content);
+    for (auto& b : buttons) {
+        b->setIconScalePercent(50);
+        b->setIconTextSpacing(20);
+        b->setPadding({ (Ui::SideBar::buttonHeight - b->iconPaintRect().width()) / 2, 0, 0, 0 });
+        b->setProperty("group", "sidebar");
+    }
+
+    IconButton* test = new IconButton(QIcon(":/icons/3bars.svg"), "The first issue was that I couldn't modify padding from all four directions this ended up being a problem when I wanted the", _content);
     test->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    test->resize(50, 100);
+    test->resize(40, 100);
     test->move(10, 10);
     test->setIconScalePercent(80);
-    test->setPadding(IconButton::Padding(0, 10, 0, 0));
 
     QMenu* menu = new QMenu(test);
     QAction* action = menu->addAction("Fake action");

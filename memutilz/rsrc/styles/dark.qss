@@ -1,20 +1,20 @@
 * {
     font-family: "Inter 18pt";
     font-size: 10pt;
-    color: #ffffff
+    color: palette(text);
 }
 
 QWidget {
-    background-color: #0b0b0b;
+    background-color: palette(window);
     border: 1px solid transparent;
 }
 
 QMainWindow {
-    background-color: #101010
+    background-color: palette(window);
 }
 
 SideBar{
-    background-color: #101010;
+    background-color: palette(window);
 }
 
 #sidebarSeparator {
@@ -22,23 +22,23 @@ SideBar{
 }
 
 IconButton {
-    background-color: #101010;
+    background-color: palette(button);
     border: 1px solid transparent;
 }
 
 IconButton:hover {
-    background-color: #181818;
-    border: 1px solid #ffffff;
+    background-color: palette(alternate-base);
+    border: 1px solid palette(highlight);
 }
 
 IconButton[group="sidebar"]:hover {
-    background-color: #181818;
+    background-color: palette(alternate-base);
     border: none;
 }
 
 IconButton:focus {
-    background-color: #121212;
-    border: 1px dotted #ffffff;
+    background-color: palette(mid);
+    border: 1px dotted palette(text);
 }
 
 

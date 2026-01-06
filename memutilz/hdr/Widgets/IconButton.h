@@ -163,21 +163,20 @@ signals:
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 	virtual bool event(QEvent* event) override;
-	virtual bool hitButton(const QPoint& pos) const override;
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void mousePressEvent(QMouseEvent* event) override;
 private:
 	void updateRectLayout();
 	void drawMenuIndicator(QPainter& p, const QRect& r, qreal thickness);
 
-	TextTruncateMode _truncateMode	{ TextTruncateMode::Clip };
+	TextTruncateMode _truncateMode{ TextTruncateMode::Clip };
 	TextWrapMode _wrapMode			{ TextWrapMode::WrapToFit };
 	Padding _padding				{ 0, 0, 0, 0 };
 	int _iconTextSpacing			{ 0 };
 	int _menuIndicatorSpacing		{ 0 };
 	int _iconScalePercent			{ 50 };
 	bool _reserveIconSpace			{ true };
-	QColor _checkedBarColor			{QColor("#ffffff")};
+	QColor _checkedBarColor			{ palette().color(QPalette::Text) };
 
 	MenuIndicatorLayout _menuIndicatorLayout{ MenuIndicatorLayout::Compact };
 

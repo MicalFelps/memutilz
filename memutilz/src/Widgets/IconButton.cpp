@@ -1,11 +1,8 @@
 #include <QStyle>
-#include <QRegularExpression>
 #include <QStyleOptionToolButton>
 #include <QPainter>
 #include <QMouseEvent>
-
 #include <QPainterPath>
-
 #include <QTextLayout>
 
 #include "Widgets/IconButton.h"
@@ -17,13 +14,15 @@ IconButton::IconButton(const QIcon& icon, const QString& text, QWidget* parent)
 	setIcon(icon);
 	setText(text);
 	setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	setPopupMode(QToolButton::MenuButtonPopup);
+	setPopupMode(QToolButton::DelayedPopup);
 	setAttribute(Qt::WA_Hover, true);
 
 	setFocusPolicy(Qt::TabFocus);
 
 	connect(this, &IconButton::toggled, this, [this](bool checked) {
 		if (!checked) clearFocus(); });
+
+	connect(this, &IconButton::hoverRegionChanged, this, [this]() {this->update(); });
 }
 
 QSize IconButton::minimumSizeHint() const {
@@ -190,6 +189,27 @@ void IconButton::paintEvent(QPaintEvent* event) {
 
 	// ---------------------------------------------------------
 
+	p.save();
+	p.setOpacity(0.25);
+
+	switch (_hoverRegion) {
+	case HoverRegion::Icon: {
+		p.fillRect(_iconHitRect, palette().color(QPalette::Highlight));
+		break;
+	}
+	case HoverRegion::None: {
+		break;
+	}
+	default: {
+		QRect target = _textHitRect.united(_menuHitRect);
+		p.fillRect(target, palette().color(QPalette::Highlight));
+		break;
+	}
+	}
+
+	p.restore();
+
+	/*
 	p.fillRect(_iconPaintRect, QColor("#ff0000"));
 	p.fillRect(_textPaintRect, QColor("#00ff00"));
 	p.fillRect(_menuPaintRect, QColor("#0000ff"));
@@ -200,6 +220,7 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	p.fillRect(_textHitRect, QColor("#00ff00"));
 	p.fillRect(_menuHitRect, QColor("#0000ff"));
 	p.restore();
+	*/
 
 	// ---------------------------------------------------------
 
@@ -225,27 +246,41 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	textOpt.setWrapMode(wrapMode == TextWrapMode::WrapToFit ? QTextOption::WordWrap : QTextOption::NoWrap);
 	layout.setTextOption(textOpt);
 
-	layout.beginLayout();
-	qreal y = 0;
+	if (!isHorizontal) {
+		qreal y = 0;
+		int numLines = 0;
+		layout.beginLayout();
 
-	while (true) {
-		QTextLine line = layout.createLine();
-		if (!line.isValid()) {
-			break;
+		while (true) {
+			QTextLine line = layout.createLine();
+			if (!line.isValid()) {
+				break;
+			}
+
+			line.setLineWidth(_textPaintRect.width());
+
+			if (y + line.height() > _textPaintRect.height()) break;
+			y += line.height();
+
+			++numLines;
 		}
 
-		line.setLineWidth(_textPaintRect.width());
+		layout.endLayout();
 
-		qreal lineBottom = y + line.height();
-		if (lineBottom > _textPaintRect.height()) break;
-		line.setPosition(QPointF(0, y));
-		y = lineBottom;
-	}
+		layout.clearLayout();
+		y = 0;
+		layout.beginLayout();
+		for (int i = 0; i < numLines; ++i) {
+			QTextLine line = layout.createLine();
+			line.setLineWidth(_textPaintRect.width());
+			line.setPosition(QPointF((_textPaintRect.width() - line.naturalTextWidth()) / 2, y));
+			y += line.height();
+			
+		}
 
-	layout.endLayout();
+		layout.endLayout();
 
-	if (!isHorizontal) {
-		for (int i = 0; i < layout.lineCount(); ++i) {
+		for (int i = 0; i < numLines; ++i) {
 			QTextLine line = layout.lineAt(i);
 
 			qreal lineW = line.naturalTextWidth();
@@ -288,7 +323,40 @@ void IconButton::paintEvent(QPaintEvent* event) {
 		&& _textPaintRect.size().height() > 0) {
 
 		p.setPen(palette().color(QPalette::ButtonText));
-		layout.draw(&p, QPointF(_textPaintRect.left(), _textPaintRect.top()));
+
+		if (isHorizontal) {
+			QString displayText = text();
+
+			switch (_truncateMode) {
+			case TextTruncateMode::NoClip: {
+				break;
+			}
+			case TextTruncateMode::Clip: {
+				int low = 0;
+				int high = displayText.length();
+
+				while (low < high) {
+					int mid = (low + high + 1) / 2;
+
+					if (fm.horizontalAdvance(displayText.left(mid)) <= _textPaintRect.width()) {
+						low = mid;
+					} else { high = mid - 1; }
+				}
+				displayText = displayText.left(low);
+				break;
+			}
+			case TextTruncateMode::Ellipsis: {
+				int textW = fm.horizontalAdvance(displayText);
+				displayText = fm.elidedText(displayText, Qt::ElideRight, _textPaintRect.width());
+				break;
+			}
+			}
+
+			p.drawText(_textPaintRect, Qt::AlignVCenter | Qt::AlignLeft, displayText);
+		}
+		else {
+			layout.draw(&p, QPointF(_textPaintRect.left(), _textPaintRect.top()));
+		}
 	}
 
 	if (hasMenu
@@ -327,13 +395,33 @@ void IconButton::paintEvent(QPaintEvent* event) {
 	qDebug() << "MenuHit:" << _menuHitRect;
 }
 bool IconButton::event(QEvent* event) { // for hover events
-	return QToolButton::event(event);
-}
-bool IconButton::hitButton(const QPoint& pos) const {
-	if (menu() && !_iconHitRect.contains(pos)) {
-		return false;
+	if (menu() != nullptr) {
+		switch (event->type()) {
+		case QEvent::HoverEnter:
+		case QEvent::HoverMove: {
+			auto he = static_cast<QHoverEvent*>(event);
+			if (!_iconHitRect.contains(he->pos())) {
+				if (!_textHitRect.contains(he->pos())) {
+					setHoverRegion(HoverRegion::Menu);
+					return true;
+				}
+				setHoverRegion(HoverRegion::Text);
+				return true;
+			}
+			else {
+				setHoverRegion(HoverRegion::Icon);
+				return true;
+			}
+		}
+		case QEvent::HoverLeave: {
+			setHoverRegion(HoverRegion::None);
+			return true;
+		}
+		default:
+			return QToolButton::event(event);
+		}
 	}
-	return QToolButton::hitButton(pos);
+	return QToolButton::event(event);
 }
 void IconButton::resizeEvent(QResizeEvent* event) {
 	QToolButton::resizeEvent(event);
@@ -341,8 +429,9 @@ void IconButton::resizeEvent(QResizeEvent* event) {
 	updateRectLayout();
 }
 void IconButton::mousePressEvent(QMouseEvent* event) {
-	if (menu() && !_iconHitRect.contains(event->pos())) {
+	if (event->button() == Qt::LeftButton && menu() && !_iconHitRect.contains(event->pos())) {
 		showMenu();
+		event->accept();
 		return;
 	}
 
@@ -363,7 +452,7 @@ void IconButton::updateRectLayout() {
 	bool isHorizontal = (toolButtonStyle() == Qt::ToolButtonTextBesideIcon);
 
 	// Icon
-	int iconSize = qMin(contentRect.width(), contentRect.height());
+	int iconSize = qMin(buttonRect.width(), buttonRect.height());
 	int scaledIconSize = iconSize * _iconScalePercent / 100;
 
 	// Text
@@ -373,7 +462,7 @@ void IconButton::updateRectLayout() {
 	// Menu
 	const int menuIndicatorW = qRound(fm.height() * Ui::IconButton::indicatorWidthFactor);
 	const int menuIndicatorH = qRound(fm.height() * Ui::IconButton::indicatorHeightFactor);
-	const int menuIndicatorSpacing = menuIndicatorW;
+	const int menuIndicatorSpacing = menuIndicatorH / 2;
 
 	// constraints
 	TextWrapMode wrapMode = _wrapMode;
@@ -403,10 +492,6 @@ void IconButton::updateRectLayout() {
 	_menuHitRect = QRect();
 
 	if (showIcon) {
-
-		if (hasMenu) {
-			qDebug() << "Hey";
-		}
 		// --- IconPaintRect ---
 
 		if (scaledIconSize >= Ui::IconButton::minScaledIconSize
@@ -436,19 +521,19 @@ void IconButton::updateRectLayout() {
 			_iconHitRect = buttonRect;
 
 			if (isHorizontal) {
-				_iconHitRect.setWidth(_padding.left + qMin(scaledIconSize, contentRect.width()));
+				_iconHitRect.setWidth(_padding.left + scaledIconSize);
 
 				int remainderX = scaledIconSize + (hasText ? _iconTextSpacing : 0);
 				contentRect.adjust(remainderX, 0, 0, 0);
 				buttonRect.adjust(_padding.left + scaledIconSize, 0, 0, 0);
-				if (!buttonRect.isValid() || !contentRect.isValid()) return;
+				if (!buttonRect.isValid()) return;
 			}
 			else {
-				_iconHitRect.setHeight(_padding.top + qMin(scaledIconSize, contentRect.height()));
+				_iconHitRect.setHeight(_padding.top + scaledIconSize);
 				int remainderY = scaledIconSize + (hasText ? _iconTextSpacing : 0);
 				contentRect.adjust(0, remainderY, 0, 0);
 				buttonRect.adjust(0, _padding.top + scaledIconSize, 0, 0);
-				if (!buttonRect.isValid() || !contentRect.isValid()) return;
+				if (!buttonRect.isValid()) return;
 			}
 		}
 	}
@@ -460,7 +545,7 @@ void IconButton::updateRectLayout() {
 
 			if (isHorizontal) {
 				_menuPaintRect = QRect(
-					contentRect.right() - menuIndicatorW,
+					contentRect.right() - menuIndicatorW + 1,
 					contentRect.top() + (contentRect.height() - menuIndicatorH) / 2,
 					menuIndicatorW,
 					menuIndicatorH
@@ -469,7 +554,7 @@ void IconButton::updateRectLayout() {
 			else {
 				_menuPaintRect = QRect(
 					contentRect.left() + (contentRect.width() - menuIndicatorW) / 2,
-					contentRect.bottom() - menuIndicatorH,
+					contentRect.bottom() - menuIndicatorH + 1,
 					menuIndicatorW,
 					menuIndicatorH
 				);
@@ -501,6 +586,7 @@ void IconButton::updateRectLayout() {
 
 	if (hasText) {
 		if(!buttonRect.isNull()) _textHitRect = buttonRect; // we give the rest to text
+		if (!contentRect.isValid()) return;
 
 		QTextLayout layout{ text(), font() };
 		QTextOption opt;
@@ -539,33 +625,31 @@ void IconButton::updateRectLayout() {
 			QTextLine lastLine = layout.lineAt(layout.lineCount() - 1);
 			qreal lastLineW = lastLine.naturalTextWidth() + menuIndicatorSpacing + menuIndicatorW;
 
-			if (lastLineW <= maxW) {
-				QPointF pos = lastLine.position();
-				pos.rx() = (maxW - lastLineW) / 2;
+			QPointF pos = lastLine.position();
+			pos.rx() = (maxW - lastLineW) / 2;
 
-				const int offsetX = -2;
-				const int offsetY = 2;
+			const int offsetX = -2;
+			const int offsetY = 2;
 
-				_menuPaintRect = QRect(
-					pos.x() + lastLineW - menuIndicatorW + offsetX,
-					contentRect.top() + y - (lastLine.height() + menuIndicatorH) / 2 + offsetY,
-					menuIndicatorW,
-					menuIndicatorH
-				);
-			}
+			_menuPaintRect = QRect(
+				pos.x() + lastLineW - menuIndicatorW + offsetX,
+				contentRect.top() + y - (lastLine.height() + menuIndicatorH) / 2 + offsetY,
+				menuIndicatorW,
+				menuIndicatorH
+			);
 
 			lastLineW = qMin(lastLineW, maxW);
 			textW = qMin(qCeil(lastLineW), textW);
 		}
 
-		_textPaintRect = QRect(0, 0, textW, textH);
+		_textPaintRect = QRect(0, 0, qMin(textW, contentRect.width()), qMin(textH, contentRect.height()));
 		_textPaintRect.moveCenter(contentRect.center());
 
 		if (isHorizontal) {
-			_textPaintRect.moveLeft(_iconPaintRect.right() + (hasIcon ? _iconTextSpacing : 0));
+			_textPaintRect.moveLeft(_iconPaintRect.right() + (hasIcon ? _iconTextSpacing + 1 : 0));
 		}
 		else {
-			_textPaintRect.moveTop(_iconPaintRect.bottom() + (hasIcon ? _iconTextSpacing : 0));
+			_textPaintRect.moveTop(_iconPaintRect.bottom() + (hasIcon ? _iconTextSpacing + 1 : 0));
 		}
 	}
 }
