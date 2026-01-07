@@ -1,7 +1,7 @@
 #include "Widgets/Metrics.h"
 #include "Widgets/SideBar.h"
 
-#include <Chrono>
+#include <chrono>
 #include <QStyle>
 
 #include <QPainter>

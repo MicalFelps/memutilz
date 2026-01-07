@@ -1,4 +1,5 @@
 # Qt6 - System-installed only
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 # qt_standard_project_setup()
 

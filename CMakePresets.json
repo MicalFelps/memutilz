@@ -57,6 +57,9 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/home/mniki/qt/6.9.3/gcc_64"
       }
     },
     {
