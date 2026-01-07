@@ -2,11 +2,9 @@
     <qresource prefix="/icons">
         <file alias="memutilz.ico">memutilz.ico</file>
         <file alias="eye.svg">icons/eye.svg</file>
-        <file alias="files.svg">icons/files.svg</file>
-        <file alias="left_arrow.svg">icons/left_arrow.svg</file>
-        <file alias="right_arrow.svg">icons/right_arrow.svg</file>
         <file alias="settings.svg">icons/settings.svg</file>
         <file alias="3bars.svg">icons/3bars.svg</file>
+        <file alias="file.svg">icons/file.svg</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="dark.qss">styles/dark.qss</file>

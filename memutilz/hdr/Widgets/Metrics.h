@@ -8,8 +8,8 @@ namespace Ui {
         inline constexpr int minScaledIconSize = 9;
         inline constexpr int minWrapWidth = 25;
         
-        inline constexpr float indicatorWidthFactor = 0.5;
-        inline constexpr float indicatorHeightFactor = 0.3;
+        inline constexpr double indicatorWidthFactor = 0.5;
+        inline constexpr double indicatorHeightFactor = 0.3;
     }
 
     namespace SideBar {

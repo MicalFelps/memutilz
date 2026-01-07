@@ -53,6 +53,9 @@ public:
 	Q_PROPERTY(bool					reserveIconSpace		READ reserveIconSpace		WRITE setReserveIconSpace)
 	Q_PROPERTY(QColor				checkedBarColor			READ checkedBarColor		WRITE setCheckedBarColor)
 
+	Q_PROPERTY(int					menuPaintRectOffsetX	READ menuPaintRectOffsetX	WRITE setMenuPaintRectOffsetX)
+	Q_PROPERTY(int					menuPaintRectOffsetY	READ menuPaintRectOffsetY	WRITE setMenuPaintRectOffsetY)
+
 	explicit IconButton(const QIcon& icon = QIcon(), const QString& text = QString(), QWidget* parent = nullptr);
 	virtual ~IconButton() = default;
 
@@ -141,6 +144,24 @@ public:
 		}
 	}
 
+	int menuPaintRectOffsetX() const { return _menuPaintRectOffsetX; }
+	void setMenuPaintRectOffsetX(int x) {
+		if (_menuPaintRectOffsetX != x) {
+			_menuPaintRectOffsetX = x;
+			updateRectLayout();
+			update();
+		}
+	}
+
+	int menuPaintRectOffsetY() const { return _menuPaintRectOffsetY; }
+	void setMenuPaintRectOffsetY(int y) {
+		if (_menuPaintRectOffsetY != y) {
+			_menuPaintRectOffsetY = y;
+			updateRectLayout();
+			update();
+		}
+	}
+
 	QRect iconPaintRect() const { return _iconPaintRect; }
 	QRect textPaintRect() const { return _textPaintRect; }
 	QRect menuPaintRect() const { return _menuPaintRect; }
@@ -187,6 +208,9 @@ private:
 	QRect _iconHitRect{ QRect() };
 	QRect _textHitRect{ QRect() };
 	QRect _menuHitRect{ QRect() };
+
+	int _menuPaintRectOffsetX{ 0 };
+	int _menuPaintRectOffsetY{ 0 };
 
 	HoverRegion _hoverRegion{ HoverRegion::None };
 	

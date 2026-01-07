@@ -14,7 +14,7 @@ QMainWindow {
 }
 
 SideBar{
-    background-color: palette(window);
+    background-color: palette(base);
 }
 
 #sidebarSeparator {
