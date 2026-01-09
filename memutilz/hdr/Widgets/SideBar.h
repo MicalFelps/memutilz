@@ -5,8 +5,10 @@
 #include <QTimer>
 #include <QPropertyAnimation>
 #include <QFrame>
+#include <QHash>
 
-#include "IconButton.h"
+#include "Widgets/IconButton.h"
+#include "Widgets/Pages.h"
 
 class SideBar : public QWidget {
 	Q_OBJECT
@@ -27,7 +29,6 @@ public:
 	};
 
 	explicit SideBar(
-		QWidget* contentWidget = nullptr,
 		ExpandMode mode = ExpandMode::Hover,
 		QWidget* parent = nullptr);
 	virtual ~SideBar() = default;
@@ -35,15 +36,15 @@ public:
 	void collapseNow() { collapse(false); }
 	void expandNow() { expand(false); }
 
-	void addTopButton(IconButton* button);
-	void addBottomButton(IconButton* button);
+	void addTopButton(IconButton* button, PageId id = PageId::None);
+	void addBottomButton(IconButton* button, PageId id = PageId::None);
 	// void removeButton(IconButton* button);
 
 	IconButton* selectedButton() const { return _currSelection; }
 
 signals:
 	void stateChanged(State state);
-	void selectionChanged(IconButton* button);
+	void selectedPageChanged(PageId page);
 
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
@@ -52,7 +53,7 @@ protected:
 	virtual void resizeEvent(QResizeEvent* event) override; // to update handler
 
 private slots:
-	void onNewSelection(IconButton* selectedButton);
+	void onNewSelectedPage(IconButton* selectedButton);
 	void onHandlerClicked();
 private:
 	ExpandMode _expandMode{ ExpandMode::Hover };
@@ -61,6 +62,7 @@ private:
 
 	QList<IconButton*> _topButtons{ QList<IconButton*>() };
 	QList<IconButton*> _bottomButtons{ QList<IconButton*>() };
+	QHash<IconButton*, PageId> _buttonMap{ QHash<IconButton*, PageId>() };
 	QWidget* _contentWidget{ nullptr };
 
 	QTimer* _hoverTimer{ nullptr };

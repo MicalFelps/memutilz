@@ -7,20 +7,18 @@
 #include <QPainter>
 #include <QStyleOption>
 
-SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
-	: _contentWidget{ contentWidget }
-	, _expandMode{ mode }
+SideBar::SideBar(ExpandMode mode, QWidget* parent)
+	: _expandMode{ mode }
 	, QWidget( parent )
 {
 	setMouseTracking(true);
 	setAutoFillBackground(true);
+
 	setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-
-	setAttribute(Qt::WA_StyledBackground, true);
-
 	setMinimumWidth(Ui::SideBar::collapsedWidth);
 	setMaximumWidth(Ui::SideBar::expandedWidth);
-	resize(QSize(minimumWidth(), parent->height()));
+
+	setAttribute(Qt::WA_StyledBackground, true);
 
 	if (_expandMode == ExpandMode::Hover) {
 		_hoverTimer = new QTimer(this);
@@ -36,7 +34,7 @@ SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 		});
 	}
 
-	_animation = new QPropertyAnimation(this, "geometry", this);
+	_animation = new QPropertyAnimation(this, "minimumWidth", this);
 	_animation->setDuration(Ui::SideBar::animDuration);
 	_animation->setEasingCurve(QEasingCurve::Type::OutCubic);
 
@@ -57,14 +55,12 @@ SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 		connect(_handler, &IconButton::clicked, this, [this]() {
 			onHandlerClicked();
 			});
-	}
 
-	// Change the geometry of the content widget, we start collapsed
-	if (_contentWidget) {
-		QRect target { parent->geometry() };
-		target.setWidth(target.width() - minimumWidth());
-		target.moveTopLeft(this->rect().topRight());
-		_contentWidget->setGeometry(target);
+		_handler->setIconScalePercent(50);
+		_handler->setIconTextSpacing(20);
+		_handler->setPadding({ (Ui::SideBar::buttonHeight - _handler->iconPaintRect().width()) / 2, 0, 0, 0 });
+		_handler->setProperty("group", "sidebar");
+		_handler->setFocusPolicy(Qt::NoFocus);
 	}
 
 	_separatorLine = new QFrame(this);
@@ -75,7 +71,7 @@ SideBar::SideBar(QWidget* contentWidget, ExpandMode mode, QWidget* parent)
 
 // ---------------------------------------------------------
 
-void SideBar::addTopButton(IconButton* button) {
+void SideBar::addTopButton(IconButton* button, PageId id) {
 	if (!button || _topButtons.contains(button)) return;
 
 	QRect r = this->rect();
@@ -84,16 +80,17 @@ void SideBar::addTopButton(IconButton* button) {
 		? r.moveTop(0)
 		: r.moveTop(_topButtons.last()->geometry().bottom() + 1);
 
-
 	button->setGeometry(r);
 	_topButtons.append(button);
 
-	if (button != _handler) {
+	// add to hashmap
+	_buttonMap[button] = id;
+	if (button != _handler && id != PageId::None) {
 		connect(button, &IconButton::clicked, this, [this, button]() {
-			onNewSelection(button);
+			onNewSelectedPage(button);
 		});
 	}
-	
+
 	// First button becomes selected
 	if (_topButtons.size() > 2) return;
 
@@ -102,12 +99,13 @@ void SideBar::addTopButton(IconButton* button) {
 	if (_topButtons.size() == index + 1 &&
 		_topButtons[index] == button)
 	{
-		onNewSelection(button);
+		qDebug() << index;
+		onNewSelectedPage(button);
 	}
 
-	_separatorLine->raise();
+	if(_separatorLine) _separatorLine->raise();
 }
-void SideBar::addBottomButton(IconButton* button) {
+void SideBar::addBottomButton(IconButton* button, PageId id) {
 	QRect r = this->rect();
 	r.setSize(QSize(width(), Ui::SideBar::buttonHeight));
 	_bottomButtons.isEmpty()
@@ -117,8 +115,10 @@ void SideBar::addBottomButton(IconButton* button) {
 	button->setGeometry(r);
 	_bottomButtons.append(button);
 
+	// add to hashmap
+	_buttonMap[button] = id;
 	connect(button, &IconButton::clicked, this, [this, button]() {
-		onNewSelection(button);
+		onNewSelectedPage(button);
 	});
 
 	_separatorLine->raise();
@@ -179,18 +179,11 @@ void SideBar::resizeEvent(QResizeEvent* event) {
 		b->setGeometry(r);
 		lastBottomY = b->geometry().top() - 1;
 	}
-
-	if (_contentWidget) {
-		QRect target{ _contentWidget->rect() };
-		target.setSize({ parentWidget()->width() - width(), parentWidget()->height() });
-		target.moveTopLeft(rect().topRight());
-		_contentWidget->setGeometry(target);
-	}
 }
 
 // --------------------- SLOTS ---------------------
 
-void SideBar::onNewSelection(IconButton* selectedButton) {
+void SideBar::onNewSelectedPage(IconButton* selectedButton) {
 	if (!selectedButton->isCheckable()) return; 
 
 	if (_currSelection && _currSelection != selectedButton) {
@@ -198,7 +191,10 @@ void SideBar::onNewSelection(IconButton* selectedButton) {
 	}
 	_currSelection = selectedButton;
 	_currSelection->setChecked(true);
-	emit selectionChanged(_currSelection);
+	PageId id = _buttonMap.value(_currSelection);
+	if (id != PageId::None) {
+		emit selectedPageChanged(_buttonMap.value(_currSelection));
+	}
 }
 void SideBar::onHandlerClicked() {
 	if (_state == State::Closed
@@ -227,18 +223,15 @@ void SideBar::expand(bool animate) {
 	_animation->stop();
 
 	if (!animate) {
-		QRect r = geometry();
-		r.setWidth(Ui::SideBar::expandedWidth);
-		setGeometry(r);
+		setMinimumWidth(Ui::SideBar::expandedWidth);
 		setState(State::Opened);
 		return;
 	}
 
-	QRect geom{ geometry() };
-	QRect target{ geom };
-	target.setWidth(maximumWidth());
+	int currMinW = minimumWidth();
+	int target{ Ui::SideBar::expandedWidth };
 
-	_animation->setStartValue(geom);
+	_animation->setStartValue(currMinW);
 	_animation->setEndValue(target);
 	_animation->start();
 
@@ -250,19 +243,15 @@ void SideBar::collapse(bool animate) {
 	_animation->stop();
 
 	if (!animate) {
-		QRect r = geometry();
-		r.setWidth(Ui::SideBar::collapsedWidth);
-		setGeometry(r);
+		setMinimumWidth(Ui::SideBar::collapsedWidth);
 		setState(State::Closed);
 		return;
 	}
 
-	QRect geom{ geometry() };
-	QRect target{ geom };
+	int currMinW = minimumWidth();
+	int target{ Ui::SideBar::collapsedWidth };
 
-	target.setWidth(minimumWidth());
-
-	_animation->setStartValue(geom);
+	_animation->setStartValue(currMinW);
 	_animation->setEndValue(target);
 	_animation->start();
 

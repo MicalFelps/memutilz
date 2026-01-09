@@ -2,11 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <DockManager.h>
-#include <DockWidget.h>
-#include <DockAreaWidget.h>
-
-#include "Widgets/SideBar.h"
 
 struct MainWindowPrivate;
 
@@ -15,20 +10,12 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-    virtual ~MainWindow() = default;
-
-public slots:
-    //bool openFile(const QString& fileName);
-
+    virtual ~MainWindow() override;
 protected:
-    // later if you want to save the state of anything
-    // virtual void closeEvent(QCloseEvent* parent = nullptr) override;
-    virtual void resizeEvent(QResizeEvent* event) override;
-
+    virtual void closeEvent(QCloseEvent* event) override;
 private:
-    SideBar* _sidebar{ nullptr };
-    QWidget* _content{ nullptr };
-    // void createDockWidgets();
+    MainWindowPrivate* d;
+    friend struct MainWindowPrivate;
 };
 
 #endif
