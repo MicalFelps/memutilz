@@ -506,13 +506,13 @@ void IconButton::updateRectLayout() {
 
 			if (isHorizontal) {
 				_iconHitRect.setWidth(_padding.left + scaledIconSize);
-				contentRect.adjust(scaledIconSize + (hasText ? _iconTextSpacing : 0), 0, 0, 0);
+				contentRect.adjust(scaledIconSize, 0, 0, 0);
 				buttonRect.adjust(_padding.left + scaledIconSize, 0, 0, 0);
 				if (!buttonRect.isValid()) return;
 			}
 			else {
 				_iconHitRect.setHeight(_padding.top + scaledIconSize);
-				contentRect.adjust(0, scaledIconSize + (hasText ? _iconTextSpacing : 0), 0, 0);
+				contentRect.adjust(0, scaledIconSize, 0, 0);
 				buttonRect.adjust(0, _padding.top + scaledIconSize, 0, 0);
 				if (!buttonRect.isValid()) return;
 			}
@@ -566,6 +566,8 @@ void IconButton::updateRectLayout() {
 
 	if (hasText) {
 		if (!buttonRect.isNull()) _textHitRect = buttonRect; else return; // we give the rest to text
+        if(isHorizontal){ contentRect.adjust((showIcon ? _iconTextSpacing : 0), 0, 0, 0); }
+        else { contentRect.adjust(0, (showIcon ? _iconTextSpacing : 0), 0, 0); }
 		if (!contentRect.isValid()) return;
 
 		QTextLayout layout{ text(), font() };
@@ -622,10 +624,10 @@ void IconButton::updateRectLayout() {
 		_textPaintRect.moveCenter(contentRect.center());
 
 		if (isHorizontal) {
-			_textPaintRect.moveLeft(_iconPaintRect.right() + (hasIcon ? _iconTextSpacing + 1 : 0));
+			_textPaintRect.moveLeft(_iconPaintRect.right() + (showIcon ? _iconTextSpacing + 1 : 0));
 		}
 		else {
-			_textPaintRect.moveTop(_iconPaintRect.bottom() + (hasIcon ? _iconTextSpacing + 1 : 0));
+			_textPaintRect.moveTop(_iconPaintRect.bottom() + (showIcon ? _iconTextSpacing + 1 : 0));
 		}
 	}
 }

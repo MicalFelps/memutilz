@@ -1,8 +1,8 @@
 #include "MainWindow.h"
+#include "Widgets/SideBar.h"
 #include "Widgets/IconButton.h"
 
 #include <QStackedWidget>
-#include <QMenu>
 #include "Widgets/Metrics.h"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -16,19 +16,23 @@ MainWindow::MainWindow(QWidget* parent)
 
     QList<IconButton*> buttons{ QList<IconButton*>() };
 
-    IconButton* files = new IconButton(QIcon(":/icons/file.svg"), "Files", _sidebar);
-    IconButton* view = new IconButton(QIcon(":/icons/eye.svg"), "Memory View", _sidebar);
+    IconButton* explorer = new IconButton(QIcon(":/icons/processor.svg"), "Explorer", _sidebar);
+    IconButton* debug = new IconButton(QIcon(":/icons/debug.svg"), "Debug", _sidebar);
+    IconButton* scan = new IconButton(QIcon(":/icons/search.svg"), "Scan", _sidebar);
     IconButton* settings = new IconButton(QIcon(":/icons/settings.svg"), "Settings", _sidebar);
 
-    buttons.append(files);
-    buttons.append(view);
+    buttons.append(explorer);
+    buttons.append(debug);
+    buttons.append(scan);
     buttons.append(settings);
 
-    files->setCheckable(true);
-    view->setCheckable(true);
+    explorer->setCheckable(true);
+    debug->setCheckable(true);
+    scan->setCheckable(true);
 
-    _sidebar->addTopButton(files);
-    _sidebar->addTopButton(view);
+    _sidebar->addTopButton(explorer);
+    _sidebar->addTopButton(debug);
+    _sidebar->addTopButton(scan);
     _sidebar->addBottomButton(settings);
 
     for (auto& b : buttons) {

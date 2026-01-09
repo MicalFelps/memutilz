@@ -1,5 +1,5 @@
-#ifndef SIDEBAR_H
-#define SIDEBAR_H
+#ifndef WIDGETS_SIDEBAR_H
+#define WIDGETS_SIDEBAR_H
 
 #include <QWidget>
 #include <QTimer>

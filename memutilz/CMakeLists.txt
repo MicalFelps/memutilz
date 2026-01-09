@@ -50,6 +50,7 @@ set(MEMUTILZ_HEADERS
     hdr/Options.h
     hdr/Widgets/IconButton.h
     hdr/Widgets/Metrics.h
+    hdr/Widgets/Pages.h
     hdr/Widgets/SideBar.h
 )
 
