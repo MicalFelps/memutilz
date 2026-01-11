@@ -2,8 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <SARibbonMainWindow.h>
+#include <SARibbonBar.h>
 
 struct MainWindowPrivate;
+
 
 class MainWindow : public QMainWindow {
     Q_OBJECT

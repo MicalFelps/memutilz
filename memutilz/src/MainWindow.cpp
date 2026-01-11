@@ -69,7 +69,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* _public)
 }
 
 void MainWindowPrivate::createSidebar() {
-    _sidebar = new SideBar(SideBar::ExpandMode::Click);
+    _sidebar = new SideBar(SideBar::ExpandMode::Hover);
 
     QList<IconButton*> buttons{ QList<IconButton*>() };
 
@@ -77,6 +77,8 @@ void MainWindowPrivate::createSidebar() {
     IconButton* debug = new IconButton(QIcon(":/icons/debug.svg"), "Debug", _sidebar);
     IconButton* scan = new IconButton(QIcon(":/icons/search.svg"), "Scan", _sidebar);
     IconButton* settings = new IconButton(QIcon(":/icons/settings.svg"), "Settings", _sidebar);
+
+    explorer->setCheckable(true);
 
     _sidebar->addTopButton(explorer, PageId::Explorer);
     _sidebar->addTopButton(debug, PageId::Debug);
@@ -96,8 +98,6 @@ void MainWindowPrivate::createSidebar() {
         b->setProperty("group", "sidebar");
         b->setFocusPolicy(Qt::NoFocus);
     }
-
-    qDebug() << _sidebar->rect();
 }
 void MainWindowPrivate::createContent() {
     if(_content == nullptr) _content = new QStackedWidget();

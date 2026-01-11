@@ -38,9 +38,7 @@ public:
 
 	void addTopButton(IconButton* button, PageId id = PageId::None);
 	void addBottomButton(IconButton* button, PageId id = PageId::None);
-	// void removeButton(IconButton* button);
-
-	IconButton* selectedButton() const { return _currSelection; }
+	void removeButton(IconButton* button);
 
 signals:
 	void stateChanged(State state);
@@ -53,7 +51,7 @@ protected:
 	virtual void resizeEvent(QResizeEvent* event) override; // to update handler
 
 private slots:
-	void onNewSelectedPage(IconButton* selectedButton);
+	void onNewSelection(IconButton* selectedButton);
 	void onHandlerClicked();
 private:
 	ExpandMode _expandMode{ ExpandMode::Hover };
@@ -63,7 +61,6 @@ private:
 	QList<IconButton*> _topButtons{ QList<IconButton*>() };
 	QList<IconButton*> _bottomButtons{ QList<IconButton*>() };
 	QHash<IconButton*, PageId> _buttonMap{ QHash<IconButton*, PageId>() };
-	QWidget* _contentWidget{ nullptr };
 
 	QTimer* _hoverTimer{ nullptr };
 	bool _hovering{ false };

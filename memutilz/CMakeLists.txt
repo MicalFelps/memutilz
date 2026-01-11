@@ -3,16 +3,26 @@ set(QT_NO_PRIVATE_MODULE_WARNING ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 # qt_standard_project_setup()
 
-# QADS - always fetch for consistency
+# Always fetch for consistency
+# - QADS
+# - SARibbon
 if(MEMUTILZ_FETCH_DEPS)
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
     FetchContent_Declare(
         qtadvanceddocking
         GIT_REPOSITORY https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git
         GIT_TAG 4.4.1
     )
+    set(BUILD_EXAMPLES OFF CACHE BOOL "Disable Build QADS Examples" FORCE)
+
+    FetchContent_Declare(
+        SARibbon
+        GIT_REPOSITORY https://github.com/czyt1988/SARibbon.git
+        GIT_TAG        master
+    )
+    set(SARIBBON_BUILD_EXAMPLES    OFF CACHE BOOL "Disable Build SARibbon Examples" FORCE)
+    set(SARIBBON_BUILD_TESTS       OFF CACHE BOOL "Disable SARibbon Tests"    FORCE)
     FetchContent_MakeAvailable(qtadvanceddocking)
+    FetchContent_MakeAvailable(SARibbon)
 endif()
 
 # Platform Specific
@@ -28,7 +38,6 @@ endif()
 ### Executable
 
 add_executable(memutilz_ui ${GUI_TYPE})
-
 set_target_properties(memutilz_ui PROPERTIES
     OUTPUT_NAME "memutilz"
 )
@@ -63,7 +72,6 @@ set(MEMUTILZ_SOURCES
 
 set(MEMUTILZ_RESOURCES
     rsrc/MainWindow.qrc
-    # rsrc/MainWindow.ui
     rsrc/memutilz.rc
 )
 
@@ -78,9 +86,6 @@ set_target_properties(memutilz_ui PROPERTIES
     AUTOMOC ON
     AUTOUIC ON
     AUTORCC ON
-
-    # Helps AUTOUIC find the ui file
-    # AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/rsrc"
 )
 
 ### Dependancies
@@ -89,6 +94,7 @@ target_link_libraries(memutilz_ui
     PRIVATE
         memutilz_lib
         qtadvanceddocking-qt6
+        SARibbonBar
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -115,30 +121,42 @@ target_compile_definitions(memutilz_ui
 ### POST-BUILD
 
 if(WIN32)
-    get_target_property(_qt6_qmake_location Qt6::qmake IMPORTED_LOCATION)
-    get_filename_component(_qt6_bin_dir "${_qt6_qmake_location}" DIRECTORY)
+    get_target_property(_qt6_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
+    if(NOT _qt6_core_location)
+        get_target_property(_qt6_core_location Qt6::Core IMPORTED_LOCATION)
+    endif()
+    get_filename_component(_qt6_bin_dir "${_qt6_core_location}" DIRECTORY)
 
-    # Run windeployqt
+    if(NOT EXISTS "${_qt6_bin_dir}/windeployqt.exe")
+        cmake_path(GET Qt6_DIR PARENT_PATH _qt6_root)
+        cmake_path(APPEND _qt6_bin_dir "${_qt6_root}" "bin")
+    endif()
+
     add_custom_command(TARGET memutilz_ui POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E env PATH="${_qt6_bin_dir}" 
+        COMMAND "${CMAKE_COMMAND}" -E env "PATH=${_qt6_bin_dir}"
             "${_qt6_bin_dir}/windeployqt.exe"
+            --no-translations --no-quick-import --no-system-d3d-compiler
             "$<TARGET_FILE:memutilz_ui>"
-        COMMENT "Running windeployqt on Windows..."
+        COMMENT "[1] Deploying Qt runtime with windeployqt"
+        VERBATIM
     )
 
     add_custom_command(TARGET memutilz_ui POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SARibbonBar>
+            $<TARGET_FILE_DIR:memutilz_ui>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:qtadvanceddocking-qt6>
             $<TARGET_FILE_DIR:memutilz_ui>
-        COMMENT "Moving qtadvanceddocking-qt6.dll to output directory"
+        COMMENT "[2] Moving DLLs to output directory"
+        VERBATIM
     )
 
-    # NEW: Robust PDB copy (only if PDB exists)
     add_custom_command(TARGET memutilz_ui POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_PDB_FILE:qtadvanceddocking-qt6>
             $<TARGET_FILE_DIR:memutilz_ui>
-        COMMENT "Moving qtadvanceddocking-qt6.pdb to output directory"
+        COMMENT "[3] Moving PDBs to output directory"
         VERBATIM
     )
 endif()

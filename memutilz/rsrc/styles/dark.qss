@@ -33,7 +33,7 @@ IconButton:hover {
 
 IconButton[group="sidebar"]:hover {
     background-color: palette(alternate-base);
-    border: none;
+    border: 1px solid palette(highlight);
 }
 
 IconButton:focus {

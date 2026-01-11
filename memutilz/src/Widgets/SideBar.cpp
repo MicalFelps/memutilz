@@ -18,7 +18,7 @@ SideBar::SideBar(ExpandMode mode, QWidget* parent)
 	setMinimumWidth(Ui::SideBar::collapsedWidth);
 	setMaximumWidth(Ui::SideBar::expandedWidth);
 
-	setAttribute(Qt::WA_StyledBackground, true);
+	// setAttribute(Qt::WA_StyledBackground, true);
 
 	if (_expandMode == ExpandMode::Hover) {
 		_hoverTimer = new QTimer(this);
@@ -60,13 +60,13 @@ SideBar::SideBar(ExpandMode mode, QWidget* parent)
 		_handler->setIconTextSpacing(20);
 		_handler->setPadding({ (Ui::SideBar::buttonHeight - _handler->iconPaintRect().width()) / 2, 0, 0, 0 });
 		_handler->setProperty("group", "sidebar");
-		_handler->setFocusPolicy(Qt::NoFocus);
 	}
 
 	_separatorLine = new QFrame(this);
 	_separatorLine->setObjectName("sidebarSeparator");
 	_separatorLine->setFrameShape(QFrame::HLine);
 	_separatorLine->setFrameShadow(QFrame::Sunken);
+	_separatorLine->setVisible(false);
 }
 
 // ---------------------------------------------------------
@@ -87,20 +87,19 @@ void SideBar::addTopButton(IconButton* button, PageId id) {
 	_buttonMap[button] = id;
 	if (button != _handler && id != PageId::None) {
 		connect(button, &IconButton::clicked, this, [this, button]() {
-			onNewSelectedPage(button);
+			onNewSelection(button);
 		});
 	}
 
 	// First button becomes selected
-	if (_topButtons.size() > 2) return;
+	if (_topButtons.size() > 2 || _topButtons.isEmpty()) return;
 
 	const int index = (_handler != nullptr) ? 1 : 0;
 
 	if (_topButtons.size() == index + 1 &&
 		_topButtons[index] == button)
 	{
-		qDebug() << index;
-		onNewSelectedPage(button);
+		onNewSelection(button);
 	}
 
 	if(_separatorLine) _separatorLine->raise();
@@ -118,10 +117,36 @@ void SideBar::addBottomButton(IconButton* button, PageId id) {
 	// add to hashmap
 	_buttonMap[button] = id;
 	connect(button, &IconButton::clicked, this, [this, button]() {
-		onNewSelectedPage(button);
+		onNewSelection(button);
 	});
 
 	_separatorLine->raise();
+}
+void SideBar::removeButton(IconButton* button) {
+	if (_buttonMap.contains(button) && button != _handler) {
+		_buttonMap.remove(button);
+
+		if (_bottomButtons.contains(button)) {
+			_bottomButtons.removeOne(button);
+
+			int lastTopY{ rect().bottom() };
+
+			for (auto& b : _bottomButtons) {
+				b->move(b->x(), lastTopY - b->height());
+				lastTopY = b->y();
+			}
+		}
+		else { // in top buttons
+			_topButtons.removeOne(button);
+
+			int lastBottomY{ rect().top() };
+
+			for (auto& b : _topButtons) {
+				b->move(b->x(), lastBottomY);
+				lastBottomY += b->height();
+			}
+		}
+	}
 }
 
 // ------------------- PROTECTED -------------------
@@ -136,6 +161,8 @@ void SideBar::paintEvent(QPaintEvent* event) {
 
 	// background and border
 	style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+
+	if (_topButtons.isEmpty() || _bottomButtons.isEmpty()) return;
 
 	const int topY = _bottomButtons.last()->y();
 	const int bottomY = _topButtons.last()->y() + _topButtons.last()->height();
@@ -169,21 +196,21 @@ void SideBar::resizeEvent(QResizeEvent* event) {
 		b->setGeometry({QPoint(b->pos()), QSize(width(), b->height())});
 	}
 
-	int lastBottomY{rect().bottom()};
+	int lastTopY{rect().bottom()};
 
 	for (auto& b : _bottomButtons) {
 		QRect r{};
 		r.setSize(QSize(width(), b->height()));
-		r.moveBottom(lastBottomY);
+		r.moveBottom(lastTopY);
 
 		b->setGeometry(r);
-		lastBottomY = b->geometry().top() - 1;
+		lastTopY = b->geometry().top() - 1;
 	}
 }
 
 // --------------------- SLOTS ---------------------
 
-void SideBar::onNewSelectedPage(IconButton* selectedButton) {
+void SideBar::onNewSelection(IconButton* selectedButton) {
 	if (!selectedButton->isCheckable()) return; 
 
 	if (_currSelection && _currSelection != selectedButton) {
@@ -191,6 +218,7 @@ void SideBar::onNewSelectedPage(IconButton* selectedButton) {
 	}
 	_currSelection = selectedButton;
 	_currSelection->setChecked(true);
+
 	PageId id = _buttonMap.value(_currSelection);
 	if (id != PageId::None) {
 		emit selectedPageChanged(_buttonMap.value(_currSelection));

@@ -17,7 +17,7 @@ IconButton::IconButton(const QIcon& icon, const QString& text, QWidget* parent)
 	setPopupMode(QToolButton::DelayedPopup);
 	setAttribute(Qt::WA_Hover, true);
 
-	setFocusPolicy(Qt::TabFocus);
+	setFocusPolicy(Qt::NoFocus);
 
 	connect(this, &IconButton::toggled, this, [this](bool checked) {
 		if (!checked) clearFocus(); });
