@@ -1,0 +1,14 @@
+* {
+    font-family: "Inter 18pt";
+    font-size: 10pt;
+    color: palette(text);
+}
+
+QWidget {
+    background-color: palette(window);
+    border: 1px solid transparent;
+}
+
+QMainWindow {
+    background-color: palette(window);
+}

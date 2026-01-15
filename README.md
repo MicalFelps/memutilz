@@ -1,3 +1,3 @@
 # memutilz
 
-Primarily a cross-platform memory utility library, and optionally memory manipulation tool.
+My cross-platform cheat engine clone (because I hate CE's UI).

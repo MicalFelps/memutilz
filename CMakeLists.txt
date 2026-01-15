@@ -1,99 +1,110 @@
 cmake_minimum_required(VERSION 3.28)
+
+# Takes care of potential symlinks
+file(REAL_PATH "${CMAKE_SOURCE_DIR}" SRC_DIR)
+file(REAL_PATH "${CMAKE_BINARY_DIR}" BIN_DIR)
+
+# Prevent in-source builds
+if(SRC_DIR STREQUAL BIN_DIR)
+    message(FATAL_ERROR
+        "In-source builds aren't allowed\n"
+        "Create a separate build directory and run cmake from there\n"
+    )
+endif()
+
+cmake_policy(SET CMP0135 NEW) # FetchContent timestamp handling
+
 project(
-    "memutilz"
-    VERSION 2.0.0
-    LANGUAGES C CXX
+    memutilz
+    VERSION 1.0.0
+    HOMEPAGE_URL https://github.com/MicalFelps/memutilz
+    LANGUAGES CXX C
 )
 
-### Global options
-option(BUILD_SHARED_LIBS "Build dynamic libraries (.dll/.so) instead of static libs" OFF)
-option(MEMUTILZ_BUILD_UI "Build the QT-based executable (UI) alongside the library" ON)
-option(MEMUTILZ_FETCH_DEPS "Automatically fetch third-party dependencies if not found on the system" ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-### Set architecture based on configuration
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(ARCH "" CACHE STRING "Target architecture (x86 or x64)")
-set_property(CACHE ARCH PROPERTY STRINGS "x86" "x64")
+include(Options)
+include(TargetConfig)
 
-# Auto-detect architecture if not set
-if(NOT ARCH)
-    if(DEFINED CMAKE_GENERATOR_PLATFORM)
-        if(CMAKE_GENERATOR_PLATFORM MATCHES "^(x64|Win64|AMD64|x86_64)$")
-            set(ARCH "x64")
-        elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^(Win32|x86)$")
-            set(ARCH "x86")
-        endif()
-    endif()
-
-    # Fallback detection based on pointer size
-    if(NOT ARCH)
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            set(ARCH "x64")
-        else()
-            set(ARCH "x86")
-        endif()
-    endif()
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+    message(STATUS "No build type selected, defaulting to Debug")
 endif()
 
-# Validate ARCH value
-if(NOT ARCH STREQUAL "x86" AND NOT ARCH STREQUAL "x64")
-    message(FATAL_ERROR "ARCH must be 'x86' or 'x64', got: '${ARCH}'")
-endif()
+message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
-message(STATUS "Building for architecture: ${ARCH}")
+# ---- dependencies ----
 
-### Output Directories
+include(cmake/CPM.cmake)
+set(CPM_VERBOSE TRUE CACHE BOOL "Enable verbose CPM output" FORCE)
 
-# Artifacts always go build/binaries/<arch>/
-set(_base "${CMAKE_SOURCE_DIR}/build/binaries/${ARCH}")
-
-# Should work fine with whatever generator
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${_base}/bin/$<LOWER_CASE:$<CONFIG>>")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${_base}/lib/$<LOWER_CASE:$<CONFIG>>")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${_base}/lib/$<LOWER_CASE:$<CONFIG>>")
-
-### Dependancies
-
-# For easy dependancy management
-# Prefer system-installed, fallback to fetch if option enabled
-include(FetchContent)
-
-# Zydis (for disassembly)
-find_package(Zydis QUIET)
-if(NOT Zydis_FOUND AND MEMUTILZ_FETCH_DEPS)
-    message(STATUS "Zydis not found; fetching via FetchContent...")
-    FetchContent_Declare(
-        Zydis
-        GIT_REPOSITORY https://github.com/zyantific/zydis.git
+if(NOT TARGET Zydis)
+    CPMAddPackage(
+        NAME Zydis
+        GITHUB_REPOSITORY zyantific/zydis
         GIT_TAG v4.1.1
+        EXCLUDE_FROM_ALL TRUE
     )
-    FetchContent_MakeAvailable(Zydis)
 endif()
 
-# Make sure it exists now
-if(NOT TARGET Zydis AND NOT Zydis_FOUND)
-    message(FATAL_ERROR "Zydis library not found. Set MEMUTILZ_FETCH_DEPS=ON or install Zydis system-wide.")
+# ---- subdirectories ----
+
+include(GNUInstallDirs)
+
+if(PROJECT_IS_TOP_LEVEL AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory" FORCE)
 endif()
 
-# Create Alias
-if(NOT TARGET zydis::zydis)
-    if(TARGET Zydis)
-        add_library(zydis::zydis ALIAS Zydis)
-    elseif(TARGET Zydis::Zydis)
-        add_library(zydis::zydis ALIAS Zydis::Zydis)
-    endif()
+add_subdirectory(src)
+
+if(MEMUTILZ_BUILD_APPS)
+    add_subdirectory(apps)
 endif()
 
-### Subdirectories
-
-if(WIN32)
-    add_subdirectory(agent)     # Injectable DLL for windows (only)
-else()
-    message(STATUS "Skipping agent.dll (Windows only)")
+if(MEMUTILZ_BUILD_PLUGINS)
+    add_subdirectory(plugins)
 endif()
 
-add_subdirectory(lib)       # Main library (static/shared)
+include(CTest)
 
-if(MEMUTILZ_BUILD_UI)
-    add_subdirectory(memutilz)  # QT executable (UI app)
+if(BUILD_TESTING)
+    add_subdirectory(test)
 endif()
+
+# ---- Installation ----
+
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/memutilzConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    cmake/memutilzConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/memutilzConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memutilz
+)
+
+# Export targets for find_package()
+install(
+    EXPORT memutilzTargets
+    FILE memutilzTargets.cmake
+    NAMESPACE memutilz::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memutilz
+    COMPONENT memutilz
+)
+
+# Install config files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/memutilzConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/memutilzConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memutilz
+    COMPONENT memutilz
+)

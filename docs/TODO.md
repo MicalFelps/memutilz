@@ -1,0 +1,1 @@
+1. make sure cmake files are properly configured

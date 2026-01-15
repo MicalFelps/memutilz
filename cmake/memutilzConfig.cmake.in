@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+check_required_components(memutilz)
+
+include("${CMAKE_CURRENT_LIST_DIR}/memutilzTargets.cmake")
+
+set(memutilz_VERSION "@PROJECT_VERSION@")
