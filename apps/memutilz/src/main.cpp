@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
     a.setPalette(dark);
 
-    QFile style(":/styles/dark.qss");
+    QFile style(":/styles/default.qss");
     style.open(QFile::ReadOnly);
     QString styleSheet = style.readAll();
     a.setStyleSheet(styleSheet);

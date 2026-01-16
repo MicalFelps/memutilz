@@ -35,3 +35,9 @@ target_link_libraries(agent PRIVATE
     psapi
     ntdll
 )
+
+install(TARGETS agent
+    EXPORT memutilzTargets
+    RUNTIME DESTINATION    ${CMAKE_INSTALL_BINDIR}/plugins
+    COMPONENT plugins
+)

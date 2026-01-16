@@ -9,3 +9,5 @@ option(MEMUTILZ_ENABLE_ASAN     "Enable Address Sanitizer"            OFF)
 option(MEMUTILZ_ENABLE_UBSAN    "Enable Undefined Behavior Sanitizer" OFF)
 option(MEMUTILZ_ENABLE_COVERAGE "Enable code coverage"                OFF)
 option(MEMUTILZ_ENABLE_IPO		"Enable Interprocedural Optimization (LTO) when supported" ON)
+
+option(MEMUTILZ_USE_LOCAL_DEPS  "Use local copies of third-party dependencies" ON)

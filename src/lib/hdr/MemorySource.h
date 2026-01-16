@@ -1,8 +1,11 @@
-#ifndef MEMORYSOURCE_H
+﻿#ifndef MEMORYSOURCE_H
 #define MEMORYSOURCE_H
 
 #include <cstdint>
 #include <optional>
+#include <string>
+#include <sstream>
+#include <iomanip>
 
 class MemorySource {
 	virtual ~MemorySource() = default;
@@ -14,5 +17,7 @@ class MemorySource {
 };
 
 int give_10() { return 10; }
+
+__declspec(dllexport) std::string basic_zydis_disasm(const uint8_t* bytes, size_t length);
 
 #endif

@@ -40,17 +40,15 @@ message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
 # ---- dependencies ----
 
-include(cmake/CPM.cmake)
-set(CPM_VERBOSE TRUE CACHE BOOL "Enable verbose CPM output" FORCE)
+set(MEMUTILZ_DEPENDENCY_DIR "${CMAKE_SOURCE_DIR}/ext")
 
-if(NOT TARGET Zydis)
-    CPMAddPackage(
-        NAME Zydis
-        GITHUB_REPOSITORY zyantific/zydis
-        GIT_TAG v4.1.1
-        EXCLUDE_FROM_ALL TRUE
-    )
-endif()
+include(CPM)
+include(deps/Versions)
+
+# Zydis
+include(deps/Zydis)
+memutilz_add_zydis()
+add_library(memutilz::zydis ALIAS Zydis)
 
 # ---- subdirectories ----
 

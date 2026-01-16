@@ -1,1 +1,3 @@
-1. make sure cmake files are properly configured
+1. Fix dependencies issues
+	- installation
+	- proper linking

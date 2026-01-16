@@ -1,5 +1,4 @@
 include(TargetConfig)
-
 add_library(memutilz_lib)
 memutilz_configure_target(memutilz_lib)
 
@@ -29,7 +28,7 @@ target_sources(memutilz_lib
 
 target_link_libraries(memutilz_lib
     PRIVATE
-        Zydis
+        memutilz::zydis
 )
 
 if(WIN32 AND BUILD_SHARED_LIBS)
@@ -40,10 +39,10 @@ endif()
 
 install(TARGETS memutilz_lib
     EXPORT memutilzTargets
-    LIBRARY DESTINATION    ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION    ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION    ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION   ${CMAKE_INSTALL_INCLUDEDIR}
+    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT memutilz
 )
 

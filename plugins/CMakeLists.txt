@@ -1,5 +1,3 @@
-if(MEMUTILZ_BUILD_PLUGINS)
-    if(WIN32)
-        add_subdirectory(agent)
-    endif()
+if(WIN32)
+    add_subdirectory(agent)
 endif()
