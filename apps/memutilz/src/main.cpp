@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     dark.setColor(QPalette::AlternateBase, QColor("#181818"));
 
     dark.setColor(QPalette::Button, QColor("#101010"));
-    dark.setColor(QPalette::Mid, QColor("#121212"));
+    dark.setColor(QPalette::Mid, QColor("#212121"));
 
     dark.setColor(QPalette::Text, QColor("#ffffff"));
     dark.setColor(QPalette::ButtonText, QColor("#ffffff"));
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
     a.setPalette(dark);
 
-    QFile style(":/styles/default.qss");
+    QFile style(":/styles/dark.qss");
     style.open(QFile::ReadOnly);
     QString styleSheet = style.readAll();
     a.setStyleSheet(styleSheet);

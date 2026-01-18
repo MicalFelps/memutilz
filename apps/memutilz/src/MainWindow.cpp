@@ -1,43 +1,79 @@
-#include <QBoxLayout.h>
+#include <QMessageBox.h>
+#include <QFile>
+
+#include <SARibbonBar.h>
+
 #include "MainWindow.h"
-#include <MemorySource.h>
+#include "ApplicationWidget.h"
+#include "CentralDockingArea.h"
 
 struct MainWindowPrivate {
     MainWindow* _this;
-    QWidget* _central{ nullptr };
-    QHBoxLayout* _layout{ nullptr };
+    ApplicationWidget* applicationWidget{ nullptr };
+    CentralDockingArea* centralDockingArea{ nullptr };
 
-    MainWindowPrivate(MainWindow* _public);
+    void setupUi();
+
+    /*
+    void createRibbonApplicationButton();
+
+    void createCategoryDebug(SARibbonCategory* page);
+    void createCategoryView(SARibbonCategory* page);
+    void createCategoryTools(SARibbonCategory* page);
+
+    void createCentralDockingArea();
+    */
+
+    void setDarkStyle();
+
+    MainWindowPrivate(MainWindow* _public) : _this{ _public } {}
 };
 
-MainWindowPrivate::MainWindowPrivate(MainWindow* _public)
-    : _this{ _public }
-    , _central{ new QWidget(_this) }
-    , _layout{ new QHBoxLayout(_central) }
-{
+void MainWindowPrivate::setupUi() {
+    _this->setWindowTitle(qApp->applicationName() % " v" % qApp->applicationVersion());
+    _this->resize(1600, 900);
+
+    setDarkStyle();
+
+}
+
+void MainWindowPrivate::setDarkStyle() {
+    SARibbonBar* ribbon = _this->ribbonBar();
+    ribbon->setWindowTitleTextColor(qApp->palette().text().color());
+
+    QFile style(":/styles/saribbon.qss");
+    style.open(QFile::ReadOnly);
+    QString styleSheet = style.readAll();
+    ribbon->setStyleSheet(styleSheet);
+
+
+
+
 }
 
 // ------------------------------------------------------------------
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent)
-    , d{ new MainWindowPrivate(this) } {
-
-    setMinimumSize(250, 50);
-    resize(1600, 900);
-
-    uint8_t code[] = {
-        0x48, 0x89, 0xE5,                    // mov rbp, rsp
-        0x48, 0x83, 0xEC, 0x30,              // sub rsp, 48
-        0x48, 0x8D, 0x05, 0x00, 0x00, 0x00, 0x00,  // lea rax, [rip]
-        0xC3                                 // ret
-    };
-
-    std::string result = basic_zydis_disasm(code, sizeof(code));
-    qDebug() << result << "\n";
+    : SARibbonMainWindow(parent)
+    , d{ new MainWindowPrivate(this) }
+{
+    d->setupUi();
 }
-MainWindow::~MainWindow() { delete d; }
+
+MainWindow::~MainWindow() {
+    delete d;
+}
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    QMainWindow::closeEvent(event);
+    auto r = QMessageBox::question(this
+        , "Exit"
+        , "Do you really want to exit?"
+        , QMessageBox::Yes | QMessageBox::No);
+
+    if (r == QMessageBox::Yes) {
+        event->accept();
+    }
+    else {
+        event->ignore();
+    }
 }

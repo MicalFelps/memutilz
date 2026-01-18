@@ -8,13 +8,8 @@ CPMAddPackage(
         "BUILD_EXAMPLES OFF"
 )
 
-CPMAddPackage(
-    NAME SARibbon
-    GITHUB_REPOSITORY czyt1988/SARibbon
-    GIT_TAG ${SARIBBON_VER}
-    OPTIONS
-        "SARIBBON_BUILD_EXAMPLES OFF"
-)
+include(deps/SARibbon)
+memutilz_add_saribbon()
 
 if(WIN32)
     set(GUI_TYPE WIN32)
@@ -78,13 +73,13 @@ target_link_libraries(memutilz_ui
         Qt6::Widgets
 )
 
+
+
 install(
     TARGETS memutilz_ui
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT apps
 )
-
-message(STATUS "GOOD SO FAR")
 
 install(TARGETS memutilz_lib qtadvanceddocking-qt6 SARibbonBar
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -93,6 +88,15 @@ install(TARGETS memutilz_lib qtadvanceddocking-qt6 SARibbonBar
 )
 
 if(WIN32)
+    set(MEMUTILZ_UI_RUNTIME_DEPS memutilz_lib qtadvanceddocking-qt6 SARibbonBar)
+    foreach(_dependency IN LISTS MEMUTILZ_UI_RUNTIME_DEPS)
+        add_custom_command(TARGET memutilz_ui POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${_dependency}>
+                $<TARGET_FILE_DIR:memutilz_ui>
+        )
+    endforeach()
+
     add_custom_command(TARGET memutilz_ui POST_BUILD
         COMMAND Qt6::windeployqt
             $<$<CONFIG:Debug>:--debug>

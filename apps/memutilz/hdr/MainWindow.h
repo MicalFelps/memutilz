@@ -1,17 +1,20 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+#include <QCloseEvent>
+
+#include <SARibbonMainWindow.h>
+
 
 struct MainWindowPrivate;
 
-
-class MainWindow : public QMainWindow {
+class MainWindow : public SARibbonMainWindow {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     virtual ~MainWindow() override;
+
 protected:
     virtual void closeEvent(QCloseEvent* event) override;
 private:

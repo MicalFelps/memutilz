@@ -1,4 +1,4 @@
-* {
+﻿* {
     font-family: "Inter 18pt";
     font-size: 10pt;
     color: palette(text);

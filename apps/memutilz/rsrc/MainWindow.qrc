@@ -1,9 +1,14 @@
 <RCC>
     <qresource prefix="/icons">
         <file alias="memutilz.ico">memutilz.ico</file>
+        <file alias="saribbon/close.svg">icons/saribbon/close.svg</file>
+        <file alias="saribbon/maximize.svg">icons/saribbon/maximize.svg</file>
+        <file alias="saribbon/minimize.svg">icons/saribbon/minimize.svg</file>
+        <file alias="saribbon/normal.svg">icons/saribbon/normal.svg</file>
     </qresource>
     <qresource prefix="/styles">
-        <file alias="default.qss">styles/default.qss</file>
+        <file alias="dark.qss">styles/dark.qss</file>
+        <file alias="saribbon.qss">styles/saribbon.qss</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Inter_18pt-Regular.ttf">fonts/Inter_18pt-Regular.ttf</file>
