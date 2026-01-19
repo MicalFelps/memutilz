@@ -8,7 +8,6 @@
     </qresource>
     <qresource prefix="/styles">
         <file alias="dark.qss">styles/dark.qss</file>
-        <file alias="saribbon.qss">styles/saribbon.qss</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Inter_18pt-Regular.ttf">fonts/Inter_18pt-Regular.ttf</file>

@@ -1,7 +1,7 @@
 #include <QMessageBox.h>
-#include <QFile>
 
 #include <SARibbonBar.h>
+#include <SARibbonGlobal.h>
 
 #include "MainWindow.h"
 #include "ApplicationWidget.h"
@@ -14,17 +14,26 @@ struct MainWindowPrivate {
 
     void setupUi();
 
-    /*
+
+    // SARibbon
     void createRibbonApplicationButton();
 
     void createCategoryDebug(SARibbonCategory* page);
     void createCategoryView(SARibbonCategory* page);
     void createCategoryTools(SARibbonCategory* page);
 
-    void createCentralDockingArea();
-    */
+    void createQuickAccessBar();
+    void createRightButtonGroup();
+    void createWindowButtonGroupBar();
 
-    void setDarkStyle();
+    QAction* createAction(const QString& text, const QString& iconurl, const QString& objName);
+    QAction* createAction(const QString& text, const QString& iconurl);
+
+    // Docking Area
+    void createCentralDockingArea();
+
+    // Style
+    void setTheme();
 
     MainWindowPrivate(MainWindow* _public) : _this{ _public } {}
 };
@@ -33,22 +42,14 @@ void MainWindowPrivate::setupUi() {
     _this->setWindowTitle(qApp->applicationName() % " v" % qApp->applicationVersion());
     _this->resize(1600, 900);
 
-    setDarkStyle();
-
+    setTheme();
+    
+    _this->setRibbonTheme(SARibbonTheme::RibbonThemeDark3);
 }
 
-void MainWindowPrivate::setDarkStyle() {
+void MainWindowPrivate::setTheme() {
     SARibbonBar* ribbon = _this->ribbonBar();
     ribbon->setWindowTitleTextColor(qApp->palette().text().color());
-
-    QFile style(":/styles/saribbon.qss");
-    style.open(QFile::ReadOnly);
-    QString styleSheet = style.readAll();
-    ribbon->setStyleSheet(styleSheet);
-
-
-
-
 }
 
 // ------------------------------------------------------------------
@@ -59,7 +60,6 @@ MainWindow::MainWindow(QWidget* parent)
 {
     d->setupUi();
 }
-
 MainWindow::~MainWindow() {
     delete d;
 }

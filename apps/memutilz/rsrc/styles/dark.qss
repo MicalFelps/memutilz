@@ -12,3 +12,8 @@ QWidget {
 QMainWindow {
     background-color: palette(window);
 }
+
+SARibbonApplicationWidget{
+    background-color: palette(window);
+    color: palette(text);
+}
