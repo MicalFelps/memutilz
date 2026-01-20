@@ -1,11 +1,11 @@
-#include "MainWindow.h"
-#include "Options.h"
-
 #include <QApplication>
 #include <QFontDatabase>
 #include <QCommandLineParser>
 #include <QStyleFactory>
 #include <QFile>
+
+#include "MainWindow.h"
+#include "Options.h"
 
 static void loadFonts() {
 
@@ -54,18 +54,26 @@ int main(int argc, char* argv[])
     QPalette dark;
 
     dark.setColor(QPalette::Window, QColor("#0b0b0b"));
-    dark.setColor(QPalette::Base, QColor("#101010"));
-    dark.setColor(QPalette::AlternateBase, QColor("#181818"));
+    dark.setColor(QPalette::WindowText, QColor("#bbbbbb"));
 
-    dark.setColor(QPalette::Button, QColor("#101010"));
-    dark.setColor(QPalette::Mid, QColor("#212121"));
+    dark.setColor(QPalette::Base, QColor("#121212"));
+    dark.setColor(QPalette::AlternateBase, QColor("#181818"));  // checked / alternate rows
 
-    dark.setColor(QPalette::Text, QColor("#ffffff"));
-    dark.setColor(QPalette::ButtonText, QColor("#ffffff"));
-    dark.setColor(QPalette::WindowText, QColor("#ffffff"));
+    dark.setColor(QPalette::ToolTipBase, QColor("#202020"));
+    dark.setColor(QPalette::ToolTipText, QColor("#e6e6e6"));
 
-    dark.setColor(QPalette::Highlight, QColor("#ffffff"));
-    dark.setColor(QPalette::HighlightedText, QColor("#000000"));
+    dark.setColor(QPalette::Text, QColor("#d8d8d8"));
+    dark.setColor(QPalette::Button, QColor("#1c1c1c"));
+    dark.setColor(QPalette::ButtonText, QColor("#d6d6d6"));
+    dark.setColor(QPalette::BrightText, QColor("#ffffff"));  // warnings / emphasis only
+
+    dark.setColor(QPalette::Light, QColor("#2a2a2a"));     // raised edges / highlight
+    dark.setColor(QPalette::Midlight, QColor("#202020"));  // hover
+    dark.setColor(QPalette::Mid, QColor("#161616"));       // pressed
+    dark.setColor(QPalette::Dark, QColor("#0b0b0b"));      // borders
+    dark.setColor(QPalette::Shadow, QColor("#050505"));    // depth
+
+    dark.setColor(QPalette::PlaceholderText, QColor("#7a7a7a"));
 
     a.setPalette(dark);
 

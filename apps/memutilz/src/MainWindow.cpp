@@ -1,69 +1,12 @@
 #include <QMessageBox.h>
 
-#include <SARibbonBar.h>
-#include <SARibbonGlobal.h>
-
 #include "MainWindow.h"
-#include "ApplicationWidget.h"
-#include "CentralDockingArea.h"
 
-struct MainWindowPrivate {
-    MainWindow* _this;
-    ApplicationWidget* applicationWidget{ nullptr };
-    CentralDockingArea* centralDockingArea{ nullptr };
-
-    void setupUi();
-
-
-    // SARibbon
-    void createRibbonApplicationButton();
-
-    void createCategoryDebug(SARibbonCategory* page);
-    void createCategoryView(SARibbonCategory* page);
-    void createCategoryTools(SARibbonCategory* page);
-
-    void createQuickAccessBar();
-    void createRightButtonGroup();
-    void createWindowButtonGroupBar();
-
-    QAction* createAction(const QString& text, const QString& iconurl, const QString& objName);
-    QAction* createAction(const QString& text, const QString& iconurl);
-
-    // Docking Area
-    void createCentralDockingArea();
-
-    // Style
-    void setTheme();
-
-    MainWindowPrivate(MainWindow* _public) : _this{ _public } {}
-};
-
-void MainWindowPrivate::setupUi() {
-    _this->setWindowTitle(qApp->applicationName() % " v" % qApp->applicationVersion());
-    _this->resize(1600, 900);
-
-    setTheme();
-    
-    _this->setRibbonTheme(SARibbonTheme::RibbonThemeDark3);
-}
-
-void MainWindowPrivate::setTheme() {
-    SARibbonBar* ribbon = _this->ribbonBar();
-    ribbon->setWindowTitleTextColor(qApp->palette().text().color());
-}
-
-// ------------------------------------------------------------------
-
-MainWindow::MainWindow(QWidget* parent)
-    : SARibbonMainWindow(parent)
-    , d{ new MainWindowPrivate(this) }
+MainWindow::MainWindow(QWidget* parent, SARibbonMainWindowStyles style, const Qt::WindowFlags flags)
+    : SARibbonMainWindow(parent, style, flags)
 {
-    d->setupUi();
+    setupUi();
 }
-MainWindow::~MainWindow() {
-    delete d;
-}
-
 void MainWindow::closeEvent(QCloseEvent* event) {
     auto r = QMessageBox::question(this
         , "Exit"
@@ -76,4 +19,30 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     else {
         event->ignore();
     }
+}
+
+void MainWindow::setupUi() {
+    setWindowTitle(qApp->applicationName() % " v" % qApp->applicationVersion());
+    resize(1600, 900);
+    setMinimumSize(250, 100);
+    
+    //setContentsMargins(1, 0, 1, 0);
+    //ribbonBar()->setContentsMargins(4, 0, 4, 0);
+
+    _ribbonBar = new RibbonBar(ribbonBar(), this);
+    _applicationWidget = new ApplicationWidget(this);
+    _applicationWidget->hide();
+    _centralDockingArea = new CentralDockingArea(this);
+    _statusBar = new QStatusBar(this);
+
+    setStatusBar(_statusBar);
+    _statusBar->showMessage("Ready");
+
+    connect(_ribbonBar, &RibbonBar::applicationButtonClicked,
+        this, [this]() {
+            qDebug() << "Clicked!";
+            // _applicationWidget->show();
+        });
+
+    setRibbonTheme(SARibbonTheme::RibbonThemeDark3);
 }

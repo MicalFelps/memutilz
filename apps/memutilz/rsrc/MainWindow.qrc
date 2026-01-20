@@ -1,10 +1,15 @@
 <RCC>
     <qresource prefix="/icons">
         <file alias="memutilz.ico">memutilz.ico</file>
-        <file alias="saribbon/close.svg">icons/saribbon/close.svg</file>
-        <file alias="saribbon/maximize.svg">icons/saribbon/maximize.svg</file>
-        <file alias="saribbon/minimize.svg">icons/saribbon/minimize.svg</file>
-        <file alias="saribbon/normal.svg">icons/saribbon/normal.svg</file>
+        <file alias="debug-continue.svg">icons/debug-continue.svg</file>
+        <file alias="debug-pause.svg">icons/debug-pause.svg</file>
+        <file alias="debug-continue-bugless.svg">icons/debug-continue-bugless.svg</file>
+        <file alias="debug-step-into.svg">icons/debug-step-into.svg</file>
+        <file alias="debug-step-out.svg">icons/debug-step-out.svg</file>
+        <file alias="debug-step-over.svg">icons/debug-step-over.svg</file>
+        <file alias="debug-detach.svg">icons/debug-detach.svg</file>
+        <file alias="debug-restart.svg">icons/debug-restart.svg</file>
+        <file alias="debug-stop.svg">icons/debug-stop.svg</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="dark.qss">styles/dark.qss</file>

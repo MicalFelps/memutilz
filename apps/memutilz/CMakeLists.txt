@@ -42,13 +42,19 @@ target_include_directories(memutilz_ui
 )
 
 set(MEMUTILZ_UI_HEADERS
+    hdr/ApplicationWidget.h
+    hdr/CentralDockingArea.h
     hdr/MainWindow.h
     hdr/Options.h
+    hdr/RibbonBar.h
 )
 
 set(MEMUTILZ_UI_SOURCES
+    src/ApplicationWidget.cpp
+    src/CentralDockingArea.cpp
     src/main.cpp
     src/MainWindow.cpp
+    src/RibbonBar.cpp
 )
 
 set(MEMUTILZ_UI_RESOURCES
