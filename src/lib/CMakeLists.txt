@@ -13,7 +13,7 @@ target_include_directories(memutilz_lib
 )
 
 set(MEMUTILZ_LIB_HEADERS
-    hdr/MemorySource.h
+    src/MemorySource.h
 )
 
 set(MEMUTILZ_LIB_SOURCES

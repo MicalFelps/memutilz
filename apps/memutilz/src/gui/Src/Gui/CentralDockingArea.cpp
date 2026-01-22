@@ -2,4 +2,5 @@
 
 CentralDockingArea::CentralDockingArea(QWidget* parent)
 	: QWidget(parent)
-{}
+{
+}

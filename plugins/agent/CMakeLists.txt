@@ -15,7 +15,7 @@ target_precompile_headers(agent
 )
 
 set(AGENT_HEADERS
-    hdr/pch.h
+    src/pch.h
 )
 
 set(AGENT_SOURCES

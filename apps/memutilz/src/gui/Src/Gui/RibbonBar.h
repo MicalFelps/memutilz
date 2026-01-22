@@ -20,14 +20,12 @@ private:
     void createCategoryMain(SARibbonCategory* page);
     void createCategoryView(SARibbonCategory* page);
 
-    /*
-    void createQuickAccessBar();
-    void createRightButtonGroup();
-    void createWindowButtonGroupBar();
+    //void createQuickAccessBar();
+    //void createRightButtonGroup();
+    //void createWindowButtonGroupBar();
 
-    void createActionManager();
+    // void createActionManager();
 
-    */
     QAction* createAction(const QString& text, const QString& iconurl, const QString& objName);
     QAction* createAction(const QString& text, const QString& iconurl);
 

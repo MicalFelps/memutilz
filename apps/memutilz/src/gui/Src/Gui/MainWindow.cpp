@@ -26,8 +26,8 @@ void MainWindow::setupUi() {
     resize(1600, 900);
     setMinimumSize(250, 100);
     
-    //setContentsMargins(1, 0, 1, 0);
-    //ribbonBar()->setContentsMargins(4, 0, 4, 0);
+    setContentsMargins(1, 0, 1, 0);
+    ribbonBar()->setContentsMargins(4, 0, 4, 0);
 
     _ribbonBar = new RibbonBar(ribbonBar(), this);
     _applicationWidget = new ApplicationWidget(this);
