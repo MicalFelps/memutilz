@@ -10,6 +10,12 @@
         <file alias="debug-detach.svg">icons/debug-detach.svg</file>
         <file alias="debug-restart.svg">icons/debug-restart.svg</file>
         <file alias="debug-stop.svg">icons/debug-stop.svg</file>
+        <file alias="debug-console.svg">icons/debug-console.svg</file>
+        <file alias="file.svg">icons/file.svg</file>
+        <file alias="file-binary.svg">icons/file-binary.svg</file>
+        <file alias="file-code.svg">icons/file-code.svg</file>
+        <file alias="file-asm.svg">icons/file-asm.svg</file>
+        <file alias="console.svg">icons/console.svg</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="dark.qss">styles/dark.qss</file>

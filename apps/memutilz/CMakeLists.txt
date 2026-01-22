@@ -42,24 +42,27 @@ target_include_directories(memutilz_ui
 )
 
 set(MEMUTILZ_UI_HEADERS
-    hdr/ApplicationWidget.h
-    hdr/CentralDockingArea.h
-    hdr/MainWindow.h
-    hdr/Options.h
-    hdr/RibbonBar.h
+    src/gui/Src/BaseWidgets/QConsole.h
+    src/gui/Src/Gui/ApplicationWidget.h
+    src/gui/Src/Gui/CentralDockingArea.h
+    src/gui/Src/Gui/MainWindow.h
+    src/gui/Src/Gui/RibbonBar.h
+    src/gui/Src/AppLimits.h
+    src/Options.h
 )
 
 set(MEMUTILZ_UI_SOURCES
-    src/ApplicationWidget.cpp
-    src/CentralDockingArea.cpp
+    src/gui/Src/BaseWidgets/QConsole.cpp
+    src/gui/Src/Gui/ApplicationWidget.cpp
+    src/gui/Src/Gui/CentralDockingArea.cpp
+    src/gui/Src/Gui/MainWindow.cpp
+    src/gui/Src/Gui/RibbonBar.cpp
     src/main.cpp
-    src/MainWindow.cpp
-    src/RibbonBar.cpp
 )
 
 set(MEMUTILZ_UI_RESOURCES
-    rsrc/MainWindow.qrc
-    rsrc/memutilz.rc
+    src/gui/rsrc/memutilz.qrc
+    src/gui/rsrc/memutilz.rc
 )
 
 target_sources(memutilz_ui
@@ -78,8 +81,6 @@ target_link_libraries(memutilz_ui
         Qt6::Gui
         Qt6::Widgets
 )
-
-
 
 install(
     TARGETS memutilz_ui

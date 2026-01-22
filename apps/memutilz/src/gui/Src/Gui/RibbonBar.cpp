@@ -1,7 +1,8 @@
-#include "RibbonBar.h"
-
 #include <SARibbonApplicationButton.h>
 #include <SARibbonMenu.h>
+
+#include "RibbonBar.h"
+#include "AppLimits.h"
 
 RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
 	: _ribbon{ ribbon }
@@ -11,6 +12,7 @@ RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
 
 	// Main Category
 	SARibbonCategory* categoryMain = _ribbon->addCategoryPage({ "Main" });
+	categoryMain->setObjectName({ "categoryMain" });
 	createCategoryMain(categoryMain);
 
 	// View Category
@@ -20,6 +22,7 @@ RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
 	createCategoryView(categoryView);
 	_ribbon->addCategoryPage(categoryView);
 
+	showMaximized();
 }
 
 void RibbonBar::createRibbonApplicationButton() {
@@ -33,20 +36,7 @@ void RibbonBar::createRibbonApplicationButton() {
 		this, [this](bool c) { Q_UNUSED(c); emit applicationButtonClicked(); });
 }
 
-
 void RibbonBar::createCategoryMain(SARibbonCategory* page) {
-	/*
-	Control Flow
-		- pause
-		- run (continue to x)
-		- step into
-		- step over
-		- step out
-	End
-		- close
-		- detach
-		- restart
-	*/
 	SARibbonPanel* panelFlowControl = page->addPanel({ "Flow Control" });
 
 	QAction* actionDebugPause = createAction({ "Break" }, ":/icons/debug-pause");
@@ -93,13 +83,27 @@ void RibbonBar::createCategoryMain(SARibbonCategory* page) {
 void RibbonBar::createCategoryView(SARibbonCategory* page) {
 	SARibbonPanel* panelWindows = new SARibbonPanel({ "Windows" });
 	page->addPanel(panelWindows);
-}
-/*
-void RibbonBar::createCategoryTools(SARibbonCategory* page) {
-	return;
-}
-*/
 
+	QAction* actionCommandWindow = createAction({ "Command" }, ":/icons/console");
+	panelWindows->addLargeAction(actionCommandWindow);
+
+	QAction* actionDisassemblyWindow = createAction({ "Disassembly" }, ":/icons/file-asm");
+	panelWindows->addLargeAction(actionDisassemblyWindow);
+
+	SARibbonMenu* menuMemoryWindow{ new SARibbonMenu(this) };
+	{
+		QAction* action = nullptr;
+		QIcon icon = QIcon(":/icons/file-binary");
+
+		for (int i = 0; i < Limits::Ui::MaxMemoryWindowWidgets; ++i) {
+			action = menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
+			action->setObjectName(QStringLiteral("Memory %1").arg(i));
+		}
+	}
+	QAction* actionMemoryWindow = createAction({ "Memory" }, ":/icons/file-binary");
+	actionMemoryWindow->setMenu(menuMemoryWindow);
+	panelWindows->addLargeAction(actionMemoryWindow);
+}
 
 QAction* RibbonBar::createAction(const QString& text, const QString& iconurl, const QString& objName) {
 	QAction* a = new QAction(this);

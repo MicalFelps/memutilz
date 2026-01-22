@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
     dark.setColor(QPalette::Light, QColor("#2a2a2a"));     // raised edges / highlight
     dark.setColor(QPalette::Midlight, QColor("#202020"));  // hover
-    dark.setColor(QPalette::Mid, QColor("#161616"));       // pressed
+    dark.setColor(QPalette::Mid, QColor("#151515"));       // pressed
     dark.setColor(QPalette::Dark, QColor("#0b0b0b"));      // borders
     dark.setColor(QPalette::Shadow, QColor("#050505"));    // depth
 
