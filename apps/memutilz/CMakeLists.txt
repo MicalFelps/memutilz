@@ -42,21 +42,31 @@ target_include_directories(memutilz_ui
 )
 
 set(MEMUTILZ_UI_HEADERS
-    src/gui/Src/BaseWidgets/QConsole.h
-    src/gui/Src/Gui/ApplicationWidget.h
-    src/gui/Src/Gui/CentralDockingArea.h
-    src/gui/Src/Gui/MainWindow.h
-    src/gui/Src/Gui/RibbonBar.h
-    src/gui/Src/AppLimits.h
+    src/gui/Src/Components/ApplicationWidget.h
+    src/gui/Src/Components/CentralDockingArea.h
+    src/gui/Src/Components/QConsole.h
+    src/gui/Src/Components/RibbonBar.h
+    src/gui/Src/Config/AppLimits.h
+    src/gui/Src/Core/ActionManager/ActionContainer.h
+    src/gui/Src/Core/ActionManager/ActionManager.h
+    src/gui/Src/Core/ActionManager/Command.h
+    src/gui/Src/Core/Constants.h
+    src/gui/Src/Main/MainWindow.h
+    src/gui/Src/Utils/IdRegistry.h
+    src/gui/Src/Utils/Types.h
     src/Options.h
 )
 
 set(MEMUTILZ_UI_SOURCES
-    src/gui/Src/BaseWidgets/QConsole.cpp
-    src/gui/Src/Gui/ApplicationWidget.cpp
-    src/gui/Src/Gui/CentralDockingArea.cpp
-    src/gui/Src/Gui/MainWindow.cpp
-    src/gui/Src/Gui/RibbonBar.cpp
+    src/gui/Src/Components/ApplicationWidget.cpp
+    src/gui/Src/Components/CentralDockingArea.cpp
+    src/gui/Src/Components/QConsole.cpp
+    src/gui/Src/Components/RibbonBar.cpp
+    src/gui/Src/Core/ActionManager/ActionContainer.cpp
+    src/gui/Src/Core/ActionManager/ActionManager.cpp
+    src/gui/Src/Core/ActionManager/Command.cpp
+    src/gui/Src/Main/MainWindow.cpp
+    src/gui/Src/Utils/IdRegistry.cpp
     src/main.cpp
 )
 
@@ -65,11 +75,16 @@ set(MEMUTILZ_UI_RESOURCES
     src/gui/rsrc/memutilz.rc
 )
 
+set(MEMUTILZ_UI_FORMS
+    src/gui/Src/Components/ApplicationWidget.ui
+)
+
 target_sources(memutilz_ui
     PRIVATE
         ${MEMUTILZ_UI_HEADERS}
         ${MEMUTILZ_UI_SOURCES}
         ${MEMUTILZ_UI_RESOURCES}
+        ${MEMUTILZ_UI_FORMS}
 )
 
 target_link_libraries(memutilz_ui
@@ -77,6 +92,7 @@ target_link_libraries(memutilz_ui
         memutilz_lib
         qtadvanceddocking-qt6
         SARibbonBar
+        xxHash::xxHash
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets

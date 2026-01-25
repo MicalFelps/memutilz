@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QStatusbar>
 #include <QCloseEvent>
@@ -30,5 +29,3 @@ private:
     CentralDockingArea* _centralDockingArea{ nullptr };
     QStatusBar* _statusBar{ nullptr };
 };
-
-#endif

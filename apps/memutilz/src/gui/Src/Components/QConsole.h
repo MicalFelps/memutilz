@@ -1,5 +1,4 @@
-#ifndef WIDGETS_QCONSOLE_H
-#define WIDGETS_QCONSOLE_H
+#pragma once
 
 #include <QPlainTextEdit>
 
@@ -43,4 +42,3 @@ private:
     int m_historyIndex = -1;
     */
 };
-#endif

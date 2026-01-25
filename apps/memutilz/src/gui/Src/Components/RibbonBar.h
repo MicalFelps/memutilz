@@ -1,5 +1,4 @@
-#ifndef RIBBONBAR_H
-#define RIBBONBAR_H
+#pragma once
 
 #include <SARibbonBar.h>
 #include <SARibbonCategory.h>
@@ -32,5 +31,3 @@ private:
     SARibbonBar* _ribbon{ nullptr };
     SARibbonActionsManager* actionsManager{ nullptr };
 };
-
-#endif

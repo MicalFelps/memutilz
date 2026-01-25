@@ -1,4 +1,5 @@
 #include "ApplicationWidget.h"
+#include "ui_ApplicationWidget.h"
 
 struct ApplicationWidgetPrivate {
 	ApplicationWidget* _this;
@@ -17,7 +18,10 @@ void ApplicationWidgetPrivate::setupUi() {
 ApplicationWidget::ApplicationWidget(SARibbonMainWindow* parent)
 	: SARibbonApplicationWidget(parent)
 	, d{ new ApplicationWidgetPrivate(this) }
-{}
+	, ui(new Ui::ApplicationWidget)
+{
+	ui->setupUi(this);
+}
 
 ApplicationWidget::~ApplicationWidget() {
 	delete d;

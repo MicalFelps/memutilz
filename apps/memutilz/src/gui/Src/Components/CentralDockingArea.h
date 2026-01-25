@@ -1,5 +1,4 @@
-#ifndef CENTRALDOCKINGAREA_H
-#define CENTRALDOCKINGAREA_H
+#pragma once
 
 #include <QWidget>
 
@@ -12,5 +11,3 @@ public:
 private:
 
 };
-
-#endif // CENTRALDOCKINGAREA_H

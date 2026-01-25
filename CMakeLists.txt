@@ -50,6 +50,10 @@ include(deps/Zydis)
 memutilz_add_zydis()
 add_library(memutilz::zydis ALIAS Zydis)
 
+# xxhash
+include(deps/xxhash)
+memutilz_add_xxhash()
+
 # ---- subdirectories ----
 
 include(GNUInstallDirs)

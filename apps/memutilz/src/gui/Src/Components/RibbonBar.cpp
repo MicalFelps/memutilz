@@ -104,18 +104,3 @@ void RibbonBar::createCategoryView(SARibbonCategory* page) {
 	actionMemoryWindow->setMenu(menuMemoryWindow);
 	panelWindows->addLargeAction(actionMemoryWindow);
 }
-
-QAction* RibbonBar::createAction(const QString& text, const QString& iconurl, const QString& objName) {
-	QAction* a = new QAction(this);
-	a->setText(text);
-	a->setIcon(QIcon(iconurl));
-	a->setObjectName(objName);
-	return a;
-}
-QAction* RibbonBar::createAction(const QString& text, const QString& iconurl) {
-	QAction* a = new QAction(this);
-	a->setText(text);
-	a->setIcon(QIcon(iconurl));
-	a->setObjectName(text);
-	return a;
-}
