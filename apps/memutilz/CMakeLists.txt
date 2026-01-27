@@ -42,6 +42,7 @@ target_include_directories(memutilz_ui
 )
 
 set(MEMUTILZ_UI_HEADERS
+    src/gui/Src/Base/CustomPaintToolButton.h
     src/gui/Src/Components/ApplicationWidget.h
     src/gui/Src/Components/CentralDockingArea.h
     src/gui/Src/Components/QConsole.h
@@ -52,12 +53,14 @@ set(MEMUTILZ_UI_HEADERS
     src/gui/Src/Core/ActionManager/Command.h
     src/gui/Src/Core/Constants.h
     src/gui/Src/Main/MainWindow.h
+    src/gui/Src/Utils/ButtonPainters.h
     src/gui/Src/Utils/IdRegistry.h
     src/gui/Src/Utils/Types.h
     src/Options.h
 )
 
 set(MEMUTILZ_UI_SOURCES
+    src/gui/Src/Base/CustomPaintToolButton.cpp
     src/gui/Src/Components/ApplicationWidget.cpp
     src/gui/Src/Components/CentralDockingArea.cpp
     src/gui/Src/Components/QConsole.cpp
@@ -66,6 +69,7 @@ set(MEMUTILZ_UI_SOURCES
     src/gui/Src/Core/ActionManager/ActionManager.cpp
     src/gui/Src/Core/ActionManager/Command.cpp
     src/gui/Src/Main/MainWindow.cpp
+    src/gui/Src/Utils/ButtonPainters.cpp
     src/gui/Src/Utils/IdRegistry.cpp
     src/main.cpp
 )

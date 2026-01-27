@@ -1,0 +1,62 @@
+PROJECT_NAME           = "@DOXY_PROJECT_NAME@"
+PROJECT_NUMBER         = "@DOXY_PROJECT_VERSION@"
+PROJECT_BRIEF          = "@DOXY_PROJECT_BRIEF@"
+USE_MDFILE_AS_MAINPAGE = "@DOXY_MAINPAGE@"
+
+# Output
+
+OUTPUT_DIRECTORY       = "@DOXY_OUTPUT_DIR@"
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+GENERATE_XML           = NO
+
+# HTML
+
+GENERATE_TREEVIEW      = YES
+FULL_SIDEBAR           = YES
+SEARCHENGINE           = YES
+
+# Input
+
+INPUT                  = @DOXY_INPUT@
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.hpp *.cpp *.cxx
+EXCLUDE_PATTERNS       = */ext/* */tests/* */build/* */cmake/*
+
+# What to Document
+
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+EXTRACT_ANON_NSPACES   = NO
+
+# Preprocessing
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+
+PREDEFINED             = \
+    DOXYGEN \
+    Q_OBJECT= \
+    Q_GADGET= \
+    Q_PROPERTY(...)= \
+    Q_SIGNAL= \
+    Q_SLOT= \
+    signals= \
+    slots=
+
+# Warnings
+
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+
+# Quiet mdoe
+
+QUIET				   = YES

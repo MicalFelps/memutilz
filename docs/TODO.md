@@ -2,3 +2,4 @@
 2. Make quick access buttons for sidebar customization
 3. Make Console Window -> most important widget (for debug output)
 4. Make Connection manager so mainWindow doesn't become a mess
+5. Setup Doxygen

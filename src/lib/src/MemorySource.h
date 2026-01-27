@@ -7,6 +7,20 @@
 #include <sstream>
 #include <iomanip>
 
+/**
+ * @brief A test class to verify Doxygen setup
+ *
+ * This class exists only to test that Doxygen is generating output.
+ */
+class TestDoc
+{
+public:
+	/**
+	 * @brief Test function
+	 */
+	void doSomething();
+};
+
 class MemorySource {
 	virtual ~MemorySource() = default;
 	virtual size_t read(uint64_t address, void* buffer, size_t length) const = 0;

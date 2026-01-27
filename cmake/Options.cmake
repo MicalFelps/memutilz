@@ -2,6 +2,7 @@ option(BUILD_SHARED_LIBS        "Build shared libraries"		ON)
 
 option(MEMUTILZ_BUILD_APPS      "Build the main executable"     ON)
 option(MEMUTILZ_BUILD_PLUGINS   "Build available plugins"		ON)
+option(MEMUTILZ_BUILD_DOCS		"Build doxygen documentation"	ON)
 
 option(MEMUTILZ_WARNINGS_AS_ERRORS  "Treat compiler warnings as errors" OFF)
 

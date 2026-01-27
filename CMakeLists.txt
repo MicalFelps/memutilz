@@ -75,7 +75,11 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
-    add_subdirectory(test)
+    add_subdirectory(tests)
+endif()
+
+if(MEMUTILZ_BUILD_DOCS)
+    add_subdirectory(docs)
 endif()
 
 # ---- Installation ----
