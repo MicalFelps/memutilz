@@ -5,9 +5,9 @@
 
 #include <SARibbonMainWindow.h>
 
-#include "ApplicationWidget.h"
-#include "RibbonBar.h"
-#include "CentralDockingArea.h"
+#include "../Components/ApplicationWidget.h"
+#include "../Components/RibbonBar.h"
+#include "../Components/CentralDockingArea.h"
 
 class MainWindow : public SARibbonMainWindow {
     Q_OBJECT

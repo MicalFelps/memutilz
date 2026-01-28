@@ -6,6 +6,7 @@
 .vs/
 build/
 install/
+docs/memutilz/.obsidian
 
 # User-specific files
 *.rsuser

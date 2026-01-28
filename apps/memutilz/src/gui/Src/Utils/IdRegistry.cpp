@@ -15,7 +15,7 @@ struct StringHolder {
 		, len{ len }
 		, h{ XXH3_64bits(str, len) } {}
 
-	size_t qHash(const StringHolder& sh, size_t seed = 0) noexcept {
+	friend size_t qHash(const StringHolder& sh, size_t seed = 0) noexcept {
 		return QT_PREPEND_NAMESPACE(qHash)(sh.h, seed);
 	}
 
@@ -31,6 +31,7 @@ struct StringHolder {
 };
 class IdCache : public QHash<StringHolder, u64>
 {
+public:
 #ifndef MU_ALLOW_STATIC_LEAKS
 	~IdCache()
 	{
@@ -39,6 +40,10 @@ class IdCache : public QHash<StringHolder, u64>
 	}
 #endif
 };
+
+QHash<IdValueType, StringHolder> IdRegistry::_stringFromId;
+IdCache IdRegistry::_idFromString;
+QReadWriteLock IdRegistry::_mutex;
 
 Id IdRegistry::getOrRegister(const char* s, size_t len) {
 	if (!s) return Id{};
@@ -65,17 +70,19 @@ Id IdRegistry::getOrRegister(const char* s, size_t len) {
 }
 std::string_view IdRegistry::stringFromId(Id id) {
 	QReadLocker lock(&_mutex);
-	if (auto it = _stringFromId.constFind(id); it == _stringFromId.cend()) return nullptr;
-	const auto& [unused_key, sh] = *it;
+	auto it = _stringFromId.constFind(id);
+	if (it == _stringFromId.cend()) return std::string_view{};
+	const StringHolder& sh = it.value();
 	return std::string_view{ sh.str, sh.len };
 }
 std::optional<Id> IdRegistry::idFromString(const char* s, size_t len) {
 	QReadLocker lock(&_mutex);
 	StringHolder key{ s, len };
-	if (auto it = _idFromString.constFind(key); it == _idFromString.cend()) return std::nullopt;
-	const auto& [unused_key, id] = *it;
-	return Id{ id };
+	auto it = _idFromString.constFind(key);
+	if (it == _idFromString.cend()) return std::nullopt;
+	return Id{ it.value() };
 }
+
 Id Id::withSuffix(u64 suffix) const {
 	return Id{ std::format("{}.{}", name(), suffix) };
 }

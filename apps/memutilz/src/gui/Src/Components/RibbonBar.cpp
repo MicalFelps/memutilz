@@ -2,7 +2,7 @@
 #include <SARibbonMenu.h>
 
 #include "RibbonBar.h"
-#include "../../Src/AppLimits.h"
+#include "../Config/AppLimits.h"
 
 RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
 	: _ribbon{ ribbon }
@@ -103,4 +103,21 @@ void RibbonBar::createCategoryView(SARibbonCategory* page) {
 	QAction* actionMemoryWindow = createAction({ "Memory" }, ":/icons/file-binary");
 	actionMemoryWindow->setMenu(menuMemoryWindow);
 	panelWindows->addLargeAction(actionMemoryWindow);
+}
+
+QAction* RibbonBar::createAction(const QString& text, const QString& iconurl, const QString& objName)
+{
+	QAction* act = new QAction(this);
+	act->setText(text);
+	act->setIcon(QIcon(iconurl));
+	act->setObjectName(objName);
+	return act;
+}
+QAction* RibbonBar::createAction(const QString& text, const QString& iconurl)
+{
+	QAction* act = new QAction(this);
+	act->setText(text);
+	act->setIcon(QIcon(iconurl));
+	act->setObjectName(text);
+	return act;
 }

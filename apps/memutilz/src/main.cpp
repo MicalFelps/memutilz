@@ -4,7 +4,7 @@
 #include <QStyleFactory>
 #include <QFile>
 
-#include "gui/Src/Gui/MainWindow.h"
+#include "gui/Src/Main/MainWindow.h"
 #include "Options.h"
 
 static void loadFonts() {

@@ -10,8 +10,8 @@ namespace Painters {
 		const int height = r.height();
 
 		const int barWidth = 4;
-		const int offsetX = 0;
-		const int verticalPadding = 6; // top/bottom padding
+		const qreal offsetX = 0;
+		const qreal verticalPadding = 6; // top/bottom padding
 		const qreal cornerRadius = 2.0;
 		const QColor barColor("#6D68CC");
 
