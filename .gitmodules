@@ -1,6 +1,6 @@
 [submodule "ext/Zydis"]
 	path = ext/Zydis
-	url = https://github.com/zyantific/zydis.git
+	url = https://github.com/MicalFelps/zydis.git
 [submodule "ext/SARibbon"]
 	path = ext/SARibbon
-	url = https://github.com/czyt1988/SARibbon.git
+	url = https://github.com/MicalFelps/SARibbon.git

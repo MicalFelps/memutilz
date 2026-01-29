@@ -54,6 +54,7 @@ set(MEMUTILZ_UI_HEADERS
     src/gui/Src/Core/Constants.h
     src/gui/Src/Main/MainWindow.h
     src/gui/Src/Utils/ButtonPainters.h
+    src/gui/Src/Utils/Id.h
     src/gui/Src/Utils/IdRegistry.h
     src/gui/Src/Utils/Types.h
     src/Options.h
@@ -70,6 +71,7 @@ set(MEMUTILZ_UI_SOURCES
     src/gui/Src/Core/ActionManager/Command.cpp
     src/gui/Src/Main/MainWindow.cpp
     src/gui/Src/Utils/ButtonPainters.cpp
+    src/gui/Src/Utils/Id.cpp
     src/gui/Src/Utils/IdRegistry.cpp
     src/main.cpp
 )
