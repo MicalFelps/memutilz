@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 // Simple helper function we're going to test (pretend it's in your project)
 std::string reverse_string(const std::string& s) {

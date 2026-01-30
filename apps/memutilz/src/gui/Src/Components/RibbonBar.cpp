@@ -5,8 +5,8 @@
 #include "../Config/AppLimits.h"
 
 RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
-	: _ribbon{ ribbon }
-	, QWidget(parent)
+	: QWidget(parent)
+	, _ribbon{ ribbon }
 {
 	createRibbonApplicationButton();
 

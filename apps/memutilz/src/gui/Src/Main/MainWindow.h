@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QStatusbar>
+#include <QStatusBar>
 #include <QCloseEvent>
 
 #include <SARibbonMainWindow.h>

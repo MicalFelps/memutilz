@@ -4,3 +4,6 @@
 [submodule "ext/SARibbon"]
 	path = ext/SARibbon
 	url = https://github.com/MicalFelps/SARibbon.git
+[submodule "ext/sanitizers-cmake"]
+	path = ext/sanitizers-cmake
+	url = https://github.com/arsenm/sanitizers-cmake.git

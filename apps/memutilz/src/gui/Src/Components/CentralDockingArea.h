@@ -23,13 +23,14 @@ class CentralDockingArea : public QWidget {
 public:
 	explicit CentralDockingArea(QWidget* parent = nullptr);
 	virtual ~CentralDockingArea() override;
-
+/*
 	QPointer<ads::CDockManager> dockManager() const { return _dockManager; }
 	ads::CDockWidget* dockWidget(Utils::Id id) const;
 	std::optional<Utils::Id> focusedDockId() const;
 	
 	bool contains(Utils::Id id) const { return _docks.contains(id); }
 	std::optional<Utils::Id> idFromDock(const ads::CDockWidget* dockWidget) const;
+*/
 
 	/**
 	 * Adds the dock widget if the id is new, otherwise shows the existing one.
@@ -38,6 +39,7 @@ public:
 	 * @warning The returned pointer is only valid until the widget is removed
 	 *          or closed with DockWidgetDeleteOnClose enabled.
 	 */
+/*
 	QPointer<ads::CDockWidget> addOrShowFloating(Utils::Id id, ads::CDockWidget* dockWidget);
 	QPointer<ads::CDockWidget> addOrShowDocked(
 		Utils::Id id,
@@ -55,11 +57,13 @@ public:
 		ads::CDockWidget* dockWidget,
 		ads::SideBarLocation side				= ads::SideBarLeft
 	);
+*/
 
 	/**
 	 * Creates and shows a dock widget using the registered factory for the given id.
 	 * Returns nullptr if no factory is registered for the aforementioned id.
 	 */
+/*
 	QPointer<ads::CDockWidget> addOrShowFactory(Utils::Id id);
 
 	void showDock(Utils::Id id, bool bringToFront = true);
@@ -106,4 +110,5 @@ private:
 	std::optional<Utils::Id>								_focusedDock;
 
 	QHash<Utils::Id, std::function<ads::CDockWidget*>()>	_factories;
+*/
 };

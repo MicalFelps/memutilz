@@ -1,3 +1,4 @@
+set(QT_NO_PRIVATE_MODULE_WARNING ON CACHE BOOL "Disable Qt private module warnings")
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
 CPMAddPackage(
@@ -93,11 +94,26 @@ target_sources(memutilz_ui
         ${MEMUTILZ_UI_FORMS}
 )
 
+set(MEMUTILZ_UI_QT6_DEPS
+    qtadvanceddocking-qt6
+    SARibbonBar
+)
+
+foreach(dep IN LISTS MEMUTILZ_UI_QT6_DEPS)
+    if(TARGET ${dep})
+        target_compile_options(${dep} PRIVATE
+            $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-deprecated-declarations>
+            $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
+        )
+    else()
+        message(WARNING "Target '${dep}' not found (cannot apply deprecation suppression)")
+    endif()
+endforeach()
+
 target_link_libraries(memutilz_ui
     PRIVATE
+        ${MEMUTILZ_UI_QT6_DEPS}
         memutilz_lib
-        qtadvanceddocking-qt6
-        SARibbonBar
         xxHash::xxHash
         Qt6::Core
         Qt6::Gui

@@ -19,8 +19,7 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "MEMUTILZ_ENABLE_ASAN": true,
-        "MEMUTILZ_ENABLE_UBSAN": true
+        "MEMUTILZ_ENABLE_SANITIZERS": true
       },
       "condition": {
         "type": "equals",

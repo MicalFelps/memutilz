@@ -16,7 +16,7 @@ public:
     explicit ApplicationWidget(SARibbonMainWindow* parent = nullptr);
     ~ApplicationWidget();
 private:
-    Ui::ApplicationWidget* ui;
     ApplicationWidgetPrivate* d;
+    Ui::ApplicationWidget* ui;
     friend struct ApplicationWidgetPrivate;
 };

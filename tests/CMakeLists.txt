@@ -103,18 +103,20 @@ add_gtest(test_math
     TIMEOUT 15
 )
 
-add_custom_command(TARGET test_example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:test_example>
-        $<TARGET_FILE_DIR:test_example>
-    COMMAND_EXPAND_LISTS
-    COMMENT "Copying runtime DLLs for test_example"
-)
+if(WIN32)
+    add_custom_command(TARGET test_example POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:test_example>
+            $<TARGET_FILE_DIR:test_example>
+        COMMAND_EXPAND_LISTS
+        COMMENT "Copying runtime DLLs for test_example"
+    )
 
-add_custom_command(TARGET test_math POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:test_math>
-        $<TARGET_FILE_DIR:test_math>
-    COMMAND_EXPAND_LISTS
-    COMMENT "Copying runtime DLLs for test_math"
-)
+    add_custom_command(TARGET test_math POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:test_math>
+            $<TARGET_FILE_DIR:test_math>
+        COMMAND_EXPAND_LISTS
+        COMMENT "Copying runtime DLLs for test_math"
+    )
+endif()

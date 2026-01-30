@@ -12,8 +12,8 @@ namespace Base {
 		bool isChecked = opt.state & QStyle::State_On;
 
 		bool drawCustom = (
-			isHovered && _hoverPainter.has_value()
-			|| isChecked && _checkedPainter.has_value());
+			(isHovered && _hoverPainter.has_value())
+			|| (isChecked && _checkedPainter.has_value()));
 
 		if (!drawCustom) {
 			QToolButton::paintEvent(event);

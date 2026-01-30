@@ -1,0 +1,54 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "arch-base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
+        "CMAKE_PREFIX_PATH": "/home/mniki/qt/6.9.3/gcc_64/lib/cmake",
+        "BUILD_SHARED_LIBS": true,
+        "MEMUTILZ_WARNINGS_AS_ERRORS": true
+        
+      }
+    },
+    {
+      "name": "debug",
+      "generator": "Ninja",
+      "inherits": "arch-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MEMUTILZ_ENABLE_SANITIZERS": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "inherits": "arch-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" }
+  ],
+  "testPresets": [
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } }
+  ]
+}

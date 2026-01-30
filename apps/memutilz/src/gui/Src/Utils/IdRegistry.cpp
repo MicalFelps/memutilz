@@ -11,9 +11,9 @@ namespace Utils {
 struct StringHolder {
 	StringHolder() = default;
 
-	explicit StringHolder(const char* s, size_t len)
+	explicit StringHolder(const char* s, size_t l)
 		: str{ s }
-		, len{ len }
+		, len{ l }
 		, h{ XXH3_64bits(str, len) } {}
 
 	friend size_t qHash(const StringHolder& sh, size_t seed = 0) noexcept {

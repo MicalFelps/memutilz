@@ -32,6 +32,9 @@ class MemorySource {
 
 int give_10() { return 10; }
 
+#ifdef __linux__
+#else
 __declspec(dllexport) std::string basic_zydis_disasm(const uint8_t* bytes, size_t length);
+#endif
 
 #endif
