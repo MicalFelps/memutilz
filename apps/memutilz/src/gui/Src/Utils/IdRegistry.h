@@ -12,7 +12,7 @@ namespace Utils {
 	public:
 		[[nodiscard]] static Id getOrRegister(const char* s, size_t len = 0);
 		[[nodiscard]] static std::string_view stringFromId(Id id);
-		[[nodiscard]] static std::optional<Id> idFromString(const char* s, size_t len = 0);
+		[[nodiscard]] static std::optional<Id> idFromString(const char* s, size_t len = 0, bool hasWriteLock = false);
 
 	private:
 		IdRegistry() = delete;

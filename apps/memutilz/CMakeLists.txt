@@ -43,25 +43,27 @@ target_include_directories(memutilz_ui
 )
 
 set(MEMUTILZ_UI_HEADERS
+    src/Options.h
     src/gui/Src/Base/CustomPaintToolButton.h
     src/gui/Src/Components/ApplicationWidget.h
     src/gui/Src/Components/CentralDockingArea.h
     src/gui/Src/Components/QConsole.h
     src/gui/Src/Components/RibbonBar.h
-    src/gui/Src/Config/AppLimits.h
+    src/gui/Src/Constants/AppLimits.h
+    src/gui/Src/Constants/Ids.h
+    src/gui/Src/Core/Constants.h
     src/gui/Src/Core/ActionManager/ActionContainer.h
     src/gui/Src/Core/ActionManager/ActionManager.h
     src/gui/Src/Core/ActionManager/Command.h
-    src/gui/Src/Core/Constants.h
     src/gui/Src/Main/MainWindow.h
     src/gui/Src/Utils/ButtonPainters.h
     src/gui/Src/Utils/Id.h
     src/gui/Src/Utils/IdRegistry.h
     src/gui/Src/Utils/Types.h
-    src/Options.h
 )
 
 set(MEMUTILZ_UI_SOURCES
+    src/main.cpp
     src/gui/Src/Base/CustomPaintToolButton.cpp
     src/gui/Src/Components/ApplicationWidget.cpp
     src/gui/Src/Components/CentralDockingArea.cpp
@@ -74,7 +76,6 @@ set(MEMUTILZ_UI_SOURCES
     src/gui/Src/Utils/ButtonPainters.cpp
     src/gui/Src/Utils/Id.cpp
     src/gui/Src/Utils/IdRegistry.cpp
-    src/main.cpp
 )
 
 set(MEMUTILZ_UI_RESOURCES

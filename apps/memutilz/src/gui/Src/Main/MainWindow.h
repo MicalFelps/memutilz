@@ -24,6 +24,8 @@ protected:
 private:
     void setupUi();
 
+    void handleWindowSignal();
+
     ApplicationWidget* _applicationWidget{ nullptr };
     RibbonBar* _ribbonBar{ nullptr };
     CentralDockingArea* _centralDockingArea{ nullptr };

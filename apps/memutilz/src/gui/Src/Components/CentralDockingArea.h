@@ -6,6 +6,46 @@
 #include "../Utils/Id.h"
 
 /**
+ * @brief CDockWidget Identifier
+ *
+ * DockKeys with std::nullopt index don't have an index
+ * pool associated with the type, so you can only have a
+ * single instance of the type.
+ */
+struct DockKey {
+	DockKey() = default;
+	DockKey(Utils::Id dockType, std::optional<int> dockIndex = std::nullopt)
+		: type{ dockType }
+		, index{ dockIndex } {}
+
+	Utils::Id type;
+	std::optional<int> index;
+
+	bool operator==(const DockKey& other) const {
+		return type == other.type && index == other.index;
+	}
+};
+inline size_t qHash(const DockKey& k, size_t seed = 0) {
+	seed = qHash(k.type, seed);
+
+	if (k.index.has_value()) {
+		seed = qHash(*k.index, seed);
+	} else {
+		seed = qHash(0x9e3779b9, seed);
+	}
+
+	return seed;
+}
+
+/**
+ * @brief Index pool for dock widgets that allow multiple instances
+ *
+ * The limit needs to be at least 2, or else there's not really
+ * any point in tracking which indexes are available and which aren't
+ */
+class IndexPool;
+
+/**
  * @brief Owns and manages all visible dock widgets
  * 
  * CentralDockingArea is a wrapper around dockManager that
@@ -21,94 +61,59 @@ class CentralDockingArea : public QWidget {
 	Q_OBJECT
 
 public:
-	explicit CentralDockingArea(QWidget* parent = nullptr);
+	explicit CentralDockingArea(
+		QWidget* parent = nullptr,
+		const ads::CDockManager::ConfigFlags flags = ads::CDockManager::DefaultBaseConfig);
 	virtual ~CentralDockingArea() override;
-/*
+
 	QPointer<ads::CDockManager> dockManager() const { return _dockManager; }
-	ads::CDockWidget* dockWidget(Utils::Id id) const;
-	std::optional<Utils::Id> focusedDockId() const;
-	
-	bool contains(Utils::Id id) const { return _docks.contains(id); }
-	std::optional<Utils::Id> idFromDock(const ads::CDockWidget* dockWidget) const;
-*/
 
 	/**
-	 * Adds the dock widget if the id is new, otherwise shows the existing one.
-	 * Returns the managed dock widget (either the new one, or the existing one).
-	 *
-	 * @warning The returned pointer is only valid until the widget is removed
-	 *          or closed with DockWidgetDeleteOnClose enabled.
+	 * @return You need to specify the index for types that have an index pool
+	 * or you get nullptr
 	 */
-/*
-	QPointer<ads::CDockWidget> addOrShowFloating(Utils::Id id, ads::CDockWidget* dockWidget);
-	QPointer<ads::CDockWidget> addOrShowDocked(
-		Utils::Id id,
-		ads::CDockWidget* dockWidget,
-		ads::CDockAreaWidget* container			= nullptr,
-		ads::DockWidgetArea relativePosition	= ads::CenterDockWidgetArea
-	);
-	QPointer<ads::CDockWidget> addOrShowTabbed(
-		Utils::Id id,
-		ads::CDockWidget* dockWidget,
-		ads::CDockAreaWidget* container			= nullptr
-	);
-	QPointer<ads::CDockWidget> addOrShowSidebar(
-		Utils::Id id,
-		ads::CDockWidget* dockWidget,
-		ads::SideBarLocation side				= ads::SideBarLeft
-	);
-*/
+	QPointer<ads::CDockWidget> dockWidget(DockKey key) const;
+	QPointer<ads::CDockWidget> dockWidget(Utils::Id type) const { dockWidget(DockKey{ type }); }
+
+	bool contains(DockKey key) const { return _docks.contains(key); }
+	bool contains(Utils::Id type) const { contains(DockKey{ type }); }
+	std::optional<DockKey> keyFromDock(ads::CDockWidget* dockWidget) const;
 
 	/**
-	 * Creates and shows a dock widget using the registered factory for the given id.
-	 * Returns nullptr if no factory is registered for the aforementioned id.
-	 */
-/*
-	QPointer<ads::CDockWidget> addOrShowFactory(Utils::Id id);
+	* You need to call setLimit before creating any widgets if you want
+	* to allow multiple instances for that type
+	*/
+	void setLimit(Utils::Id type, int limit);
+	ads::CFloatingDockContainer* addFloatingOrShow(Utils::Id type, ads::CDockWidget* dockWidget);
+	QPointer<ads::CDockWidget> addFactoryOrShow(Utils::Id type);
 
-	void showDock(Utils::Id id, bool bringToFront = true);
-	void hideDock(Utils::Id id);
-	void toggleDock(Utils::Id id);
-	void activateDock(Utils::Id id); // show + raise + setFocus
+	void showDock(DockKey key, bool bringToFront = true);
+	void hideDock(DockKey key);
+	void toggleDock(DockKey key);
+	void activateDock(DockKey key); // show + raise + setFocus
 
-	/// <summary>
-	/// Removes from layout and map. Deletes the widget UNLESS
-	/// DockWidgetDeleteOnClose is set (in which case widget deletes itself)
-	/// </summary>
-	/// <param name="id"> Dock Widget ID </param>
-	/// <returns> Returns true if dock existed and deleted successfully </returns>
-	bool remove(Utils::Id id);
+	void showDock(Utils::Id type, bool bringToFront = true) { showDock(DockKey{ type, std::nullopt }, bringToFront); }
+	void hideDock(Utils::Id type) { hideDock(DockKey{ type, std::nullopt }); }
+	void toggleDock(Utils::Id type) { toggleDock(DockKey{ type, std::nullopt }); }
+	void activateDock(Utils::Id type) { activateDock(DockKey{ type, std::nullopt }); }
+
+	bool remove(DockKey key);
 	void removeAll();
 
-	// Layout
+	void toggleLockLayout();
+	bool isLayoutLocked() const { return _layoutLocked; }
 
-	QStringList perspectiveNames() const;
-	std::optional<QString> currentPerspectiveName() const;
+	void registerFactory(Utils::Id type, std::function<ads::CDockWidget*()> factory);
+private slots:
+	void onDockDestroyed(QObject* obj);
 
-	bool savePerspective(const QString& name);
-	bool loadPerspective(const QString& name);
-	bool deletePerspective(const QString& name);
-
-	void setLayoutLocked(bool locked);
-	bool isLayoutLocked() const;
-
-	void createFactory(Utils::Id id, std::function<ads::CDockWidget*()> factory);
-signals:
-	void focusedDockWidgetChanged(std::optional<Utils::Id> prev, std::optional<Utils::Id> curr);
-	void dockShown(Utils::Id id);
-	void dockHidden(Utils::Id id);
-	void dockRemoved(Utils::Id id);
-
-	void perspectiveListChanged();
-	void perspectiveLoaded(const QString& name);
 private:
 	QPointer<ads::CDockManager>								_dockManager;
-	QHash<Utils::Id, QPointer<ads::CDockWidget>>			_docks;
-	QHash<ads::CDockWidget*, Utils::Id>						_ids;
-	QHash<QString, QByteArray>								_perspectives;
-	std::optional<QString>									_currentPerspective;
-	std::optional<Utils::Id>								_focusedDock;
+	QHash<DockKey, QPointer<ads::CDockWidget>>				_docks;
+	QHash<ads::CDockWidget*, DockKey>						_keys;
 
-	QHash<Utils::Id, std::function<ads::CDockWidget*>()>	_factories;
-*/
+	QHash<Utils::Id, std::function<ads::CDockWidget*()>>	_factories;
+	QHash<Utils::Id ,IndexPool>								_indexPools;
+
+	bool													_layoutLocked{ false };
 };

@@ -19,7 +19,8 @@ def main():
     matches = find_files(args.directory, args.pattern)
     for path in matches:
         index = path.find("src")
-        print(path[index:])
+        res = path.replace("\\", "/")
+        print(res[index:])
 
 if __name__ == "__main__":
     main()

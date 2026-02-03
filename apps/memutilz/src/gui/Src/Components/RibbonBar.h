@@ -12,7 +12,7 @@ public:
 
 signals:
     void applicationButtonClicked();
-
+    void createTextWidget();
 private:
     void createRibbonApplicationButton();
 

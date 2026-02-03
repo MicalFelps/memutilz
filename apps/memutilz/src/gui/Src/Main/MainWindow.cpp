@@ -2,6 +2,10 @@
 
 #include "MainWindow.h"
 
+#include <QPlainTextEdit>
+#include <DockWidget.h>
+#include "../Constants/Ids.h"
+
 MainWindow::MainWindow(QWidget* parent, SARibbonMainWindowStyles style, const Qt::WindowFlags flags)
     : SARibbonMainWindow(parent, style, flags)
 {
@@ -44,5 +48,17 @@ void MainWindow::setupUi() {
             // _applicationWidget->show();
         });
 
+    connect(_ribbonBar, &RibbonBar::createTextWidget, this,
+        &MainWindow::handleWindowSignal);
+
     setRibbonTheme(SARibbonTheme::RibbonThemeDark3);
+}
+
+void MainWindow::handleWindowSignal() {
+    auto w = new QPlainTextEdit(this);
+    ads::CDockWidget* dock = new ads::CDockWidget(_centralDockingArea->dockManager(), "Whatever", nullptr);
+    dock->setWidget(w);
+
+    _centralDockingArea->setLimit(Core::Constants::Dock::TEXT, 4);
+    _centralDockingArea->addFloatingOrShow(Core::Constants::Dock::TEXT, dock);
 }

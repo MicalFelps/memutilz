@@ -55,7 +55,7 @@ Id IdRegistry::getOrRegister(const char* s, size_t len) {
 
 	if (auto maybeId = idFromString(s, len)) return *maybeId;
 	QWriteLocker lock(&_mutex);
-	if (auto maybeId = idFromString(s, len)) return *maybeId; // double check pattern is ok here
+	if (auto maybeId = idFromString(s, len, true)) return *maybeId; // double check pattern is ok here
 
 	static Id::value_type nextAvailableId = 0x100000;
 	Id::value_type nextId = nextAvailableId++;
@@ -76,13 +76,14 @@ std::string_view IdRegistry::stringFromId(Id id) {
 	const StringHolder& sh = it.value();
 	return std::string_view{ sh.str, sh.len };
 }
-std::optional<Id> IdRegistry::idFromString(const char* s, size_t len) {
-	QReadLocker lock(&_mutex);
+std::optional<Id> IdRegistry::idFromString(const char* s, size_t len, bool hasWriteLock) {
+	if (!hasWriteLock) {
+		QReadLocker lock(&_mutex);
+	}
 	StringHolder key{ s, len };
 	auto it = _idFromString.constFind(key);
 	if (it == _idFromString.cend()) return std::nullopt;
 	return Id{ it.value() };
 }
-
 
 } // namespace Utils
