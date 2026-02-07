@@ -13,28 +13,27 @@
  * single instance of the type.
  */
 struct DockKey {
-	DockKey() = default;
-	DockKey(Utils::Id dockType, std::optional<int> dockIndex = std::nullopt)
-		: type{ dockType }
-		, index{ dockIndex } {}
+    DockKey() = default;
+    DockKey(Utils::Id dockType, std::optional<int> dockIndex = std::nullopt)
+        : type{dockType}, index{dockIndex} {}
 
-	Utils::Id type;
-	std::optional<int> index;
+    Utils::Id type;
+    std::optional<int> index;
 
-	bool operator==(const DockKey& other) const {
-		return type == other.type && index == other.index;
-	}
+    bool operator==(const DockKey& other) const {
+        return type == other.type && index == other.index;
+    }
 };
 inline size_t qHash(const DockKey& k, size_t seed = 0) {
-	seed = qHash(k.type, seed);
+    seed = qHash(k.type, seed);
 
-	if (k.index.has_value()) {
-		seed = qHash(*k.index, seed);
-	} else {
-		seed = qHash(0x9e3779b9, seed);
-	}
+    if (k.index.has_value()) {
+        seed = qHash(*k.index, seed);
+    } else {
+        seed = qHash(0x9e3779b9, seed);
+    }
 
-	return seed;
+    return seed;
 }
 
 /**
@@ -47,7 +46,7 @@ class IndexPool;
 
 /**
  * @brief Owns and manages all visible dock widgets
- * 
+ *
  * CentralDockingArea is a wrapper around dockManager that
  * manages the ownership of all registered dock widgets. Closing
  * a dock widget either hides it or deletes it entirely depending
@@ -58,62 +57,75 @@ class IndexPool;
  * it could become a memory leak, but this is very very unlikely.
  */
 class CentralDockingArea : public QWidget {
-	Q_OBJECT
+    Q_OBJECT
 
-public:
-	explicit CentralDockingArea(
-		QWidget* parent = nullptr,
-		const ads::CDockManager::ConfigFlags flags = ads::CDockManager::DefaultBaseConfig);
-	virtual ~CentralDockingArea() override;
+   public:
+    explicit CentralDockingArea(QWidget* parent = nullptr,
+                                const ads::CDockManager::ConfigFlags flags =
+                                    ads::CDockManager::DefaultBaseConfig);
+    virtual ~CentralDockingArea() override;
 
-	QPointer<ads::CDockManager> dockManager() const { return _dockManager; }
+    QPointer<ads::CDockManager> dockManager() const { return _dockManager; }
 
-	/**
-	 * @return You need to specify the index for types that have an index pool
-	 * or you get nullptr
-	 */
-	QPointer<ads::CDockWidget> dockWidget(DockKey key) const;
-	QPointer<ads::CDockWidget> dockWidget(Utils::Id type) const { dockWidget(DockKey{ type }); }
+    /**
+     * @return You need to specify the index for types that have an index pool
+     * or you get nullptr
+     */
+    QPointer<ads::CDockWidget> dockWidget(DockKey key) const;
+    QPointer<ads::CDockWidget> dockWidget(Utils::Id type) const {
+        return dockWidget(DockKey{type});
+    }
 
-	bool contains(DockKey key) const { return _docks.contains(key); }
-	bool contains(Utils::Id type) const { contains(DockKey{ type }); }
-	std::optional<DockKey> keyFromDock(ads::CDockWidget* dockWidget) const;
+    bool contains(DockKey key) const { return _docks.contains(key); }
+    bool contains(Utils::Id type) const { return contains(DockKey{type}); }
+    std::optional<DockKey> keyFromDock(ads::CDockWidget* dockWidget) const;
 
-	/**
-	* You need to call setLimit before creating any widgets if you want
-	* to allow multiple instances for that type
-	*/
-	void setLimit(Utils::Id type, int limit);
-	ads::CFloatingDockContainer* addFloatingOrShow(Utils::Id type, ads::CDockWidget* dockWidget);
-	QPointer<ads::CDockWidget> addFactoryOrShow(Utils::Id type);
+    /**
+     * You need to call setLimit before creating any widgets if you want
+     * to allow multiple instances for that type
+     */
+    void setLimit(Utils::Id type, int limit);
 
-	void showDock(DockKey key, bool bringToFront = true);
-	void hideDock(DockKey key);
-	void toggleDock(DockKey key);
-	void activateDock(DockKey key); // show + raise + setFocus
+    ads::CDockAreaWidget* addDockWidgetOrShow(
+        ads::DockWidgetArea area, Utils::Id type, ads::CDockWidget* dockWidget,
+        ads::CDockAreaWidget* dockAreaWidget = nullptr);
 
-	void showDock(Utils::Id type, bool bringToFront = true) { showDock(DockKey{ type, std::nullopt }, bringToFront); }
-	void hideDock(Utils::Id type) { hideDock(DockKey{ type, std::nullopt }); }
-	void toggleDock(Utils::Id type) { toggleDock(DockKey{ type, std::nullopt }); }
-	void activateDock(Utils::Id type) { activateDock(DockKey{ type, std::nullopt }); }
+    ads::CDockAreaWidget* addDockWidgetFactoryOrShow(
+        ads::DockWidgetArea area, Utils::Id type,
+        ads::CDockAreaWidget* dockAreaWidget = nullptr);
 
-	bool remove(DockKey key);
-	void removeAll();
+    ads::CDockAreaWidget* showDock(DockKey key, bool bringToFront = true);
+    void hideDock(DockKey key);
+    void toggleDock(DockKey key);
+    void activateDock(DockKey key);  // show + raise + setFocus
 
-	void toggleLockLayout();
-	bool isLayoutLocked() const { return _layoutLocked; }
+    ads::CDockAreaWidget* showDock(Utils::Id type, bool bringToFront = true) {
+        return showDock(DockKey{type, std::nullopt}, bringToFront);
+    }
+    void hideDock(Utils::Id type) { hideDock(DockKey{type, std::nullopt}); }
+    void toggleDock(Utils::Id type) { toggleDock(DockKey{type, std::nullopt}); }
+    void activateDock(Utils::Id type) {
+        activateDock(DockKey{type, std::nullopt});
+    }
 
-	void registerFactory(Utils::Id type, std::function<ads::CDockWidget*()> factory);
-private slots:
-	void onDockDestroyed(QObject* obj);
+    bool remove(DockKey key);
+    void removeAll();
 
-private:
-	QPointer<ads::CDockManager>								_dockManager;
-	QHash<DockKey, QPointer<ads::CDockWidget>>				_docks;
-	QHash<ads::CDockWidget*, DockKey>						_keys;
+    void toggleLockLayout();
+    bool isLayoutLocked() const { return _layoutLocked; }
 
-	QHash<Utils::Id, std::function<ads::CDockWidget*()>>	_factories;
-	QHash<Utils::Id ,IndexPool>								_indexPools;
+    void registerFactory(Utils::Id type,
+                         std::function<ads::CDockWidget*()> factory);
+   private slots:
+    void onDockDestroyed(QObject* obj);
 
-	bool													_layoutLocked{ false };
+   private:
+    QPointer<ads::CDockManager> _dockManager;
+    QHash<DockKey, QPointer<ads::CDockWidget>> _docks;
+    QHash<ads::CDockWidget*, DockKey> _keys;
+
+    QHash<Utils::Id, std::function<ads::CDockWidget*()>> _factories;
+    QHash<Utils::Id, IndexPool> _indexPools;
+
+    bool _layoutLocked{false};
 };

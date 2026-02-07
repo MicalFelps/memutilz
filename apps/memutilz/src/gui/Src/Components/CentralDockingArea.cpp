@@ -1,11 +1,12 @@
 #include "CentralDockingArea.h"
 
 class IndexPool {
-public:
+   public:
     IndexPool() = default;
-    explicit IndexPool(int limit)
-        : _limit{ limit > 2 ? limit : 2 } {
-        for (int i = 1; i <= _limit; ++i) { _allAvailable.insert(i); }
+    explicit IndexPool(int limit) : _limit{limit > 2 ? limit : 2} {
+        for (int i = 1; i <= _limit; ++i) {
+            _allAvailable.insert(i);
+        }
         _nextAvailable = 1;
     }
 
@@ -22,7 +23,10 @@ public:
             _allAvailable.remove(*_nextAvailable);
         }
 
-        if (_allAvailable.isEmpty()) { _nextAvailable = std::nullopt; return res; }
+        if (_allAvailable.isEmpty()) {
+            _nextAvailable = std::nullopt;
+            return res;
+        }
 
         int next = std::numeric_limits<int>::max();
         for (auto i : _allAvailable) {
@@ -36,90 +40,115 @@ public:
     void release(int index) {
         if (index <= 0 || index > _limit) return;
         _allAvailable.insert(index);
-        if (index < _nextAvailable || !_nextAvailable.has_value()) _nextAvailable = index;
+        if (index < _nextAvailable || !_nextAvailable.has_value())
+            _nextAvailable = index;
     }
 
-private:
-    QSet<int>			_allAvailable;
-    std::optional<int>	_nextAvailable;
-    int					_limit;
+   private:
+    QSet<int> _allAvailable;
+    std::optional<int> _nextAvailable;
+    int _limit;
 };
 
-CentralDockingArea::CentralDockingArea(QWidget* parent, const ads::CDockManager::ConfigFlags flags)
+CentralDockingArea::CentralDockingArea(
+    QWidget* parent, const ads::CDockManager::ConfigFlags flags)
     : QWidget(parent) {
     ads::CDockManager::setConfigFlags(flags);
     _dockManager = new ads::CDockManager(this);
 }
 CentralDockingArea::~CentralDockingArea() {
-	removeAll();
-	delete _dockManager;
+    removeAll();
+    delete _dockManager;
 }
 
 QPointer<ads::CDockWidget> CentralDockingArea::dockWidget(DockKey key) const {
-	if (_docks.contains(key)) return _docks[key];
-	else return nullptr;
+    if (_docks.contains(key))
+        return _docks[key];
+    else
+        return nullptr;
 }
-std::optional<DockKey> CentralDockingArea::keyFromDock(ads::CDockWidget* dockWidget) const {
-	if (_keys.contains(dockWidget)) return _keys[dockWidget];
-	else return std::nullopt;
+std::optional<DockKey> CentralDockingArea::keyFromDock(
+    ads::CDockWidget* dockWidget) const {
+    if (_keys.contains(dockWidget))
+        return _keys[dockWidget];
+    else
+        return std::nullopt;
 }
 
 void CentralDockingArea::setLimit(Utils::Id type, int limit) {
-	if (_indexPools.contains(type)) return;
-	_indexPools[type] = IndexPool(limit);
+    if (_indexPools.contains(type)) return;
+    _indexPools[type] = IndexPool(limit);
 }
-ads::CFloatingDockContainer* CentralDockingArea::addFloatingOrShow(Utils::Id type, ads::CDockWidget* dockWidget) {
-    if (_indexPools.contains(type)) {
-        auto pool = _indexPools[type];
-        auto index = pool.acquire();
-        if (index == std::nullopt) {
-            showDock(DockKey{ type, 1 }, true);
-            return nullptr;
+
+// TODO: U-Test
+ads::CDockAreaWidget* CentralDockingArea::addDockWidgetOrShow(
+    ads::DockWidgetArea area, Utils::Id type, ads::CDockWidget* dockWidget,
+    ads::CDockAreaWidget* dockAreaWidget) {
+    qDebug() << "-----------------";
+    qDebug() << "Clicked Text Widget Create";
+    qDebug() << "Type:" << type.name();
+
+    if (contains(type)) {  // dockWidget exists
+        if (_indexPools.contains(type)) {
+            auto pool = _indexPools[type];
+            auto index = pool.nextAvailable().has_value()
+                             ? *pool.nextAvailable()
+                             : pool.limit();
+            return showDock(DockKey{type, index}, true);
+        } else {
+            return showDock(type, true);
         }
-        else {
-            DockKey key{ type, index };
+    } else {  // doesn't exist yet, create it
+        if (_indexPools.contains(type)) {
+            auto pool = _indexPools[type];
+            auto nextId = pool.nextAvailable();
+            if (nextId.has_value()) {
+                qDebug() << "Id:" << nextId;
+                DockKey key{type, *nextId};
+                _docks[key] = dockWidget;
+                _keys[dockWidget] = key;
+
+                connect(dockWidget, &QObject::destroyed, this,
+                        &CentralDockingArea::onDockDestroyed);
+                return _dockManager->addDockWidget(area, dockWidget,
+                                                   dockAreaWidget);
+            } else {
+                int index = pool.limit();
+                return showDock(DockKey{type, index}, true);
+            }
+        } else {
+            DockKey key{type, std::nullopt};
             _docks[key] = dockWidget;
             _keys[dockWidget] = key;
 
-            connect(dockWidget, &QObject::destroyed, this, &CentralDockingArea::onDockDestroyed);  
-            return _dockManager->addDockWidgetFloating(dockWidget);
-        }
-    }
-    else {
-        if (_docks.contains(type)) {
-            showDock(type);
-            return nullptr;
-        }
-        else {
-            DockKey key{ type, std::nullopt };
-            _docks[key] = dockWidget;
-            _keys[dockWidget] = key;
-
-            connect(dockWidget, &QObject::destroyed, this, &CentralDockingArea::onDockDestroyed);
-            return _dockManager->addDockWidgetFloating(dockWidget);
+            connect(dockWidget, &QObject::destroyed, this,
+                    &CentralDockingArea::onDockDestroyed);
+            return _dockManager->addDockWidget(area, dockWidget,
+                                               dockAreaWidget);
         }
     }
 }
 
-// To-Do
-QPointer<ads::CDockWidget> CentralDockingArea::addFactoryOrShow(Utils::Id type) {
-    if (_factories.contains(type)) {
-        auto w = _factories[type]();
-        return w;
-    }
-
-    return nullptr;
+// TODO: U-Test
+ads::CDockAreaWidget* CentralDockingArea::addDockWidgetFactoryOrShow(
+    ads::DockWidgetArea area, Utils::Id type,
+    ads::CDockAreaWidget* dockAreaWidget) {
+    if (!_factories.contains(type)) return nullptr;
+    auto w = _factories[type]();
+    return addDockWidgetOrShow(area, type, w, dockAreaWidget);
 }
 
-void CentralDockingArea::showDock(DockKey key, bool bringToFront) {
+ads::CDockAreaWidget* CentralDockingArea::showDock(DockKey key,
+                                                   bool bringToFront) {
     auto w = dockWidget(key);
-    if (!w) return;
+    if (!w) return nullptr;
 
     w->toggleView(true);
     if (bringToFront) {
         w->raise();
         w->setFocus();
     }
+    return w->dockAreaWidget();
 }
 void CentralDockingArea::hideDock(DockKey key) {
     auto w = dockWidget(key);
@@ -171,12 +200,14 @@ void CentralDockingArea::removeAll() {
 
 void CentralDockingArea::toggleLockLayout() {
     _layoutLocked = !_layoutLocked;
-    _layoutLocked
-        ? _dockManager->lockDockWidgetFeaturesGlobally(ads::CDockWidget::NoDockWidgetFeatures)
-        : _dockManager->lockDockWidgetFeaturesGlobally(ads::CDockWidget::DefaultDockWidgetFeatures);
+    _layoutLocked ? _dockManager->lockDockWidgetFeaturesGlobally(
+                        ads::CDockWidget::NoDockWidgetFeatures)
+                  : _dockManager->lockDockWidgetFeaturesGlobally(
+                        ads::CDockWidget::DefaultDockWidgetFeatures);
 }
 
-void CentralDockingArea::registerFactory(Utils::Id type, std::function<ads::CDockWidget* ()> factory) {
+void CentralDockingArea::registerFactory(
+    Utils::Id type, std::function<ads::CDockWidget*()> factory) {
     _factories[type] = factory;
 }
 
