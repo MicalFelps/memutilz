@@ -56,13 +56,13 @@ class IndexPool;
  * If an expensive dock widget remains hidden for a long time
  * it could become a memory leak, but this is very very unlikely.
  */
-class CentralDockingArea : public QWidget {
+class CentralDockingArea : public QObject {
     Q_OBJECT
 
    public:
-    explicit CentralDockingArea(QWidget* parent = nullptr,
-                                const ads::CDockManager::ConfigFlags flags =
-                                    ads::CDockManager::DefaultBaseConfig);
+    CentralDockingArea() = delete;
+    explicit CentralDockingArea(QObject* parent = nullptr,
+                                ads::CDockManager* dockManager = nullptr);
     virtual ~CentralDockingArea() override;
 
     QPointer<ads::CDockManager> dockManager() const { return _dockManager; }

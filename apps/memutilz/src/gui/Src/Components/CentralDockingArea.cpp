@@ -50,16 +50,10 @@ class IndexPool {
     int _limit;
 };
 
-CentralDockingArea::CentralDockingArea(
-    QWidget* parent, const ads::CDockManager::ConfigFlags flags)
-    : QWidget(parent) {
-    ads::CDockManager::setConfigFlags(flags);
-    _dockManager = new ads::CDockManager(this);
-}
-CentralDockingArea::~CentralDockingArea() {
-    removeAll();
-    delete _dockManager;
-}
+CentralDockingArea::CentralDockingArea(QObject* parent,
+                                       ads::CDockManager* dockManager)
+    : QObject(parent), _dockManager{dockManager} {}
+CentralDockingArea::~CentralDockingArea() { removeAll(); }
 
 QPointer<ads::CDockWidget> CentralDockingArea::dockWidget(DockKey key) const {
     if (_docks.contains(key))
@@ -84,39 +78,33 @@ void CentralDockingArea::setLimit(Utils::Id type, int limit) {
 ads::CDockAreaWidget* CentralDockingArea::addDockWidgetOrShow(
     ads::DockWidgetArea area, Utils::Id type, ads::CDockWidget* dockWidget,
     ads::CDockAreaWidget* dockAreaWidget) {
-    qDebug() << "-----------------";
-    qDebug() << "Clicked Text Widget Create";
-    qDebug() << "Type:" << type.name();
+    if (_indexPools.contains(type)) {
+        auto& pool = _indexPools[type];  // copy instead of move :/
+        auto nextId = pool.acquire();
+        if (nextId.has_value()) {
+            DockKey key{type, *nextId};
+            _docks[key] = dockWidget;
+            _keys[dockWidget] = key;
 
-    if (contains(type)) {  // dockWidget exists
-        if (_indexPools.contains(type)) {
-            auto pool = _indexPools[type];
-            auto index = pool.nextAvailable().has_value()
-                             ? *pool.nextAvailable()
-                             : pool.limit();
-            return showDock(DockKey{type, index}, true);
+            connect(dockWidget, &QObject::destroyed, this,
+                    &CentralDockingArea::onDockDestroyed);
+            return _dockManager->addDockWidget(area, dockWidget,
+                                               dockAreaWidget);
         } else {
-            return showDock(type, true);
-        }
-    } else {  // doesn't exist yet, create it
-        if (_indexPools.contains(type)) {
-            auto pool = _indexPools[type];
-            auto nextId = pool.nextAvailable();
-            if (nextId.has_value()) {
-                qDebug() << "Id:" << nextId;
-                DockKey key{type, *nextId};
-                _docks[key] = dockWidget;
-                _keys[dockWidget] = key;
-
-                connect(dockWidget, &QObject::destroyed, this,
-                        &CentralDockingArea::onDockDestroyed);
-                return _dockManager->addDockWidget(area, dockWidget,
-                                                   dockAreaWidget);
-            } else {
-                int index = pool.limit();
-                return showDock(DockKey{type, index}, true);
+            int limit = pool.limit();
+            for (int index = 1; index < limit; ++index) {
+                if (!_docks[DockKey{type, index}]->isVisible()) {
+                    return showDock(DockKey{type, index}, true);
+                    break;
+                }
             }
-        } else {
+            return showDock(DockKey{type, limit});
+        }
+    } else {
+        if (contains(type)) {
+            return showDock(type, true);
+        }  // doesn't exist at all
+        else {
             DockKey key{type, std::nullopt};
             _docks[key] = dockWidget;
             _keys[dockWidget] = key;
@@ -185,7 +173,7 @@ bool CentralDockingArea::remove(DockKey key) {
     _keys.remove(w);
 
     if (_indexPools.contains(key.type)) {
-        auto pool = _indexPools[key.type];
+        auto& pool = _indexPools[key.type];
         pool.release(*key.index);
     }
 
@@ -222,7 +210,7 @@ void CentralDockingArea::onDockDestroyed(QObject* obj) {
     _keys.remove(destroyedWidget);
 
     if (_indexPools.contains(key.type)) {
-        auto pool = _indexPools[key.type];
+        auto& pool = _indexPools[key.type];
         pool.release(*key.index);
     }
 }

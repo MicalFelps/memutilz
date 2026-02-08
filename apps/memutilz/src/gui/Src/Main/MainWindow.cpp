@@ -6,15 +6,32 @@
 #include <DockWidget.h>
 #include "../Constants/Ids.h"
 
+struct MainWindowPrivate {
+    MainWindow* _this;
+    ads::CDockManager* dockManager;
+
+    MainWindowPrivate(MainWindow* _public, const ads::CDockManager::ConfigFlags flags =
+        ads::CDockManager::DefaultBaseConfig)
+        : _this{ _public }
+    { 
+        ads::CDockManager::setConfigFlags(flags);
+        dockManager = new ads::CDockManager(_this);
+    }
+};
+
 MainWindow::MainWindow(QWidget* parent, SARibbonMainWindowStyles style,
                        const Qt::WindowFlags flags)
     : SARibbonMainWindow(parent, style, flags) {
+    d = new MainWindowPrivate(this);
     setupUi();
 }
+MainWindow::~MainWindow() {
+    delete d;
+}
+
 void MainWindow::closeEvent(QCloseEvent* event) {
     auto r = QMessageBox::question(this, "Exit", "Do you really want to exit?",
                                    QMessageBox::Yes | QMessageBox::No);
-
     if (r == QMessageBox::Yes) {
         event->accept();
     } else {
@@ -33,9 +50,10 @@ void MainWindow::setupUi() {
     _ribbonBar = new RibbonBar(ribbonBar(), this);
     _applicationWidget = new ApplicationWidget(this);
     _applicationWidget->hide();
-    _centralDockingArea = new CentralDockingArea(this);
-    _statusBar = new QStatusBar(this);
 
+    _centralDockingArea = new CentralDockingArea(this, d->dockManager);
+
+    _statusBar = new QStatusBar(this);
     setStatusBar(_statusBar);
     _statusBar->showMessage("Ready");
 
