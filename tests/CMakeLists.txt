@@ -2,24 +2,6 @@ if(NOT PROJECT_IS_TOP_LEVEL)
     return()
 endif()
 
-# Get GoogleTest via CPM
-
-include(${CMAKE_SOURCE_DIR}/cmake/CPM.cmake)
-
-if(NOT TARGET GTest::gtest)
-    CPMAddPackage(
-        NAME googletest
-        GITHUB_REPOSITORY google/googletest
-        GIT_TAG v1.17.0
-        OPTIONS
-            "INSTALL_GTEST OFF"
-            "gtest_force_shared_crt ON"
-        EXCLUDE_FROM_ALL TRUE
-    )
-endif()
-
-# Add tests
-
 enable_testing()
 include(GoogleTest)
 

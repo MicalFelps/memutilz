@@ -12,11 +12,9 @@ if(SRC_DIR STREQUAL BIN_DIR)
     )
 endif()
 
-cmake_policy(SET CMP0135 NEW) # FetchContent timestamp handling
-
 project(
     memutilz
-    VERSION 1.0.0
+    VERSION 0.0.2
     HOMEPAGE_URL https://github.com/MicalFelps/memutilz
     LANGUAGES CXX C
 )
@@ -28,9 +26,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include(Options)
-include(TargetConfig)
-
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
     message(STATUS "No build type selected, defaulting to Debug")
@@ -38,33 +33,26 @@ endif()
 
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
-# ---- dependencies ----
-
-set(MEMUTILZ_DEPENDENCY_DIR "${CMAKE_SOURCE_DIR}/ext")
-
-include(CPM)
-include(deps/Versions)
-
-# Zydis
-include(deps/Zydis)
-memutilz_add_zydis()
-add_library(memutilz::zydis ALIAS Zydis)
-
-# xxhash
-include(deps/xxhash)
-memutilz_add_xxhash()
-
 # ---- subdirectories ----
 
+include(Options)
+include(TargetConfig)
 include(GNUInstallDirs)
 
 if(PROJECT_IS_TOP_LEVEL AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory" FORCE)
 endif()
 
+find_package(Zydis CONFIG REQUIRED)
+find_package(xxHash CONFIG REQUIRED)
+
 add_subdirectory(src)
 
 if(MEMUTILZ_BUILD_APPS)
+    find_package(SARibbon   CONFIG REQUIRED)
+    find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
+    # find_package(KDDockWidgets CONFIG REQUIRED)
+
     add_subdirectory(apps)
 endif()
 
@@ -75,6 +63,8 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
+    find_package(GTest CONFIG REQUIRED)
+
     add_subdirectory(tests)
 endif()
 

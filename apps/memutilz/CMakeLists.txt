@@ -1,17 +1,6 @@
 set(QT_NO_PRIVATE_MODULE_WARNING ON CACHE BOOL "Disable Qt private module warnings")
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
-CPMAddPackage(
-    NAME qtadvanceddocking
-    GITHUB_REPOSITORY githubuser0xFFFF/Qt-Advanced-Docking-System
-    GIT_TAG ${QADS_VER}
-    OPTIONS
-        "BUILD_EXAMPLES OFF"
-)
-
-include(deps/SARibbon)
-memutilz_add_saribbon()
-
 if(WIN32)
     set(GUI_TYPE WIN32)
 elseif(APPLE)
@@ -20,13 +9,10 @@ else()
     set(GUI_TYPE "")
 endif()
 
-include(TargetConfig)
-
 add_executable(memutilz_ui ${GUI_TYPE})
 memutilz_configure_target(memutilz_ui)
 
 set(BINARY_NAME "memutilz")
-
 set_target_properties(memutilz_ui PROPERTIES
     OUTPUT_NAME ${BINARY_NAME}
 )
@@ -95,30 +81,15 @@ target_sources(memutilz_ui
         ${MEMUTILZ_UI_FORMS}
 )
 
-set(MEMUTILZ_UI_QT6_DEPS
-    qtadvanceddocking-qt6
-    SARibbonBar
-)
-
-foreach(dep IN LISTS MEMUTILZ_UI_QT6_DEPS)
-    if(TARGET ${dep})
-        target_compile_options(${dep} PRIVATE
-            $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-deprecated-declarations>
-            $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
-        )
-    else()
-        message(WARNING "Target '${dep}' not found (cannot apply deprecation suppression)")
-    endif()
-endforeach()
-
 target_link_libraries(memutilz_ui
     PRIVATE
-        ${MEMUTILZ_UI_QT6_DEPS}
-        memutilz_lib
-        xxHash::xxHash
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        SARibbon::SARibbon
+        qtadvanceddocking-qt6::qtadvanceddocking-qt6
+        xxHash::xxhash
+        memutilz_lib
 )
 
 install(

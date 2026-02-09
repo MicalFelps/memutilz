@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/microsoft/vcpkg",
+    "baseline": "aa2d37682e3318d93aef87efa7b0e88e81cd3d59"
+  },
+  "registries": [
+    {
+      "kind": "filesystem",
+      "path": "cmake/vcpkg_overlays",
+      "packages": [ "saribbon" ]
+    }
+  ]
+}

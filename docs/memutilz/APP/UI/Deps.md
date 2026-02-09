@@ -1,0 +1,1 @@
+https://kdab.github.io/KDDockWidgets/installation_and_usage.html

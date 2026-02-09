@@ -1,6 +1,6 @@
 ### GUI
 
-Unified GUI frontend for cross-platform debugging.
+Unified GUI frontend for cross-platform debugging. The front-end only works on x86-64 because you'll never need anything more than that.
 
 ### Debugging Backend
 
@@ -44,3 +44,7 @@ Kernel support (hopefully eventually)
 - Anti-Anti-Debugging, something like scyllaHide, or TitanHide
 - With signatures, you can do a lot
 - Qemu Support
+
+### ARM SUPPORT
+
+Use LLVM MCDisassembler / MCInst layer (what LLDB, clang, llvm-objdump use internally)

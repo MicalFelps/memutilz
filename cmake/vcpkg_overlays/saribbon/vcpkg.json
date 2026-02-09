@@ -1,0 +1,9 @@
+{
+	"name": "saribbon",
+	"version-string": "2.5.7",
+	"port-version": 0,
+	"description": "SARibbon fork with custom palette-based theme",
+	"homepage": "https://github.com/MicalFelps/SARibbon",
+	"license": "MIT",
+	"dependencies": []
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "memutilz",
+  "version-string": "0.0.2",
+  "description": "Memory utilities with UI app",
+  "homepage": "https://github.com/MicalFelps/memutilz",
+  "license": "MIT",
+  "dependencies": [
+    "xxhash",
+    "zydis"
+  ],
+  "features": {
+    "ui": {
+      "description": "Main UI interface for memutilz library",
+      "dependencies": [
+        "saribbon",
+        "qt-advanced-docking-system"
+      ]
+    },
+    "plugins": {
+      "description": "Dependencies for plugins",
+      "dependencies": [
+
+      ]
+    },
+    "tests": {
+      "description": "Dependencies for testing",
+      "dependencies": [
+        "gtest"
+      ]
+    }
+  }
+}

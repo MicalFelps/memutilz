@@ -3,23 +3,27 @@
   "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
   "configurePresets": [
     {
-      "name": "base",
+      "name": "vcpkg-base",
       "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
         "BUILD_SHARED_LIBS": true,
-        "MEMUTILZ_WARNINGS_AS_ERRORS": true
+        "MEMUTILZ_WARNINGS_AS_ERRORS": true,
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/ext/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/vcpkg_overlays",
+        "VCPKG_MANIFEST_MODE": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
-
     {
       "name": "linux-debug",
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
-      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "MEMUTILZ_ENABLE_SANITIZERS": true
+        "MEMUTILZ_ENABLE_SANITIZERS": true,
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
       },
       "condition": {
         "type": "equals",
@@ -29,10 +33,11 @@
     },
     {
       "name": "linux-release",
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
-      "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
       },
       "condition": {
         "type": "equals",
@@ -40,13 +45,13 @@
         "rhs": "Linux"
       }
     },
-
     {
       "name": "windows-debug",
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
-      "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
       },
       "condition": {
         "type": "equals",
@@ -56,10 +61,11 @@
     },
     {
       "name": "windows-release",
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
-      "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
       },
       "condition": {
         "type": "equals",
@@ -68,7 +74,6 @@
       }
     }
   ],
-
   "buildPresets": [
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },

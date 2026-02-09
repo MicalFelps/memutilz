@@ -1,4 +1,3 @@
-include(TargetConfig)
 add_library(memutilz_lib)
 memutilz_configure_target(memutilz_lib)
 
@@ -28,7 +27,7 @@ target_sources(memutilz_lib
 
 target_link_libraries(memutilz_lib
     PRIVATE
-        memutilz::zydis
+        Zydis::Zydis
 )
 
 if(WIN32 AND BUILD_SHARED_LIBS)
