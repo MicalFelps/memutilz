@@ -2,8 +2,6 @@ if(NOT PROJECT_IS_TOP_LEVEL)
     return()
 endif()
 
-# Add tests
-
 enable_testing()
 include(GoogleTest)
 
@@ -27,10 +25,10 @@ function(add_gtest target)
 
     target_link_libraries(${target}
         PRIVATE
-            gtest
-            gtest_main
-            memutilz_warnings
-            memutilz_options
+            GTest::gtest
+            GTest::gtest_main
+            Memutilz::Warnings
+            Memutilz::Options
             ${ARG_DEPENDS}
     )
 
@@ -44,7 +42,7 @@ function(add_gtest target)
         set_tests_properties(${target} PROPERTIES LABELS "${ARG_LABELS}")
     endif()
 
-    # Auto-discovery is almost always wanted nowadays
+    # Auto-discovery is almost always wanted
     if(NOT DEFINED ARG_AUTO_DISCOVER)
         set(ARG_AUTO_DISCOVER ON)
     endif()
@@ -58,20 +56,6 @@ function(add_gtest target)
         )
     endif()
 endfunction()
-
-# ---- Example usage ----
-#
-# add_gtest(test_math
-#     SOURCES lib/test_math.cpp
-#     DEPENDS memutilz::lib memutilz::math_utils
-#     LABELS "unit;fast"
-# )
-
-# add_gtest(test_disassembler
-#     SOURCES lib/test_disassembler.cpp integration/test_loader.cpp
-#     DEPENDS memutilz::disasm
-#     LABELS "integration;slow"
-# )
 
 add_gtest(test_example
     SOURCES example.cpp

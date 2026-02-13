@@ -8,26 +8,17 @@ else()
     set(GUI_TYPE "")
 endif()
 
-add_executable(memutilz_ui ${GUI_TYPE})
+add_executable(Memutilz ${GUI_TYPE})
 
 set(BINARY_NAME "memutilz")
-
-set_target_properties(memutilz_ui PROPERTIES
+set_target_properties(Memutilz PROPERTIES
     OUTPUT_NAME ${BINARY_NAME}
-)
-
-set_target_properties(memutilz_ui PROPERTIES
     AUTOMOC ON
     AUTOUIC ON
     AUTORCC ON
 )
 
-target_include_directories(memutilz_ui
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/hdr
-)
-
-set(MEMUTILZ_UI_HEADERS
+set(MEMUTILZ_HEADERS
     src/Options.h
     src/gui/Src/Base/CustomPaintToolButton.h
     src/gui/Src/Components/ApplicationWidget.h
@@ -47,7 +38,7 @@ set(MEMUTILZ_UI_HEADERS
     src/gui/Src/Utils/Types.h
 )
 
-set(MEMUTILZ_UI_SOURCES
+set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/Src/Base/CustomPaintToolButton.cpp
     src/gui/Src/Components/ApplicationWidget.cpp
@@ -63,77 +54,88 @@ set(MEMUTILZ_UI_SOURCES
     src/gui/Src/Utils/IdRegistry.cpp
 )
 
-set(MEMUTILZ_UI_RESOURCES
+set(MEMUTILZ_RESOURCES
     src/gui/rsrc/memutilz.qrc
     src/gui/rsrc/memutilz.rc
 )
 
-set(MEMUTILZ_UI_FORMS
+set(MEMUTILZ_FORMS
     src/gui/Src/Components/ApplicationWidget.ui
 )
 
-target_sources(memutilz_ui
+target_sources(Memutilz
     PRIVATE
-        ${MEMUTILZ_UI_HEADERS}
-        ${MEMUTILZ_UI_SOURCES}
-        ${MEMUTILZ_UI_RESOURCES}
-        ${MEMUTILZ_UI_FORMS}
+        ${MEMUTILZ_HEADERS}
+        ${MEMUTILZ_SOURCES}
+        ${MEMUTILZ_RESOURCES}
+        ${MEMUTILZ_FORMS}
 )
 
-target_link_libraries(memutilz_ui
+target_link_libraries(Memutilz
     PRIVATE
-        qtadvanceddocking-qt6
-        SARibbonBar
-        memutilz_lib
+        ads::qtadvanceddocking-qt6
+        SARibbonBar::SARibbonBar
         xxHash::xxHash
+        Memutilz::Memutilz
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
 )
 
-add_sanitizers(memutilz_ui)
+add_sanitizers(Memutilz)
 
 install(
-    TARGETS memutilz_ui
+    TARGETS Memutilz
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
+    COMPONENT Apps
 )
 
-install(TARGETS memutilz_lib qtadvanceddocking-qt6 SARibbonBar
+install(
+    TARGETS
+        qtadvanceddocking-qt6
+        SARibbonBar
+        Memutilz
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
+    COMPONENT Apps
     OPTIONAL
 )
 
 if(WIN32)
-    set(MEMUTILZ_UI_RUNTIME_DEPS memutilz_lib qtadvanceddocking-qt6 SARibbonBar)
-    foreach(_dependency IN LISTS MEMUTILZ_UI_RUNTIME_DEPS)
-        add_custom_command(TARGET memutilz_ui POST_BUILD
+    set(MEMUTILZ_RUNTIME_DEPS
+        qtadvanceddocking-qt6
+        SARibbonBar
+        MemutilzLib
+    )
+    foreach(_dependency IN LISTS MEMUTILZ_RUNTIME_DEPS)
+        add_custom_command(TARGET Memutilz POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:${_dependency}>
-                $<TARGET_FILE_DIR:memutilz_ui>
+                $<TARGET_FILE_DIR:Memutilz>
         )
     endforeach()
 
-    add_custom_command(TARGET memutilz_ui POST_BUILD
+    add_custom_command(TARGET Memutilz POST_BUILD
         COMMAND Qt6::windeployqt
             $<$<CONFIG:Debug>:--debug>
             --no-translations
             --no-quick-import
             --no-system-d3d-compiler
-            "$<TARGET_FILE:memutilz_ui>"
+            "$<TARGET_FILE:Memutilz>"
         COMMENT "Deploying Qt runtime with windeployqt"
         VERBATIM
     )
 
     qt_generate_deploy_app_script(
-        TARGET memutilz_ui
+        TARGET Memutilz
         OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
-        DEPLOY_TOOL_OPTIONS --no-translations --no-quick-import --no-system-d3d-compiler
+        DEPLOY_TOOL_OPTIONS
+            --no-translations
+            --no-quick-import
+            --no-system-d3d-compiler
     )
 
     install(SCRIPT ${deploy_script}
-        COMPONENT apps
+        COMPONENT Apps
     )
 endif()

@@ -1,54 +1,60 @@
-add_library(memutilz_lib)
+add_library(MemutilzLib)
+add_library(Memutilz::Memutilz ALIAS MemutilzLib)
 
-set_target_properties(memutilz_lib PROPERTIES
-    OUTPUT_NAME "memutilz"
+set(MEMUTILZ_LIB_HEADERS_PUBLIC
+    include/MemorySource.h
 )
-
-target_include_directories(memutilz_lib
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hdr>
-        $<INSTALL_INTERFACE:include/memutilz>
+set(MEMUTILZ_LIB_HEADERS_PRIVATE
 )
-
-set(MEMUTILZ_LIB_HEADERS
-    src/MemorySource.h
-)
-
 set(MEMUTILZ_LIB_SOURCES
     src/MemorySource.cpp
 )
 
-target_sources(memutilz_lib
+target_sources(MemutilzLib
     PRIVATE
-        ${MEMUTILZ_LIB_HEADERS}
+        ${MEMUTILZ_LIB_HEADERS_PRIVATE}
         ${MEMUTILZ_LIB_SOURCES}
 )
 
-target_link_libraries(memutilz_lib
+target_include_directories(MemutilzLib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/${LIBRARY_NAME}>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(MemutilzLib
     PRIVATE
         Zydis::Zydis
-        memutilz_warnings
-        memutilz_options
+        Memutilz::Warnings
+        Memutilz::Options
 )
 
 if(WIN32 AND BUILD_SHARED_LIBS)
-    set_target_properties(memutilz_lib PROPERTIES
+    set_target_properties(MemutilzLib PROPERTIES
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
 endif()
 
-install(TARGETS memutilz_lib
+set(LIBRARY_NAME "memutilz")
+set_target_properties(MemutilzLib PROPERTIES
+    VERSION     0.0.1
+    SOVERSION   0 # API Compatibility
+    OUTPUT_NAME ${LIBRARY_NAME}
+)
+
+install(TARGETS MemutilzLib
     EXPORT memutilzTargets
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT memutilz
+    COMPONENT Memutilz
 )
 
 install(
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/hdr/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/memutilz/
-    COMPONENT memutilz
+    DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_NAME}
+    COMPONENT Memutilz
     FILES_MATCHING PATTERN "*.h"
 )

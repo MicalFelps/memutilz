@@ -52,15 +52,15 @@ if(MEMUTILZ_BUILD_APPS)
     find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets)
 
     CPMAddPackage(
-    NAME SARibbon
-    GITHUB_REPOSITORY MicalFelps/SARibbon
-    GIT_TAG ${SARIBBON_BRANCH}
-    OPTIONS
-        "SARIBBON_BUILD_EXAMPLES OFF"
-    EXCLUDE_FROM_ALL ON
+        NAME SARibbon
+        GITHUB_REPOSITORY MicalFelps/SARibbon
+        GIT_TAG ${SARIBBON_COMMIT}
+        OPTIONS
+            "SARIBBON_BUILD_EXAMPLES OFF"
+        EXCLUDE_FROM_ALL ON
     )
 
-    # SWAP THIS LATER
+    # TODO: SWAP THIS LATER
     set(QADS_VER 4.5.0)
     CPMAddPackage(
         NAME qtadvanceddocking

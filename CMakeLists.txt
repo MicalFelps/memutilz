@@ -13,7 +13,7 @@ if(SRC_DIR STREQUAL BIN_DIR)
 endif()
 
 project(
-    memutilz
+    Memutilz
     VERSION 0.0.2
     HOMEPAGE_URL https://github.com/MicalFelps/memutilz
     LANGUAGES CXX C
@@ -22,11 +22,13 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/ext/sanitizers-cmake/cmake" ${CMAKE_MODULE_PATH})
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+list(APPEND CMAKE_MODULE_PATH
+    "${CMAKE_SOURCE_DIR}/cmake"
+    "${CMAKE_SOURCE_DIR}/ext/sanitizers-cmake/cmake"
+)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
@@ -88,9 +90,9 @@ configure_package_config_file(
 install(
     EXPORT memutilzTargets
     FILE memutilzTargets.cmake
-    NAMESPACE memutilz::
+    NAMESPACE Memutilz::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memutilz
-    COMPONENT memutilz
+    COMPONENT Memutilz
 )
 
 # Install config files
@@ -98,5 +100,5 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/memutilzConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/memutilzConfigVersion.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memutilz
-    COMPONENT memutilz
+    COMPONENT Memutilz
 )

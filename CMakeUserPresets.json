@@ -9,8 +9,8 @@
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
         "CMAKE_PREFIX_PATH": "/home/mniki/qt/6.9.3/gcc_64/lib/cmake",
-        "BUILD_SHARED_LIBS": true,
-        "MEMUTILZ_WARNINGS_AS_ERRORS": true,
+        "BUILD_SHARED_LIBS": "ON",
+        "MEMUTILZ_WARNINGS_AS_ERRORS": "ON",
         "SANITIZE_ADDRESS": "ON",
         "SANITIZE_MEMORY": "OFF",
         "SANITIZE_THREAD": "OFF",

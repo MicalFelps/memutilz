@@ -12,7 +12,6 @@
         "MEMUTILZ_WARNINGS_AS_ERRORS": true
       }
     },
-
     {
       "name": "linux-debug",
       "generator": "Ninja",
@@ -43,7 +42,6 @@
         "rhs": "Linux"
       }
     },
-
     {
       "name": "windows-debug",
       "generator": "Ninja",
@@ -71,14 +69,12 @@
       }
     }
   ],
-
   "buildPresets": [
     { "name": "linux-debug", "configurePreset": "linux-debug" },
     { "name": "linux-release", "configurePreset": "linux-release" },
     { "name": "windows-debug", "configurePreset": "windows-debug" },
     { "name": "windows-release", "configurePreset": "windows-release" }
   ],
-
   "testPresets": [
     { "name": "linux-debug", "configurePreset": "linux-debug", "output": { "outputOnFailure": true } },
     { "name": "linux-release", "configurePreset": "linux-release", "output": { "outputOnFailure": true } },

@@ -39,5 +39,5 @@ target_link_libraries(agent PRIVATE
 install(TARGETS agent
     EXPORT memutilzTargets
     RUNTIME DESTINATION    ${CMAKE_INSTALL_BINDIR}/plugins
-    COMPONENT plugins
+    COMPONENT Plugins
 )
