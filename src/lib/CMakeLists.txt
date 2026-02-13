@@ -1,6 +1,4 @@
-include(TargetConfig)
 add_library(memutilz_lib)
-memutilz_configure_target(memutilz_lib)
 
 set_target_properties(memutilz_lib PROPERTIES
     OUTPUT_NAME "memutilz"
@@ -20,7 +18,7 @@ set(MEMUTILZ_LIB_SOURCES
     src/MemorySource.cpp
 )
 
-target_sources(memutilz_lib 
+target_sources(memutilz_lib
     PRIVATE
         ${MEMUTILZ_LIB_HEADERS}
         ${MEMUTILZ_LIB_SOURCES}
@@ -28,7 +26,9 @@ target_sources(memutilz_lib
 
 target_link_libraries(memutilz_lib
     PRIVATE
-        memutilz::zydis
+        Zydis::Zydis
+        memutilz_warnings
+        memutilz_options
 )
 
 if(WIN32 AND BUILD_SHARED_LIBS)

@@ -1,0 +1,7 @@
+# Suffixes: TAG, BRANCH, VERSION
+
+set(GTEST_TAG v1.17.0)
+set(KDDOCKWIDGETS_BRANCH main)
+set(SARIBBON_BRANCH dev)
+set(XXHASH_BRANCH dev)
+set(ZYDIS_BRANCH master)

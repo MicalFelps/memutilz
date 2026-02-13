@@ -1,9 +1,3 @@
-[submodule "ext/Zydis"]
-	path = ext/Zydis
-	url = https://github.com/MicalFelps/zydis.git
-[submodule "ext/SARibbon"]
-	path = ext/SARibbon
-	url = https://github.com/MicalFelps/SARibbon.git
 [submodule "ext/sanitizers-cmake"]
 	path = ext/sanitizers-cmake
 	url = https://github.com/arsenm/sanitizers-cmake.git

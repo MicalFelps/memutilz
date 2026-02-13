@@ -1,5 +1,8 @@
 ### Now
 
+1. Refactor / clean cmake
+2. Use KDAB
+
 1. Make Application Button using QToolButton and QButtonGroup
 2. Write QConsole and CentralDockingArea
 3. Handle Connections

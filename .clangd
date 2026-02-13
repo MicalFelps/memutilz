@@ -1,0 +1,10 @@
+CompileFlags:
+  Remove:
+    - -fmodules-ts
+    - -fmodule-mapper=*
+    - -fdeps-format=*
+
+InlayHints:
+  ParameterNames: No
+  DeducedTypes: Yes
+  DefaultArguments: Yes

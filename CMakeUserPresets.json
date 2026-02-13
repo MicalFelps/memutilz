@@ -10,8 +10,11 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
         "CMAKE_PREFIX_PATH": "/home/mniki/qt/6.9.3/gcc_64/lib/cmake",
         "BUILD_SHARED_LIBS": true,
-        "MEMUTILZ_WARNINGS_AS_ERRORS": true
-        
+        "MEMUTILZ_WARNINGS_AS_ERRORS": true,
+        "SANITIZE_ADDRESS": "ON",
+        "SANITIZE_MEMORY": "OFF",
+        "SANITIZE_THREAD": "OFF",
+        "SANITIZE_UNDEFINED": "ON"
       }
     },
     {
@@ -19,8 +22,7 @@
       "generator": "Ninja",
       "inherits": "arch-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "MEMUTILZ_ENABLE_SANITIZERS": true
+        "CMAKE_BUILD_TYPE": "Debug"
       },
       "condition": {
         "type": "equals",

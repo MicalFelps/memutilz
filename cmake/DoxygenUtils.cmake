@@ -1,5 +1,5 @@
 ﻿function(_add_one_doxygen_target)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "" 
+    cmake_parse_arguments(PARSE_ARGV 0 ARG ""
         "TARGET_SUFFIX;TITLE;BRIEF;MAINPAGE;DOXYFILE_TEMPLATE;OUTPUT_BASE_DIR;TARGET_OUT_VAR"
         "INPUT_DIRS"
     )
@@ -122,7 +122,7 @@ function(add_doxygen_for_plugin)
 endfunction()
 function(add_doxygen_for_libraries)
     cmake_parse_arguments(PARSE_ARGV 0 ARG
-        "" 
+        ""
         "TITLE;BRIEF;MAINPAGE;DOXYFILE_TEMPLATE;OUTPUT_BASE_DIR"
         "SOURCE_DIRS"
     )

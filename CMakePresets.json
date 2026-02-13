@@ -19,7 +19,10 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "MEMUTILZ_ENABLE_SANITIZERS": true
+        "SANITIZE_ADDRESS": "ON",
+        "SANITIZE_MEMORY": "OFF",
+        "SANITIZE_THREAD": "OFF",
+        "SANITIZE_UNDEFINED": "ON"
       },
       "condition": {
         "type": "equals",
