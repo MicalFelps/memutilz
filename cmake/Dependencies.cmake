@@ -60,14 +60,13 @@ if(MEMUTILZ_BUILD_APPS)
         EXCLUDE_FROM_ALL ON
     )
 
-    # TODO: SWAP THIS LATER
-    set(QADS_VER 4.5.0)
     CPMAddPackage(
-        NAME qtadvanceddocking
-        GITHUB_REPOSITORY githubuser0xFFFF/Qt-Advanced-Docking-System
-        GIT_TAG ${QADS_VER}
+        NAME KDDockWidgets
+        GITHUB_REPOSITORY KDAB/KDDockWidgets
+        GIT_TAG ${KDDOCKWIDGETS_BRANCH}
         OPTIONS
-            "BUILD_EXAMPLES OFF"
+            "KDDockWidgets_EXAMPLES OFF"
+        EXCLUDE_FROM_ALL ON
     )
 endif()
 

@@ -73,13 +73,13 @@ target_sources(Memutilz
 
 target_link_libraries(Memutilz
     PRIVATE
-        ads::qtadvanceddocking-qt6
-        SARibbonBar::SARibbonBar
-        xxHash::xxHash
+        KDAB::kddockwidgets
         Memutilz::Memutilz
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        SARibbonBar::SARibbonBar
+        xxHash::xxHash
 )
 
 add_sanitizers(Memutilz)
@@ -92,7 +92,7 @@ install(
 
 install(
     TARGETS
-        qtadvanceddocking-qt6
+        kddockwidgets
         SARibbonBar
         Memutilz
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -102,7 +102,7 @@ install(
 
 if(WIN32)
     set(MEMUTILZ_RUNTIME_DEPS
-        qtadvanceddocking-qt6
+        kddockwidgets
         SARibbonBar
         MemutilzLib
     )
