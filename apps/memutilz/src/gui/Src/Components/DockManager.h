@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QPointer>
-#include <DockManager.h>
 
 #include "../Utils/Id.h"
 
@@ -43,6 +42,8 @@ inline size_t qHash(const DockKey& k, size_t seed = 0) {
  * any point in tracking which indexes are available and which aren't
  */
 class IndexPool;
+
+class DockManager {};
 
 /**
  * @brief Owns and manages all visible dock widgets

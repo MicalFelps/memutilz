@@ -18,7 +18,7 @@
         <file alias="console.svg">icons/console.svg</file>
     </qresource>
     <qresource prefix="/styles">
-        <file alias="dark.qss">styles/dark.qss</file>
+        <file alias="default.qss">styles/default.qss</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Inter_18pt-Regular.ttf">fonts/Inter_18pt-Regular.ttf</file>

@@ -22,7 +22,8 @@
       "generator": "Ninja",
       "inherits": "arch-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON"
       },
       "condition": {
         "type": "equals",

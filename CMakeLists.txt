@@ -37,6 +37,7 @@ endif()
 
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
+include(GlobalOptions)
 include(ProjectOptions)
 include(Dependencies)
 

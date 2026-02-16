@@ -3,7 +3,7 @@
 #include <qcommandlineoption.h>
 
 namespace Options {
-	inline const QCommandLineOption verboseOption{ {"v", "verbose"} };
-	inline const QCommandLineOption pidOption{ {"p", "pid"}, "Process ID" };
-	inline const QCommandLineOption fileOption{ {"f", "file"}, "Input File" };
-}
+inline const QCommandLineOption verboseOption{{"v", "verbose"}};
+inline const QCommandLineOption pidOption{{"p", "pid"}, "Process ID"};
+inline const QCommandLineOption fileOption{{"f", "file"}, "Input File"};
+}  // namespace Options

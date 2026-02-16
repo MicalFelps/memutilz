@@ -20,35 +20,28 @@ set_target_properties(Memutilz PROPERTIES
 
 set(MEMUTILZ_HEADERS
     src/Options.h
-    src/gui/Src/Base/CustomPaintToolButton.h
+    src/MemutilzMacros.h
+    src/gui/Src/Resources.h
     src/gui/Src/Components/ApplicationWidget.h
-    src/gui/Src/Components/CentralDockingArea.h
-    src/gui/Src/Components/QConsole.h
-    src/gui/Src/Components/RibbonBar.h
+    src/gui/Src/Base/CustomPaintToolButton.h
+    src/gui/Src/Main/MainWindowInternal.h
+    src/gui/Src/Main/MainWindow.h
     src/gui/Src/Constants/AppLimits.h
     src/gui/Src/Constants/Ids.h
     src/gui/Src/Core/Constants.h
-    src/gui/Src/Core/ActionManager/ActionContainer.h
-    src/gui/Src/Core/ActionManager/ActionManager.h
-    src/gui/Src/Core/ActionManager/Command.h
-    src/gui/Src/Main/MainWindow.h
-    src/gui/Src/Utils/ButtonPainters.h
     src/gui/Src/Utils/Id.h
-    src/gui/Src/Utils/IdRegistry.h
     src/gui/Src/Utils/Types.h
+    src/gui/Src/Utils/IdRegistry.h
+    src/gui/Src/Utils/ButtonPainters.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
-    src/gui/Src/Base/CustomPaintToolButton.cpp
+    src/gui/Src/Resources.cpp
     src/gui/Src/Components/ApplicationWidget.cpp
-    src/gui/Src/Components/CentralDockingArea.cpp
-    src/gui/Src/Components/QConsole.cpp
-    src/gui/Src/Components/RibbonBar.cpp
-    src/gui/Src/Core/ActionManager/ActionContainer.cpp
-    src/gui/Src/Core/ActionManager/ActionManager.cpp
-    src/gui/Src/Core/ActionManager/Command.cpp
+    src/gui/Src/Base/CustomPaintToolButton.cpp
     src/gui/Src/Main/MainWindow.cpp
+    src/gui/Src/Main/MainWindowInternal.cpp
     src/gui/Src/Utils/ButtonPainters.cpp
     src/gui/Src/Utils/Id.cpp
     src/gui/Src/Utils/IdRegistry.cpp

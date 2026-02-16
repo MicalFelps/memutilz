@@ -54,7 +54,7 @@ if(MEMUTILZ_BUILD_APPS)
     CPMAddPackage(
         NAME SARibbon
         GITHUB_REPOSITORY MicalFelps/SARibbon
-        GIT_TAG ${SARIBBON_COMMIT}
+        GIT_TAG ${SARIBBON_BRANCH}
         OPTIONS
             "SARIBBON_BUILD_EXAMPLES OFF"
         EXCLUDE_FROM_ALL ON
