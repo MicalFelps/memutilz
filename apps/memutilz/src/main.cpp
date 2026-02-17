@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
         ThemeRegistry::getOrRegister("dark");
     a.setPalette(defaultTheme.has_value()
                  ? defaultTheme.value().palette
-                 : QPalette();
+                 : QPalette());
 
     QFile style(":/styles/default.qss");
     style.open(QFile::ReadOnly);

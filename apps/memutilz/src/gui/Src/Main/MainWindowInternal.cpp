@@ -2,10 +2,13 @@
 #include <SARibbonElementManager.h>
 #include <SARibbonTabBar.h>
 #include <SARibbonUtil.h>
-#include "SARibbonTitleIconWidget.h"
+#include <SARibbonTitleIconWidget.h>
 
 #if SARIBBON_USE_3RDPARTY_FRAMELESSHELPER
 #include <QWKWidgets/widgetwindowagent.h>
+#include <SARibbonButtonGroupWidget.h>
+#include <SARibbonQuickAccessBar.h>
+#include <SARibbonStackedWidget.h>
 #else
 #include <SAFramelessHelper.h>
 #endif
@@ -13,18 +16,6 @@
 #include "MainWindowInternal.h"
 
 class SARibbonTitleIconWidget;
-
-/**
- * @brief Event handler for MainWindowInternal, mainly responsible for adjusting
- * the position of the system bar
- */
-class MainWindowEventFilter : public QObject {
-    Q_OBJECT
-   public:
-    explicit MainWindowEventFilter(QObject* parent);
-    ~MainWindowEventFilter();
-    virtual bool eventFilter(QObject* obj, QEvent* e) override;
-};
 
 //===================================================
 // MainWindowInternal::Impl
@@ -212,6 +203,7 @@ MainWindowInternal::MainWindowInternal(const QString& uniqueName,
                                        Qt::WindowFlags flags)
     : KDDockWidgets::QtWidgets::MainWindow(uniqueName, options, parent, flags),
       d{std::make_unique<MainWindowInternal::Impl>(this)} {
+    d->ribbonMainWindowStyle = style;
     d->checkMainWindowFlag();
     if (d->isRibbonBarUsed()) {
         if (d->isRibbonFrameUsed()) {  // frameless
@@ -219,7 +211,6 @@ MainWindowInternal::MainWindowInternal(const QString& uniqueName,
         }
         setRibbonBar(createRibbonBar());
         setRibbonTheme(ribbonTheme());
-        setContentsMargins(2, 0, 2, 0);
         if (d->isNativeFrameUsed()) {
             // When using the native frame in ribbon mode, the icon will be
             // hidden and the compact mode will be set by default.
@@ -235,6 +226,8 @@ MainWindowInternal::MainWindowInternal(const QString& uniqueName,
     connect(qApp, &QApplication::primaryScreenChanged, this,
             &MainWindowInternal::onPrimaryScreenChanged);
 }
+
+MainWindowInternal::~MainWindowInternal(){}
 
 #if SARIBBON_USE_3RDPARTY_FRAMELESSHELPER
 /**

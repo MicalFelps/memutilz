@@ -1,4 +1,10 @@
+#include <QFontDatabase>
+#include <QHash>
+#include <QDebug>
+
 #include "Resources.h"
+
+QHash<QString, ThemeInfo> ThemeRegistry::_themes;
 
 void loadFonts() {
     QStringList fontFiles = {
@@ -19,7 +25,7 @@ void loadFonts() {
 }
 void loadThemes() {
     ThemeRegistry::getOrRegister("dark",
-                                 ThemeInfo{ThemeType::dark, Themes::dark});
+                                 ThemeInfo{ThemeType::dark, Themes::dark()});
 }
 
 std::optional<ThemeInfo> ThemeRegistry::getOrRegister(

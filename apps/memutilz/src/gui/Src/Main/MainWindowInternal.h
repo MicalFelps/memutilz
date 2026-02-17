@@ -27,7 +27,7 @@ class MainWindowInternal : public KDDockWidgets::QtWidgets::MainWindow {
             SARibbonMainWindowStyleFlag::UseRibbonMenuBar |
             SARibbonMainWindowStyleFlag::UseRibbonFrame,
         Qt::WindowFlags flags = Qt::WindowFlags());
-    virtual ~MainWindowInternal() = default;
+    virtual ~MainWindowInternal() override;
     bool isRibbonBar() const { return (nullptr != ribbonBar()); }
 
 #if SARIBBON_USE_3RDPARTY_FRAMELESSHELPER
@@ -85,4 +85,16 @@ class MainWindowInternal : public KDDockWidgets::QtWidgets::MainWindow {
    private:
     MEMUTILZ_DECLARE_PRIVATE()
     friend class SARibbonBar;
+};
+
+/**
+ * @brief Event handler for MainWindowInternal, mainly responsible for adjusting
+ * the position of the system bar
+ */
+class MainWindowEventFilter : public QObject {
+    Q_OBJECT
+public:
+    explicit MainWindowEventFilter(QObject* parent);
+    ~MainWindowEventFilter();
+    virtual bool eventFilter(QObject* obj, QEvent* e) override;
 };

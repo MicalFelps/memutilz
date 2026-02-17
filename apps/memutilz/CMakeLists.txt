@@ -83,21 +83,13 @@ install(
     COMPONENT Apps
 )
 
-install(
-    TARGETS
-        kddockwidgets
-        SARibbonBar
-        Memutilz
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT Apps
-    OPTIONAL
-)
-
 if(WIN32)
     set(MEMUTILZ_RUNTIME_DEPS
         kddockwidgets
         SARibbonBar
         MemutilzLib
+        QWKCore
+        QWKWidgets
     )
     foreach(_dependency IN LISTS MEMUTILZ_RUNTIME_DEPS)
         add_custom_command(TARGET Memutilz POST_BUILD
@@ -116,6 +108,13 @@ if(WIN32)
             "$<TARGET_FILE:Memutilz>"
         COMMENT "Deploying Qt runtime with windeployqt"
         VERBATIM
+    )
+
+    install(
+        TARGETS ${MEMUTILZ_RUNTIME_DEPS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT Apps
+        OPTIONAL
     )
 
     qt_generate_deploy_app_script(
