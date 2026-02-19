@@ -2,6 +2,7 @@
 
 set(GTEST_TAG v1.17.0)
 set(KDDOCKWIDGETS_BRANCH main)
+set(QWINDOWKIT_TAG 1.5.0)
 set(SARIBBON_BRANCH dev)
 set(XXHASH_BRANCH dev)
 set(ZYDIS_BRANCH master)

@@ -61,6 +61,13 @@ if(MEMUTILZ_BUILD_APPS)
     )
 
     CPMAddPackage(
+        NAME QWindowKit
+        GITHUB_REPOSITORY stdware/qwindowkit
+        GIT_TAG ${QWINDOWKIT_TAG}
+        EXCLUDE_FROM_ALL ON
+    )
+
+    CPMAddPackage(
         NAME KDDockWidgets
         GITHUB_REPOSITORY KDAB/KDDockWidgets
         GIT_TAG ${KDDOCKWIDGETS_BRANCH}

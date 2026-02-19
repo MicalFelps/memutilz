@@ -22,6 +22,7 @@ set(MEMUTILZ_HEADERS
     src/Options.h
     src/MemutilzMacros.h
     src/gui/Src/Resources.h
+    src/gui/Src/Base/SystemButtonBar.h
     src/gui/Src/Components/ApplicationWidget.h
     src/gui/Src/Base/CustomPaintToolButton.h
     src/gui/Src/Main/MainWindowInternal.h
@@ -38,6 +39,7 @@ set(MEMUTILZ_HEADERS
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/Src/Resources.cpp
+    src/gui/Src/Base/SystemButtonBar.cpp
     src/gui/Src/Components/ApplicationWidget.cpp
     src/gui/Src/Base/CustomPaintToolButton.cpp
     src/gui/Src/Main/MainWindow.cpp
@@ -71,6 +73,8 @@ target_link_libraries(Memutilz
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        QWindowKit::Core
+        QWindowKit::Widgets
         SARibbonBar::SARibbonBar
         xxHash::xxHash
 )
@@ -88,7 +92,6 @@ if(WIN32)
         kddockwidgets
         SARibbonBar
         MemutilzLib
-        QWKCore
         QWKWidgets
     )
     foreach(_dependency IN LISTS MEMUTILZ_RUNTIME_DEPS)

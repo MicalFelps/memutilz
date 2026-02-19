@@ -1,3 +1,8 @@
+
+- Write SystemButtonBar (Component) for MainWindowInternal
+- Finish MainWindowInternal
+
+---
 ### Now
 
 1. Refactor / clean cmake
