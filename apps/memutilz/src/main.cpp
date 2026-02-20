@@ -4,8 +4,8 @@
 #include <QFile>
 
 #include "Options.h"
-#include "gui/Src/Resources.h"
-#include "gui/Src/Main/MainWindow.h"
+#include "gui/Resources.h"
+#include "gui/Main/MainWindow.h"
 
 int main(int argc, char* argv[]) {
     QApplication a(argc, argv);
@@ -30,9 +30,8 @@ int main(int argc, char* argv[]) {
 
     std::optional<ThemeInfo> defaultTheme =
         ThemeRegistry::getOrRegister("dark");
-    a.setPalette(defaultTheme.has_value()
-                 ? defaultTheme.value().palette
-                 : QPalette());
+    a.setPalette(defaultTheme.has_value() ? defaultTheme.value().palette
+                                          : QPalette());
 
     QFile style(":/styles/default.qss");
     style.open(QFile::ReadOnly);

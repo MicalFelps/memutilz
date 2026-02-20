@@ -20,42 +20,43 @@ set_target_properties(Memutilz PROPERTIES
 
 set(MEMUTILZ_HEADERS
     src/Options.h
-    src/MemutilzMacros.h
-    src/gui/Src/Resources.h
-    src/gui/Src/Base/SystemButtonBar.h
-    src/gui/Src/Components/ApplicationWidget.h
-    src/gui/Src/Base/CustomPaintToolButton.h
-    src/gui/Src/Main/MainWindowInternal.h
-    src/gui/Src/Main/MainWindow.h
-    src/gui/Src/Constants/AppLimits.h
-    src/gui/Src/Constants/Ids.h
-    src/gui/Src/Core/Constants.h
-    src/gui/Src/Utils/Id.h
-    src/gui/Src/Utils/Types.h
-    src/gui/Src/Utils/IdRegistry.h
-    src/gui/Src/Utils/ButtonPainters.h
+    src/Globals.h
+    src/gui/Resources.h
+    src/gui/Components/RibbonBar.h
+    src/gui/Components/RibbonBar/RibbonElementManager.h
+    src/gui/Components/RibbonBar/SystemButtonBar.h
+    src/gui/Components/RibbonBar/RibbonElementFactory.h
+    src/gui/Components/RibbonBar/ButtonGroupWidget.h
+    src/gui/Main/MainWindowInternal.h
+    src/gui/Main/MainWindow.h
+    src/gui/Constants/AppLimits.h
+    src/gui/Constants/Ids.h
+    src/gui/Utils/Id.h
+    src/gui/Utils/Types.h
+    src/gui/Utils/IdRegistry.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
-    src/gui/Src/Resources.cpp
-    src/gui/Src/Base/SystemButtonBar.cpp
-    src/gui/Src/Components/ApplicationWidget.cpp
-    src/gui/Src/Base/CustomPaintToolButton.cpp
-    src/gui/Src/Main/MainWindow.cpp
-    src/gui/Src/Main/MainWindowInternal.cpp
-    src/gui/Src/Utils/ButtonPainters.cpp
-    src/gui/Src/Utils/Id.cpp
-    src/gui/Src/Utils/IdRegistry.cpp
+    src/gui/Resources.cpp
+    src/gui/Components/RibbonBar.cpp
+    src/gui/Components/RibbonBar/ButtonGroupWidget.cpp
+    src/gui/Components/RibbonBar/RibbonElementFactory.cpp
+    src/gui/Components/RibbonBar/RibbonElementManager.cpp
+    src/gui/Components/RibbonBar/SystemButtonBar.cpp
+    src/gui/Main/MainWindow.cpp
+    src/gui/Main/MainWindowInternal.cpp
+    src/gui/Utils/Id.cpp
+    src/gui/Utils/IdRegistry.cpp
 )
 
 set(MEMUTILZ_RESOURCES
-    src/gui/rsrc/memutilz.qrc
-    src/gui/rsrc/memutilz.rc
+    rsrc/memutilz.qrc
+    rsrc/memutilz.rc
 )
 
 set(MEMUTILZ_FORMS
-    src/gui/Src/Components/ApplicationWidget.ui
+    src/gui/Components/ApplicationWidget.ui
 )
 
 target_sources(Memutilz

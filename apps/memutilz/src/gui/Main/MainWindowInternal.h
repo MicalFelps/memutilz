@@ -1,11 +1,12 @@
 #pragma once
 
+#include <kddockwidgets/MainWindow.h>
+#include <QWKWidgets/widgetwindowagent.h>
 #include <SARibbonBar.h>
 
-#include <kddockwidgets/MainWindow.h>
-#include <QWKWidgets/WidgetWindowAgent.h>
+#include "../Components/RibbonBar/SystemButtonBar.h"
 
-#include "../../../MemutilzMacros.h"
+#include "../../Globals.h"
 
 /**
  * @brief The actual MainWindow inherits from this class.
@@ -14,14 +15,13 @@
  */
 class MainWindowInternal : public KDDockWidgets::QtWidgets::MainWindow {
     Q_OBJECT
-    
-public:
-    explicit MainWindowInternal(
-        const QString& uniqueName,
-        QWidget* parent = nullptr,
-        bool frameless = true,
-        KDDockWidgets::MainWindowOptions options = {},
-        Qt::WindowFlags flags = Qt::WindowFlags());
+
+   public:
+    explicit MainWindowInternal(const QString& uniqueName,
+                                QWidget* parent = nullptr,
+                                bool frameless = true,
+                                KDDockWidgets::MainWindowOptions options = {},
+                                Qt::WindowFlags flags = Qt::WindowFlags());
     virtual ~MainWindowInternal() override;
 
     SARibbonBar* ribbonBar() const;
@@ -30,20 +30,20 @@ public:
     SARibbonTheme ribbonTheme() const;
     void setRibbonTheme(SARibbonTheme theme);
 
-    SARibbonSystemButtonBar* systemButtonBar() const;
+    SystemButtonBar* systemButtonBar() const;
 
-    bool isFrameless() const { return _frameless; }
+    void updateWindowFlags(Qt::WindowFlags flags);
+    bool isFrameless() const;
 
-protected:
+   protected:
     // Factory method
-    virtual SARibbonBar* createRibbonBar() = 0;
+    virtual SARibbonBar* createRibbonBar();
 
-private slots:
+   private slots:
     void onPrimaryScreenChanged(QScreen* screen);
 
-private:
-    MEMUTILZ_DECLARE_PRIVATE(MainWindowInternal)
-    bool _frameless;
+   private:
+    MEMUTILZ_DECLARE_PRIVATE()
 };
 
 /**
@@ -52,7 +52,7 @@ private:
  */
 class MainWindowEventFilter : public QObject {
     Q_OBJECT
-public:
+   public:
     explicit MainWindowEventFilter(QObject* parent);
     ~MainWindowEventFilter();
     virtual bool eventFilter(QObject* obj, QEvent* e) override;

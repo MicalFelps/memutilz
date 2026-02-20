@@ -63,7 +63,7 @@ if(MEMUTILZ_BUILD_APPS)
     CPMAddPackage(
         NAME QWindowKit
         GITHUB_REPOSITORY stdware/qwindowkit
-        GIT_TAG ${QWINDOWKIT_TAG}
+        GIT_TAG ${QWINDOWKIT_BRANCH}
         EXCLUDE_FROM_ALL ON
     )
 
