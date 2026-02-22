@@ -50,7 +50,7 @@ class SystemButtonBar : public QFrame {
     int windowButtonWidth() const;
     void setWindowButtonWidth(int w);
 
-    void setButtonWidthStretch(int close = 2, int max = 2, int min = 2);
+    void setButtonWidthStretch(int close = 3, int max = 3, int min = 3);
 
     virtual QSize sizeHint() const override;
 

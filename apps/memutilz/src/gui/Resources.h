@@ -24,7 +24,7 @@ MEMUTILZ_DEFINE_THEME(dark, p.setColor(QPalette::Window, QColor("#0b0b0b"));
                       p.setColor(QPalette::Light, QColor("#2a2a2a"));
                       p.setColor(QPalette::Midlight, QColor("#202020"));
                       p.setColor(QPalette::Mid, QColor("#151515"));
-                      p.setColor(QPalette::Dark, QColor("#0b0b0b"));
+                      p.setColor(QPalette::Dark, QColor("#101010"));
                       p.setColor(QPalette::Shadow, QColor("#050505"));
                       p.setColor(QPalette::PlaceholderText, QColor("#7a7a7a"));)
 }  // namespace Themes

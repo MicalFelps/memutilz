@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
     a.setStyleSheet(styleSheet);
 
     MainWindow mainWindow(QStringLiteral("MainWindow"));
+    mainWindow.resize(1600, 900);
     mainWindow.show();
     return a.exec();
 }

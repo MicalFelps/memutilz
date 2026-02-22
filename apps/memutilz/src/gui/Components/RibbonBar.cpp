@@ -1,132 +1,132 @@
+#include <SARibbonCategory.h>
 #include <SARibbonApplicationButton.h>
 #include <SARibbonMenu.h>
 
 #include "RibbonBar.h"
 #include "../Constants/AppLimits.h"
 
-RibbonBar::RibbonBar(SARibbonBar* ribbon, QWidget* parent)
-	: QWidget(parent)
-	, _ribbon{ ribbon }
-{
-	createRibbonApplicationButton();
+struct RibbonBar::Impl {
+    Impl(RibbonBar* _public) : _this{_public} {}
+    void setupUi();
 
-	// Main Category
-	SARibbonCategory* categoryMain = _ribbon->addCategoryPage({ "Main" });
-	categoryMain->setObjectName({ "categoryMain" });
-	createCategoryMain(categoryMain);
+   private:
+    MEMUTILZ_DECLARE_PUBLIC(RibbonBar)
 
-	// View Category
-	SARibbonCategory* categoryView = new SARibbonCategory();
-	categoryView->setCategoryName({ "View" });
-	categoryView->setObjectName({ "categoryView" });
-	createCategoryView(categoryView);
-	_ribbon->addCategoryPage(categoryView);
+    void createApplicationButton();
+    void createCategoryMain();
+    void createCategoryView();
+};
 
-	showMaximized();
+void RibbonBar::Impl::setupUi() {
+    createApplicationButton();
+    createCategoryMain();
+    createCategoryView();
 }
 
-void RibbonBar::createRibbonApplicationButton() {
-	QAbstractButton* btn = _ribbon->applicationButton();
-	if (!btn) {
-		btn = new SARibbonApplicationButton(_ribbon);
-		_ribbon->setApplicationButton(btn);
-	}
-	btn->setText(QString("File"));
-	connect(btn, &QAbstractButton::clicked,
-		this, [this](bool c) { Q_UNUSED(c); emit applicationButtonClicked(); });
+void RibbonBar::Impl::createApplicationButton() {
+    QAbstractButton* btn = _this->applicationButton();
+    if (!btn) {
+        btn = new SARibbonApplicationButton(_this);
+        _this->setApplicationButton(btn);
+    }
+    btn->setText(QString("&File"));
+}
+void RibbonBar::Impl::createCategoryMain() {
+    SARibbonCategory* page = _this->addCategoryPage("Main");
+    page->setObjectName("categoryMain");
+    SARibbonPanel* panelFlowControl = page->addPanel("Flow Control");
+
+    QAction* actionDebugPause =
+        new QAction(QIcon(":/icons/debug-pause"), "Break", _this);
+    actionDebugPause->setToolTip("");
+    panelFlowControl->addLargeAction(actionDebugPause);
+
+    SARibbonMenu* menuDebugContinue{new SARibbonMenu(_this)};
+    {
+        QAction* action = nullptr;
+        QIcon icon = QIcon(":/icons/debug-continue-bugless");
+
+        action = menuDebugContinue->addAction(icon, {"Go Unhandled Exception"});
+        action->setObjectName({"Go Unhandled Exception"});
+
+        action = menuDebugContinue->addAction(icon, {"Go Handled Exception"});
+        action->setObjectName({"Go Handled Exception"});
+    }
+
+    QAction* actionDebugContinue =
+        new QAction(QIcon(":/icons/debug-continue"), "Go", _this);
+    actionDebugContinue->setToolTip("");
+    actionDebugContinue->setMenu(menuDebugContinue);
+    panelFlowControl->addLargeAction(actionDebugContinue,
+                                     QToolButton::MenuButtonPopup);
+
+    QAction* actionDebugStepOut =
+        new QAction(QIcon(":/icons/debug-step-out"), "Step Out", _this);
+    QAction* actionDebugStepInto =
+        new QAction(QIcon(":/icons/debug-step-into"), "Step Into", _this);
+    QAction* actionDebugStepOver =
+        new QAction(QIcon(":/icons/debug-step-over"), "Step Over", _this);
+
+    panelFlowControl->addSmallAction(actionDebugStepOut);
+    panelFlowControl->addSmallAction(actionDebugStepInto);
+    panelFlowControl->addSmallAction(actionDebugStepOver);
+
+    // End Panel
+
+    SARibbonPanel* panelEnd = page->addPanel({"End"});
+
+    QAction* actionDebugRestart =
+        new QAction(QIcon(":/icons/debug-restart"), "Restart", _this);
+    QAction* actionDebugStop =
+        new QAction(QIcon(":/icons/debug-stop"), "Stop", _this);
+    QAction* actionDebugDetach =
+        new QAction(QIcon(":/icons/debug-detach"), "Detach", _this);
+
+    panelEnd->addSmallAction(actionDebugRestart);
+    panelEnd->addSmallAction(actionDebugStop);
+    panelEnd->addSmallAction(actionDebugDetach);
+}
+void RibbonBar::Impl::createCategoryView() {
+    SARibbonCategory* page = _this->addCategoryPage("View");
+    page->setCategoryName("View");
+    SARibbonPanel* panelWindows = page->addPanel("Windows");
+
+    QAction* actionCommandWindow =
+        new QAction(QIcon(":/icons/console"), "Command", _this);
+    panelWindows->addLargeAction(actionCommandWindow);
+
+    QAction* actionDisassemblyWindow =
+        new QAction(QIcon(":/icons/file-asm"), "Disassembly", _this);
+    panelWindows->addLargeAction(actionDisassemblyWindow);
+
+    SARibbonMenu* menuMemoryWindow{new SARibbonMenu(_this)};
+    {
+        QAction* action = nullptr;
+        QIcon icon = QIcon(":/icons/file-binary");
+
+        for (int i = 0; i < Limits::Ui::MaxMemoryWindowWidgets; ++i) {
+            action =
+                menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
+        }
+    }
+    QAction* actionMemoryWindow =
+        new QAction(QIcon(":/icons/file-binary"), "Memory", _this);
+    actionMemoryWindow->setMenu(menuMemoryWindow);
+    panelWindows->addLargeAction(actionMemoryWindow);
 }
 
-void RibbonBar::createCategoryMain(SARibbonCategory* page) {
-	SARibbonPanel* panelFlowControl = page->addPanel({ "Flow Control" });
+// ###########################################
+// RibbonBar
+// ###########################################
 
-	QAction* actionDebugPause = createAction({ "Break" }, ":/icons/debug-pause");
-	actionDebugPause->setToolTip("");
-	panelFlowControl->addLargeAction(actionDebugPause);
+RibbonBar::RibbonBar(QWidget* parent)
+    : SARibbonBar(parent), d{std::make_unique<RibbonBar::Impl>(this)} {
+    d->setupUi();
 
-	SARibbonMenu* menuDebugContinue{ new SARibbonMenu(this) };
-	{
-		QAction* action = nullptr;
-		QIcon icon = QIcon(":/icons/debug-continue-bugless");
-
-		action = menuDebugContinue->addAction(icon, { "Go Unhandled Exception" });
-		action->setObjectName({ "Go Unhandled Exception" });
-
-		action = menuDebugContinue->addAction(icon, { "Go Handled Exception" });
-		action->setObjectName({ "Go Handled Exception" });
-	}
-
-	QAction* actionDebugContinue = createAction({ "Go" }, ":/icons/debug-continue");
-	actionDebugContinue->setToolTip("");
-	actionDebugContinue->setMenu(menuDebugContinue);
-	panelFlowControl->addLargeAction(actionDebugContinue, QToolButton::MenuButtonPopup);
-
-	QAction* actionDebugStepOut = createAction({ "Step Out" }, ":/icons/debug-step-out");
-	QAction* actionDebugStepInto = createAction({ "Step Into" }, ":/icons/debug-step-into");
-	QAction* actionDebugStepOver = createAction({ "Step Over" }, ":/icons/debug-step-over");
-
-	panelFlowControl->addSmallAction(actionDebugStepOut);
-	panelFlowControl->addSmallAction(actionDebugStepInto);
-	panelFlowControl->addSmallAction(actionDebugStepOver);
-
-	// ------------------------------------------------------------
-
-	SARibbonPanel* panelEnd = page->addPanel({ "End" });
-
-	QAction* actionDebugRestart = createAction({ "Restart" }, ":/icons/debug-restart");
-	QAction* actionDebugStop = createAction({ "Stop Debugging" }, ":/icons/debug-stop");
-	QAction* actionDebugDetach = createAction({ "Detach" }, ":/icons/debug-detach");
-
-	panelEnd->addSmallAction(actionDebugRestart);
-	panelEnd->addSmallAction(actionDebugStop);
-	panelEnd->addSmallAction(actionDebugDetach);
+    connect(applicationButton(), &QAbstractButton::clicked, this,
+            [this](bool c) {
+                Q_UNUSED(c);
+                qDebug() << "ApplicationButton clicked!";
+            });
 }
-void RibbonBar::createCategoryView(SARibbonCategory* page) {
-	SARibbonPanel* panelWindows = new SARibbonPanel({ "Windows" });
-	page->addPanel(panelWindows);
-
-	QAction* actionCommandWindow = createAction({ "Command" }, ":/icons/console");
-	panelWindows->addLargeAction(actionCommandWindow);
-
-	QAction* actionDisassemblyWindow = createAction({ "Disassembly" }, ":/icons/file-asm");
-	panelWindows->addLargeAction(actionDisassemblyWindow);
-
-	SARibbonMenu* menuMemoryWindow{ new SARibbonMenu(this) };
-	{
-		QAction* action = nullptr;
-		QIcon icon = QIcon(":/icons/file-binary");
-
-		for (int i = 0; i < Limits::Ui::MaxMemoryWindowWidgets; ++i) {
-			action = menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
-			action->setObjectName(QStringLiteral("Memory %1").arg(i));
-		}
-	}
-	QAction* actionMemoryWindow = createAction({ "Memory" }, ":/icons/file-binary");
-	actionMemoryWindow->setMenu(menuMemoryWindow);
-	panelWindows->addLargeAction(actionMemoryWindow);
-
-	// ----- Testing -----
-
-	QAction* actionTextWindow = createAction({ "Text" }, ":/icons/file");
-	// actionTextWindow->setMenu(menuTextWindow);
-	panelWindows->addLargeAction(actionTextWindow);
-
-	connect(actionTextWindow, &QAction::triggered, this,
-		[this]() { emit createTextWidget(); });
-}
-
-QAction* RibbonBar::createAction(const QString& text, const QString& iconurl, const QString& objName)
-{
-	QAction* act = new QAction(this);
-	act->setText(text);
-	act->setIcon(QIcon(iconurl));
-	act->setObjectName(objName);
-	return act;
-}
-QAction* RibbonBar::createAction(const QString& text, const QString& iconurl)
-{
-	QAction* act = new QAction(this);
-	act->setText(text);
-	act->setIcon(QIcon(iconurl));
-	act->setObjectName(text);
-	return act;
-}
+RibbonBar::~RibbonBar() {}

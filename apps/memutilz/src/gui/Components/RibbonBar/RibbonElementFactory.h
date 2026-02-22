@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SARibbonElementFactory.h>
+
 #include "SystemButtonBar.h"
 
 /**

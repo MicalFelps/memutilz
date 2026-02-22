@@ -93,6 +93,7 @@ if(WIN32)
         kddockwidgets
         SARibbonBar
         MemutilzLib
+        QWKCore
         QWKWidgets
     )
     foreach(_dependency IN LISTS MEMUTILZ_RUNTIME_DEPS)

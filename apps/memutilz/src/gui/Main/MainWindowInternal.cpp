@@ -195,6 +195,9 @@ void MainWindowInternal::setRibbonBar(SARibbonBar* ribbonBar) {
         // Finally, it must be raised; otherwise, newly added elements will be
         // covered.
         if (d->systemButtonBar) d->systemButtonBar->raise();
+    } else {
+        ribbonBar->setTitleIconVisible(false);
+        ribbonBar->setRibbonStyle(SARibbonBar::RibbonStyleCompactThreeRow);
     }
 
     if (!d->eventFilter) {
@@ -206,20 +209,6 @@ void MainWindowInternal::setRibbonBar(SARibbonBar* ribbonBar) {
 SARibbonTheme MainWindowInternal::ribbonTheme() const {
     return d->currentRibbonTheme;
 }
-/**
- * @brief MainWindowInternal::setRibbonTheme
- *
- * Note: In some versions of Qt, setting the theme in the constructor
- * may not take full effect. You can use QTimer to defer it to the end
- * of the event queue, for example:
- * @code
- * QTimer::singleShot(0, this, [this]() {
- *     this->setRibbonTheme(SARibbonMainWindow::RibbonThemeDark);
- * });
- * @endcode
- *
- * @param theme The ribbon theme to apply.
- */
 void MainWindowInternal::setRibbonTheme(SARibbonTheme theme) {
     SA::setBuiltInRibbonTheme(this, theme);
     d->currentRibbonTheme = theme;

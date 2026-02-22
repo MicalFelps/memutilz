@@ -20,7 +20,7 @@ struct SystemButtonBar::Impl {
     SystemToolButton* buttonClose{nullptr};
     SystemToolButton* buttonMinimize{nullptr};
     SystemToolButton* buttonMaximize{nullptr};
-    int closeStretch{4};
+    int closeStretch{3};
     int maxStretch{3};
     int minStretch{3};
     int windowButtonWidth{35};
@@ -233,7 +233,6 @@ void SystemButtonBar::updateSystemButtonStates(Qt::WindowStates states) {
     if (d->buttonMaximize) {
         bool on = states.testFlag(Qt::WindowMaximized);
         d->buttonMaximize->setChecked(on);
-        d->buttonMaximize->setToolTip(on ? tr("Restore") : tr("Maximize"));
     }
 }
 

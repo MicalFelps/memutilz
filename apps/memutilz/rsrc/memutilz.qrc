@@ -16,6 +16,10 @@
         <file alias="file-code.svg">icons/file-code.svg</file>
         <file alias="file-asm.svg">icons/file-asm.svg</file>
         <file alias="console.svg">icons/console.svg</file>
+        <file alias="window-close.svg">icons/window-close.svg</file>
+        <file alias="window-maximize.svg">icons/window-maximize.svg</file>
+        <file alias="window-minimize.svg">icons/window-minimize.svg</file>
+        <file alias="window-restore.svg">icons/window-restore.svg</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="default.qss">styles/default.qss</file>

@@ -1,4 +1,5 @@
 #include "RibbonElementFactory.h"
+#include "../RibbonBar.h"
 
 RibbonElementFactory::RibbonElementFactory() {}
 RibbonElementFactory::~RibbonElementFactory() {}
