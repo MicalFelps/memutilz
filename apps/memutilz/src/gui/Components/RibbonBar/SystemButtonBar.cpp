@@ -5,6 +5,10 @@
 #include "../../Main/MainWindowInternal.h"
 
 struct SystemButtonBar::Impl {
+   private:
+    MEMUTILZ_DECLARE_PUBLIC(SystemButtonBar)
+
+   public:
     Impl(SystemButtonBar* _public);
 
     void setupMinimizeButton(bool on);
@@ -28,9 +32,6 @@ struct SystemButtonBar::Impl {
     Qt::WindowFlags flags{Qt::WindowMinMaxButtonsHint |
                           Qt::WindowCloseButtonHint};
     ButtonGroupWidget* buttonGroup;
-
-   private:
-    MEMUTILZ_DECLARE_PUBLIC(SystemButtonBar)
 };
 
 SystemButtonBar::Impl::Impl(SystemButtonBar* _public)
@@ -129,15 +130,15 @@ void SystemButtonBar::Impl::resizeElement(QSize size) {
 
 int SystemButtonBar::Impl::closeButtonWidthHint() const {
     qreal t = closeStretch + maxStretch + minStretch;
-    return (3 * windowButtonWidth) * closeStretch / t;
+    return qRound((3 * windowButtonWidth) * closeStretch / t);
 }
 int SystemButtonBar::Impl::maxButtonWidthHint() const {
     qreal t = closeStretch + maxStretch + minStretch;
-    return (3 * windowButtonWidth) * maxStretch / t;
+    return qRound((3 * windowButtonWidth) * maxStretch / t);
 }
 int SystemButtonBar::Impl::minButtonWidthHint() const {
     qreal t = closeStretch + maxStretch + minStretch;
-    return (3 * windowButtonWidth) * minStretch / t;
+    return qRound((3 * windowButtonWidth) * minStretch / t);
 }
 QSize SystemButtonBar::Impl::sizeHint() const {
     int h = titleBarHeight;

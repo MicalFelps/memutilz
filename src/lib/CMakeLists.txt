@@ -2,12 +2,15 @@ add_library(MemutilzLib)
 add_library(Memutilz::Memutilz ALIAS MemutilzLib)
 
 set(MEMUTILZ_LIB_HEADERS_PUBLIC
-    include/MemorySource.h
+    include/Types.h
+    include/utils/Id.h
+    include/Utils/IdRegistry.h
 )
 set(MEMUTILZ_LIB_HEADERS_PRIVATE
 )
 set(MEMUTILZ_LIB_SOURCES
-    src/MemorySource.cpp
+    src/Utils/Id.cpp
+    src/Utils/IdRegistry.cpp
 )
 
 target_sources(MemutilzLib
@@ -26,9 +29,13 @@ target_include_directories(MemutilzLib
 
 target_link_libraries(MemutilzLib
     PRIVATE
-        Zydis::Zydis
         Memutilz::Warnings
         Memutilz::Options
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        xxHash::xxHash
+        Zydis::Zydis
 )
 
 if(WIN32 AND BUILD_SHARED_LIBS)

@@ -101,12 +101,10 @@ void RibbonBar::Impl::createCategoryView() {
 
     SARibbonMenu* menuMemoryWindow{new SARibbonMenu(_this)};
     {
-        QAction* action = nullptr;
         QIcon icon = QIcon(":/icons/file-binary");
 
         for (int i = 0; i < Limits::Ui::MaxMemoryWindowWidgets; ++i) {
-            action =
-                menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
+            menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
         }
     }
     QAction* actionMemoryWindow =
@@ -123,10 +121,9 @@ RibbonBar::RibbonBar(QWidget* parent)
     : SARibbonBar(parent), d{std::make_unique<RibbonBar::Impl>(this)} {
     d->setupUi();
 
-    connect(applicationButton(), &QAbstractButton::clicked, this,
-            [this](bool c) {
-                Q_UNUSED(c);
-                qDebug() << "ApplicationButton clicked!";
-            });
+    connect(applicationButton(), &QAbstractButton::clicked, this, [](bool c) {
+        Q_UNUSED(c);
+        qDebug() << "ApplicationButton clicked!";
+    });
 }
 RibbonBar::~RibbonBar() {}

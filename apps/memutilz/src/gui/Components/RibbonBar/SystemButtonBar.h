@@ -5,8 +5,6 @@
 
 #include "../../../Globals.h"
 
-// TODO: Handle i3 on X11 and other tiling WMs
-
 /**
  * @brief The MainWindow's system buttons (minimize, maximize, and close)
  *

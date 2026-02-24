@@ -23,6 +23,8 @@ set(MEMUTILZ_HEADERS
     src/Globals.h
     src/gui/Resources.h
     src/gui/Components/RibbonBar.h
+    src/gui/Components/ApplicationWidget.h
+    # src/gui/Components/DockManager.h
     src/gui/Components/RibbonBar/RibbonElementManager.h
     src/gui/Components/RibbonBar/SystemButtonBar.h
     src/gui/Components/RibbonBar/RibbonElementFactory.h
@@ -31,14 +33,13 @@ set(MEMUTILZ_HEADERS
     src/gui/Main/MainWindow.h
     src/gui/Constants/AppLimits.h
     src/gui/Constants/Ids.h
-    src/gui/Utils/Id.h
-    src/gui/Utils/Types.h
-    src/gui/Utils/IdRegistry.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/Resources.cpp
+    # src/gui/Components/DockManager.cpp
+    src/gui/Components/ApplicationWidget.cpp
     src/gui/Components/RibbonBar.cpp
     src/gui/Components/RibbonBar/ButtonGroupWidget.cpp
     src/gui/Components/RibbonBar/RibbonElementFactory.cpp
@@ -46,8 +47,6 @@ set(MEMUTILZ_SOURCES
     src/gui/Components/RibbonBar/SystemButtonBar.cpp
     src/gui/Main/MainWindow.cpp
     src/gui/Main/MainWindowInternal.cpp
-    src/gui/Utils/Id.cpp
-    src/gui/Utils/IdRegistry.cpp
 )
 
 set(MEMUTILZ_RESOURCES
@@ -75,6 +74,8 @@ endif()
 target_link_libraries(Memutilz
     PRIVATE
         KDAB::kddockwidgets
+        Memutilz::Warnings
+        Memutilz::Options
         Memutilz::Memutilz
         Qt6::Core
         Qt6::Gui
@@ -82,7 +83,6 @@ target_link_libraries(Memutilz
         QWindowKit::Core
         QWindowKit::Widgets
         SARibbonBar::SARibbonBar
-        xxHash::xxHash
 )
 
 add_sanitizers(Memutilz)

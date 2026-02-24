@@ -5,7 +5,7 @@ add_doxygen_for_libraries(
         "${CMAKE_SOURCE_DIR}/src/lib/src"
     TITLE       "Main Libraries"
     BRIEF       "Core utilities for GUI"
-    MAINPAGE    "memcore.md"
+    MAINPAGE    "memutilz_lib.md"
     DOXYFILE_TEMPLATE "${CMAKE_SOURCE_DIR}/docs/Doxyfile.in"
     OUTPUT_BASE_DIR "${CMAKE_BINARY_DIR}/docs"
 )

@@ -12,8 +12,7 @@
  * @brief MainWindowInternal Impl class
  */
 struct MainWindowInternal::Impl {
-    Impl(MainWindowInternal* _public, bool _frameless)
-        : _this{_public}, frameless{_frameless} {}
+    Impl(bool _frameless) : frameless{_frameless} {}
 
     void installWindowAgent(MainWindowInternal* _public);
 
@@ -28,9 +27,6 @@ struct MainWindowInternal::Impl {
     SystemButtonBar* systemButtonBar{nullptr};
     QWK::WidgetWindowAgent* windowAgent{nullptr};
     bool frameless{true};
-
-   private:
-    MEMUTILZ_DECLARE_PUBLIC(MainWindowInternal)
 };
 
 void MainWindowInternal::Impl::installWindowAgent(MainWindowInternal* _public) {
@@ -75,7 +71,7 @@ void MainWindowInternal::Impl::updateContextColors(SARibbonBar* bar,
         case SARibbonTheme::RibbonThemeOffice2021Blue:
             bar->setContextCategoryColorList({QColor(209, 207, 209)});
             bar->setContextCategoryColorHighLight(
-                [](const QColor& c) -> QColor { return QColor(39, 96, 167); });
+                [](const QColor&) -> QColor { return QColor(39, 96, 167); });
             break;
         case SARibbonTheme::RibbonThemePalette:
             bar->setContextCategoryColorList(
@@ -83,9 +79,7 @@ void MainWindowInternal::Impl::updateContextColors(SARibbonBar* bar,
             bar->setContextCategoryTitleTextColor(
                 {qApp->palette().color(QPalette::Text)});
             bar->setContextCategoryColorHighLight(
-                [](const QColor& c) -> QColor {
-                    return QColor(109, 104, 204);
-                });
+                [](const QColor&) -> QColor { return QColor(109, 104, 204); });
             break;
         default:
             break;
@@ -110,7 +104,7 @@ MainWindowInternal::MainWindowInternal(const QString& uniqueName,
                                        KDDockWidgets::MainWindowOptions options,
                                        Qt::WindowFlags flags)
     : KDDockWidgets::QtWidgets::MainWindow(uniqueName, options, parent, flags),
-      d{std::make_unique<MainWindowInternal::Impl>(this, frameless)} {
+      d{std::make_unique<MainWindowInternal::Impl>(frameless)} {
     if (frameless) d->installWindowAgent(this);
     setRibbonBar(createRibbonBar());
     setRibbonTheme(ribbonTheme());
