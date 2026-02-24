@@ -1,1 +1,0 @@
-A subclass that simply implements a default virtual scrollbar, so that I never have to worry about it again.

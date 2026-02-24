@@ -67,6 +67,11 @@ target_sources(Memutilz
         ${MEMUTILZ_FORMS}
 )
 
+# Dependencies
+if(TARGET SARibbonBar)
+    target_compile_options(SARibbonBar PRIVATE -Wno-deprecated-declarations)
+endif()
+
 target_link_libraries(Memutilz
     PRIVATE
         KDAB::kddockwidgets

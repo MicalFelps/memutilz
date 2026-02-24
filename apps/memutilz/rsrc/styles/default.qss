@@ -4,14 +4,6 @@
     color: palette(text);
 }
 
-QWidget {
-    background-color: palette(window);
-}
-
-QMainWindow {
-    background-color: palette(window);
-}
-
 /*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 =-=-=-=-=-=-=-= System Tool Buttons =-=-=-=-=-=-=
