@@ -1,3 +1,4 @@
+#include "../../Globals.h"
 #include "MainWindowInternal.h"
 
 /**
@@ -6,11 +7,13 @@
  */
 class MainWindow : public MainWindowInternal {
     Q_OBJECT
-public:
-    explicit MainWindow(
-           const QString& uniqueName, QWidget* parent = nullptr, bool frameless = true,
-           KDDockWidgets::MainWindowOptions options = {}, Qt::WindowFlags flags = Qt::WindowFlags());
-    virtual ~MainWindow() = default;
-private:
-    
+   public:
+    explicit MainWindow(const QString& uniqueName, QWidget* parent = nullptr,
+                        bool frameless = true,
+                        KDDockWidgets::MainWindowOptions options = {},
+                        Qt::WindowFlags flags = Qt::WindowFlags());
+    virtual ~MainWindow() override;
+
+   private:
+    MEMUTILZ_DECLARE_PRIVATE()
 };

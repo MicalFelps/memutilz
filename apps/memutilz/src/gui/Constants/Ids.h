@@ -3,8 +3,8 @@
 namespace Core {
 namespace Constants {
 namespace Dock {
-	inline constexpr char TEXT[] = "Core.Dock.Text";
+inline constexpr char DUMMY[] = "Core.Dock.Dummy";
 
-} // namespace Dock
-} // namespace Constants
-} // namespace Core
+}  // namespace Dock
+}  // namespace Constants
+}  // namespace Core
