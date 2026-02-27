@@ -4,6 +4,11 @@
 #include <QColor>
 #include <QString>
 
+#include <QAbstractScrollArea>
+#include <qevent.h>
+#include <qpainter.h>
+#include <QScrollBar>
+
 class DummyWidget : public QWidget {
     Q_OBJECT
     Q_PROPERTY(QString label READ label WRITE setLabel NOTIFY labelChanged)
@@ -57,4 +62,22 @@ class DummyWidget : public QWidget {
     bool m_showBorder = true;
     int m_borderWidth = 2;
     int m_clickCount = 0;
+};
+
+class DummyScrollArea : public QAbstractScrollArea {
+    Q_OBJECT
+
+   public:
+    explicit DummyScrollArea(QWidget* parent = nullptr);
+
+   protected:
+    void resizeEvent(QResizeEvent* event) override;
+    void scrollContentsBy(int dx, int dy) override;
+    void paintEvent(QPaintEvent* event) override;
+
+   private:
+    void updateScrollBarRanges();
+    void prepareDummyContent();
+
+    QStringList m_lines;
 };

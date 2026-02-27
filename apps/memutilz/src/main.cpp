@@ -4,8 +4,11 @@
 #include <QFile>
 
 #include "Options.h"
-#include "gui/Resources.h"
 #include "gui/Main/MainWindow.h"
+#include "gui/Style/ThemeRegistry.h"
+#include "gui/Style/ProxyStyle.h"
+
+// TODO: Use namespaces please
 
 int main(int argc, char* argv[]) {
     QApplication a(argc, argv);
@@ -23,7 +26,7 @@ int main(int argc, char* argv[]) {
 
     parser.process(QCoreApplication::arguments());
 
-    a.setStyle(QStyleFactory::create("Fusion"));
+    a.setStyle(new ProxyStyle);
 
     loadFonts();
     loadThemes();

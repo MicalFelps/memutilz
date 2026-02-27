@@ -3,7 +3,9 @@
 #include <SARibbonMenu.h>
 
 #include "RibbonBar.h"
-#include "../Constants/AppLimits.h"
+#include "../Constants/Ui.h"
+
+using namespace Memutilz;
 
 struct RibbonBar::Impl {
     Impl(RibbonBar* _public) : _this{_public} {}
@@ -103,7 +105,7 @@ void RibbonBar::Impl::createCategoryView() {
     {
         QIcon icon = QIcon(":/icons/file-binary");
 
-        for (int i = 0; i < Limits::Ui::MaxMemoryWindowWidgets; ++i) {
+        for (int i = 0; i < Constants::Ui::MaxMemoryWindowWidgets; ++i) {
             menuMemoryWindow->addAction(icon, QString("Memory %1").arg(i));
         }
     }

@@ -1,3 +1,5 @@
+#include <QStatusBar>
+
 #include "MainWindow.h"
 
 #include "../Components/RibbonBar.h"
@@ -6,13 +8,18 @@
 #include "../Constants/Ids.h"
 #include "../Utils/DummyWidget.h"
 
+using namespace Memutilz;
+
 struct MainWindow::Impl {
     Impl() = delete;
     Impl(MainWindow* _public) : _this{_public} {
         dockManager = new DockManager(_this);
+        statusBar = new QStatusBar(_this);
+        _this->setStatusBar(statusBar);
     }
 
     DockManager* dockManager;
+    QStatusBar* statusBar;
 
    private:
     MEMUTILZ_DECLARE_PUBLIC(MainWindow)
@@ -42,10 +49,11 @@ MainWindow::MainWindow(const QString& uniqueName, QWidget* parent,
     auto widget2 = new DummyWidget();
     dock2->setWidget(widget2);
 
-    mgr->setLimit(Core::Constants::Dock::DUMMY, 2);
-    mgr->addDockWidget(dock1, Core::Constants::Dock::DUMMY,
-                       KDDockWidgets::Location_OnLeft);
-    mgr->addDockWidget(dock2, Core::Constants::Dock::DUMMY,
-                       KDDockWidgets::Location_OnRight);
+    mgr->setLimit(Id::Dock::DUMMY, 2);
+    mgr->addDockWidget(dock1, Id::Dock::DUMMY, KDDockWidgets::Location_OnLeft);
+    mgr->addDockWidget(dock2, Id::Dock::DUMMY, KDDockWidgets::Location_OnRight);
+
+    auto* statusBar = d->statusBar;
+    statusBar->showMessage("Ready");
 }
 MainWindow::~MainWindow() {};

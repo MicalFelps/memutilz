@@ -1,4 +1,7 @@
+#include <kddockwidgets/Config.h>
+
 #include "DockManager.h"
+#include "DockWidgets/ViewFactory.h"
 
 class IndexPool {
    public:
@@ -51,7 +54,9 @@ class IndexPool {
 };
 
 DockManager::DockManager(KDDockWidgets::QtWidgets::MainWindow* parent)
-    : QObject(parent) {}
+    : QObject(parent) {
+    KDDockWidgets::Config::self().setViewFactory(new DockComponentFactory());
+}
 DockManager::~DockManager() {}
 
 QPointer<KDDockWidgets::QtWidgets::DockWidget> DockManager::dockWidget(

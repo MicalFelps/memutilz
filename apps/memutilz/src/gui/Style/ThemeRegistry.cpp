@@ -2,7 +2,8 @@
 #include <QHash>
 #include <QDebug>
 
-#include "Resources.h"
+#include "ThemeRegistry.h"
+#include "../Constants/Themes.h"
 
 QHash<QString, ThemeInfo> ThemeRegistry::_themes;
 
@@ -24,8 +25,10 @@ void loadFonts() {
     }
 }
 void loadThemes() {
-    ThemeRegistry::getOrRegister("dark",
-                                 ThemeInfo{ThemeType::dark, Themes::dark()});
+    ThemeRegistry::getOrRegister(
+        "dark", ThemeInfo{ThemeType::dark, Memutilz::Theme::dark()});
+    ThemeRegistry::getOrRegister(
+        "debug", ThemeInfo{ ThemeType::dark, Memutilz::Theme::debug() });
 }
 
 std::optional<ThemeInfo> ThemeRegistry::getOrRegister(

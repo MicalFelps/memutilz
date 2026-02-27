@@ -1,15 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
-
 <svg
-   width="800px"
-   height="800px"
-   viewBox="0 0 16 16"
-   fill="#34D776"
-   stroke="#34D776"
+   viewBox="0 0 24 24"
    version="1.1"
    id="svg1"
-   sodipodi:docname="debug-continue-bugless.svg"
+   sodipodi:docname="window-maximize-small.svg"
    inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -19,35 +13,32 @@
      id="defs1" />
   <sodipodi:namedview
      id="namedview1"
-     pagecolor="#ffffff"
+     pagecolor="#232323"
      bordercolor="#000000"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
      inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
+     inkscape:pagecheckerboard="true"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.509375"
-     inkscape:cx="428.95705"
-     inkscape:cy="305.27607"
+     inkscape:zoom="24.012168"
+     inkscape:cx="11.973096"
+     inkscape:cy="15.887778"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg1" />
-  <g
-     id="SVGRepo_bgCarrier"
-     stroke-width="0" />
-  <g
-     id="SVGRepo_tracerCarrier"
+  <rect
+     x="6.4527335"
+     y="6.452734"
+     width="11.094533"
+     height="11.094532"
+     stroke="#ffffff"
+     stroke-width="1.83014"
+     fill="none"
      stroke-linecap="round"
-     stroke-linejoin="round" />
-  <g
-     id="SVGRepo_iconCarrier">
-    <path
-       fill-rule="evenodd"
-       clip-rule="evenodd"
-       d="M4.25 3l1.166-.624 8 5.333v1.248l-8 5.334-1.166-.624V3zm1.5 1.401v7.864l5.898-3.932L5.75 4.401z"
-       id="path1" />
-  </g>
+     stroke-linejoin="round"
+     id="rect1"
+     style="stroke-width:1.8;stroke-dasharray:none" />
 </svg>

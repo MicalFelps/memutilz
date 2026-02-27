@@ -21,33 +21,42 @@ set_target_properties(Memutilz PROPERTIES
 set(MEMUTILZ_HEADERS
     src/Options.h
     src/Globals.h
-    src/gui/Resources.h
     src/gui/Components/RibbonBar.h
     src/gui/Components/ApplicationWidget.h
     src/gui/Components/DockManager.h
+    src/gui/Components/DockWidgets/ViewFactory.h
+    src/gui/Components/DockWidgets/TitleBar.h
+    src/gui/Components/DockWidgets/Group.h
     src/gui/Components/RibbonBar/RibbonElementManager.h
     src/gui/Components/RibbonBar/SystemButtonBar.h
     src/gui/Components/RibbonBar/RibbonElementFactory.h
     src/gui/Components/RibbonBar/ButtonGroupWidget.h
     src/gui/Main/MainWindowInternal.h
     src/gui/Main/MainWindow.h
-    src/gui/Constants/AppLimits.h
+    src/gui/Constants/Ui.h
     src/gui/Constants/Ids.h
+    src/gui/Constants/Themes.h
+    src/gui/Style/ProxyStyle.h
+    src/gui/Style/ThemeRegistry.h
     src/gui/Utils/DummyWidget.h
 )
 
 set(MEMUTILZ_SOURCES
     src/main.cpp
-    src/gui/Resources.cpp
     src/gui/Components/DockManager.cpp
     src/gui/Components/ApplicationWidget.cpp
     src/gui/Components/RibbonBar.cpp
+    src/gui/Components/DockWidgets/ViewFactory.cpp
+    src/gui/Components/DockWidgets/TitleBar.cpp
+    src/gui/Components/DockWidgets/Group.cpp
     src/gui/Components/RibbonBar/ButtonGroupWidget.cpp
     src/gui/Components/RibbonBar/RibbonElementFactory.cpp
     src/gui/Components/RibbonBar/RibbonElementManager.cpp
     src/gui/Components/RibbonBar/SystemButtonBar.cpp
     src/gui/Main/MainWindow.cpp
     src/gui/Main/MainWindowInternal.cpp
+    src/gui/Style/ThemeRegistry.cpp
+    src/gui/Style/ProxyStyle.cpp
     src/gui/Utils/DummyWidget.cpp
 )
 
@@ -70,7 +79,10 @@ target_sources(Memutilz
 
 # Dependencies
 if(TARGET SARibbonBar)
-    target_compile_options(SARibbonBar PRIVATE -Wno-deprecated-declarations)
+    target_compile_options(SARibbonBar PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-deprecated-declarations>
+        $<$<CXX_COMPILER_ID:MSVC>:/wd4996>
+    )
 endif()
 
 target_link_libraries(Memutilz

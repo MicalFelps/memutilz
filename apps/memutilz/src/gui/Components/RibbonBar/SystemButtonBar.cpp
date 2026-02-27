@@ -2,7 +2,10 @@
 
 #include "SystemButtonBar.h"
 #include "ButtonGroupWidget.h"
+#include "../../Constants/Ui.h"
 #include "../../Main/MainWindowInternal.h"
+
+using namespace Memutilz;
 
 struct SystemButtonBar::Impl {
    private:
@@ -28,7 +31,7 @@ struct SystemButtonBar::Impl {
     int maxStretch{3};
     int minStretch{3};
     int windowButtonWidth{35};
-    int titleBarHeight{28};
+    int titleBarHeight{Constants::Ui::FixedMainWindowTitleBarHeight};
     Qt::WindowFlags flags{Qt::WindowMinMaxButtonsHint |
                           Qt::WindowCloseButtonHint};
     ButtonGroupWidget* buttonGroup;

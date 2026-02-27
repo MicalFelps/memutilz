@@ -20,6 +20,14 @@
         <file alias="window-maximize.svg">icons/window-maximize.svg</file>
         <file alias="window-minimize.svg">icons/window-minimize.svg</file>
         <file alias="window-restore.svg">icons/window-restore.svg</file>
+        <file alias="window-close-small.svg">icons/window-close-small.svg</file>
+        <file alias="window-maximize-small.svg">icons/window-maximize-small.svg</file>
+        <file alias="window-minimize-small.svg">icons/window-minimize-small.svg</file>
+        <file alias="window-restore-small.svg">icons/window-restore-small.svg</file>
+        <file alias="pin.svg">icons/pin.svg</file>
+        <file alias="pin-filled.svg">icons/pin-filled.svg</file>
+        <file alias="pin-filled-small.svg">icons/pin-filled-small.svg</file>
+        <file alias="pin-small.svg">icons/pin-small.svg</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="default.qss">styles/default.qss</file>

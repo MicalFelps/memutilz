@@ -1,10 +1,13 @@
 #pragma once
 
-namespace Core {
-namespace Constants {
+namespace Memutilz {
+namespace Id {
+
 namespace Dock {
 inline constexpr char DUMMY[] = "Core.Dock.Dummy";
+}
+namespace Context {}
+// namespace Other{}
 
-}  // namespace Dock
-}  // namespace Constants
-}  // namespace Core
+}  // namespace Id
+}  // namespace Memutilz

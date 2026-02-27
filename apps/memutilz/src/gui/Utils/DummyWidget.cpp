@@ -144,3 +144,105 @@ void DummyWidget::resizeEvent(QResizeEvent* e) {
     QWidget::resizeEvent(e);
     update();  // make sure size text updates
 }
+
+// ###############################################
+
+DummyScrollArea::DummyScrollArea(QWidget* parent)
+    : QAbstractScrollArea(parent) {
+    // Force scrollbars to always be visible
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+    // Some huge virtual content size (you can make this dynamic later)
+    const int virtualWidth = 3400;
+    const int virtualHeight = 5200;
+
+    // Tell Qt how big our "document" is
+    horizontalScrollBar()->setRange(0, virtualWidth - viewport()->width());
+    verticalScrollBar()->setRange(0, virtualHeight - viewport()->height());
+
+    // Optional: make steps nicer
+    horizontalScrollBar()->setSingleStep(60);
+    verticalScrollBar()->setSingleStep(80);
+    horizontalScrollBar()->setPageStep(viewport()->width() * 3 / 4);
+    verticalScrollBar()->setPageStep(viewport()->height() * 3 / 4);
+
+    // Prepare some long text lines for painting
+    prepareDummyContent();
+}
+
+void DummyScrollArea::resizeEvent(QResizeEvent* event) {
+    QAbstractScrollArea::resizeEvent(event);
+    updateScrollBarRanges();
+}
+
+void DummyScrollArea::scrollContentsBy(int dx, int dy) {
+    QAbstractScrollArea::scrollContentsBy(dx, dy);
+    viewport()->update();  // most important line — repaint visible area
+}
+
+void DummyScrollArea::paintEvent(QPaintEvent* event) {
+    QPainter painter(viewport());
+    painter.fillRect(event->rect(), Qt::white);
+
+    // Where is the top-left corner of the visible area in content
+    // coordinates?
+    int x = horizontalScrollBar()->value();
+    int y = verticalScrollBar()->value();
+
+    painter.translate(-x, -y);  // ← shift coordinate system
+
+    // Draw background grid just to see scrolling clearly
+    painter.setPen(QPen(Qt::lightGray, 1, Qt::DotLine));
+    for (int ix = 0; ix < 4000; ix += 200) painter.drawLine(ix, 0, ix, 6000);
+    for (int iy = 0; iy < 6000; iy += 200) painter.drawLine(0, iy, 4000, iy);
+
+    // Draw long dummy text
+    painter.setPen(Qt::darkBlue);
+    QFont font = painter.font();
+    font.setPointSize(14);
+    painter.setFont(font);
+
+    int lineHeight = QFontMetrics(font).height() + 4;
+
+    for (int i = 0; i < m_lines.size(); ++i) {
+        int yy = 60 + i * lineHeight;
+        painter.drawText(40, yy, m_lines[i]);
+    }
+
+    // Some extra visual marker at bottom-right
+    painter.setPen(Qt::red);
+    painter.drawText(3000, 5000, "END — scrollbars should still be visible ↑←");
+}
+
+void DummyScrollArea::updateScrollBarRanges() {
+    int virtualWidth = 3400;
+    int virtualHeight = 5200;
+
+    horizontalScrollBar()->setRange(
+        0, qMax(0, virtualWidth - viewport()->width()));
+    verticalScrollBar()->setRange(
+        0, qMax(0, virtualHeight - viewport()->height()));
+}
+
+void DummyScrollArea::prepareDummyContent() {
+    QString longChunk =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do "
+        "eiusmod tempor incididunt "
+        "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis "
+        "nostrud exercitation ullamco "
+        "laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure "
+        "dolor in reprehenderit in "
+        "voluptate velit esse cillum dolore eu fugiat nulla pariatur. "
+        "Excepteur sint occaecat cupidatat "
+        "non proident, sunt in culpa qui officia deserunt mollit anim id "
+        "est laborum.   →→→ 1234567890 "
+        "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    m_lines.reserve(180);
+    for (int i = 0; i < 140; ++i) {
+        QString line = QString("%1   ").arg(i + 1, 4) + longChunk;
+        if (i % 7 == 0) line += "     ★ PARAGRAPH BREAK ★";
+        m_lines << line;
+    }
+}
