@@ -15,7 +15,27 @@ struct MainWindow::Impl {
     Impl(MainWindow* _public) : _this{_public} {
         dockManager = new DockManager(_this);
         statusBar = new QStatusBar(_this);
+
+        _this->setWindowIcon(QIcon(":/icons/memutilz.ico"));
+        _this->setRibbonBar(new RibbonBar(_this));
+        _this->setRibbonTheme(SARibbonTheme::RibbonThemePalette);
         _this->setStatusBar(statusBar);
+
+        auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(
+            QStringLiteral("DummyWidget1"));
+        auto widget1 = new DummyWidget();
+        dock1->setWidget(widget1);
+
+        auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(
+            QStringLiteral("DummyWidget2"));
+        auto widget2 = new DummyWidget();
+        dock2->setWidget(widget2);
+
+        dockManager->setLimit(Id::Dock::DUMMY, 2);
+        dockManager->addDockWidget(dock1, Id::Dock::DUMMY, KDDockWidgets::Location_OnLeft);
+        dockManager->addDockWidget(dock2, Id::Dock::DUMMY, KDDockWidgets::Location_OnRight);
+
+        statusBar->showMessage("Ready");
     }
 
     DockManager* dockManager;
@@ -34,26 +54,5 @@ MainWindow::MainWindow(const QString& uniqueName, QWidget* parent,
                        Qt::WindowFlags flags)
     : MainWindowInternal(uniqueName, parent, frameless, options, flags),
       d{std::make_unique<MainWindow::Impl>(this)} {
-    setRibbonBar(new RibbonBar(this));
-    setRibbonTheme(SARibbonTheme::RibbonThemePalette);
-
-    auto* mgr = d->dockManager;
-
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(
-        QStringLiteral("DummyWidget1"));
-    auto widget1 = new DummyWidget();
-    dock1->setWidget(widget1);
-
-    auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(
-        QStringLiteral("DummyWidget2"));
-    auto widget2 = new DummyWidget();
-    dock2->setWidget(widget2);
-
-    mgr->setLimit(Id::Dock::DUMMY, 2);
-    mgr->addDockWidget(dock1, Id::Dock::DUMMY, KDDockWidgets::Location_OnLeft);
-    mgr->addDockWidget(dock2, Id::Dock::DUMMY, KDDockWidgets::Location_OnRight);
-
-    auto* statusBar = d->statusBar;
-    statusBar->showMessage("Ready");
 }
 MainWindow::~MainWindow() {};
