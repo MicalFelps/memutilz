@@ -66,7 +66,6 @@ set(MEMUTILZ_RESOURCES
 )
 
 set(MEMUTILZ_FORMS
-    src/gui/Components/ApplicationWidget.ui
 )
 
 target_sources(Memutilz

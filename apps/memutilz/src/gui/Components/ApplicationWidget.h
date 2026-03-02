@@ -1,10 +1,8 @@
 #pragma once
 
-namespace Ui {
-class ApplicationWidget;
-}
-
 #include <QFrame>
+#include "../../Globals.h"
+
 class QShowEvent;
 class QKeyEvent;
 class MainWindow;
@@ -25,5 +23,5 @@ class ApplicationWidget : public QFrame {
     virtual void keyPressEvent(QKeyEvent* e) override;
 
    private:
-    Ui::ApplicationWidget* ui;
+    MEMUTILZ_DECLARE_PRIVATE();
 };
