@@ -9,7 +9,7 @@ MEMUTILZ_DEFINE_THEME(dark, p.setColor(QPalette::Window, QColor("#0b0b0b"));
                       p.setColor(QPalette::AlternateBase, QColor("#181818"));
                       p.setColor(QPalette::ToolTipBase, QColor("#202020"));
                       p.setColor(QPalette::ToolTipText, QColor("#e6e6e6"));
-                      p.setColor(QPalette::Text, QColor("#d8d8d8"));
+                      p.setColor(QPalette::Text, QColor("#ffffff"));
                       p.setColor(QPalette::Button, QColor("#1c1c1c"));
                       p.setColor(QPalette::ButtonText, QColor("#d6d6d6"));
                       p.setColor(QPalette::BrightText, QColor("#ffffff"));

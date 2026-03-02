@@ -23,7 +23,11 @@ set(MEMUTILZ_HEADERS
     src/Globals.h
     src/gui/Components/RibbonBar.h
     src/gui/Components/ApplicationWidget.h
+    src/gui/Components/ApplicationWidgetInternal.h
     src/gui/Components/DockManager.h
+    src/gui/Components/ApplicationWidget/SidebarToolButton.h
+    src/gui/Components/ApplicationWidget/Sidebar.h
+    src/gui/Components/ApplicationWidget/StackWidget.h
     src/gui/Components/DockWidgets/ViewFactory.h
     src/gui/Components/DockWidgets/TitleBar.h
     src/gui/Components/DockWidgets/Group.h
@@ -45,7 +49,11 @@ set(MEMUTILZ_SOURCES
     src/main.cpp
     src/gui/Components/DockManager.cpp
     src/gui/Components/ApplicationWidget.cpp
+    src/gui/Components/ApplicationWidgetInternal.cpp
     src/gui/Components/RibbonBar.cpp
+    src/gui/Components/ApplicationWidget/SidebarToolButton.cpp
+    src/gui/Components/ApplicationWidget/Sidebar.cpp
+    src/gui/Components/ApplicationWidget/StackWidget.cpp
     src/gui/Components/DockWidgets/ViewFactory.cpp
     src/gui/Components/DockWidgets/TitleBar.cpp
     src/gui/Components/DockWidgets/Group.cpp

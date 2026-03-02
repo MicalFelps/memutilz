@@ -6,6 +6,28 @@
 
 /*
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+=-=-=-=-=-=-=-= ApplicationWidget =-=-=-=-=-=-=-=
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+*/
+
+ApplicationWidget {
+    background-color: palette(window);
+}
+
+SidebarToolButton {
+    font-size: 16pt;
+}
+
+SidebarToolButton:hover {
+    background-color: palette(mid);
+}
+
+SidebarToolButton:checked {
+    color: #6D68CC;
+}
+
+/*
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 =-=-=-=-=-=-=-= System Tool Buttons =-=-=-=-=-=-=
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */

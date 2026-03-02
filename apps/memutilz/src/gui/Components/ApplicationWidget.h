@@ -1,27 +1,23 @@
 #pragma once
 
-#include <QFrame>
-#include "../../Globals.h"
+#include "ApplicationWidgetInternal.h"
+#include "ApplicationWidget/Sidebar.h"
+#include "ApplicationWidget/StackWidget.h"
 
-class QShowEvent;
-class QKeyEvent;
-class MainWindow;
-
-class ApplicationWidget : public QFrame {
+class ApplicationWidget : public ApplicationWidgetInternal {
     Q_OBJECT
 
    public:
     explicit ApplicationWidget(MainWindow* parent);
     virtual ~ApplicationWidget() override;
 
-   protected:
-    virtual void resizeToParent(const QSize& parentSize);
-
-   protected:
-    virtual bool eventFilter(QObject* obj, QEvent* e) override;
-    virtual void showEvent(QShowEvent* e) override;
-    virtual void keyPressEvent(QKeyEvent* e) override;
-
    private:
-    MEMUTILZ_DECLARE_PRIVATE();
+    void initUI();
+    void createSidebarButtons();
+
+    QHBoxLayout* _layout;
+    Sidebar* _sidebar;
+    StackedWidget* _stack;
+
+    QHash<Utils::Id, QWidget*> _mappings;
 };
