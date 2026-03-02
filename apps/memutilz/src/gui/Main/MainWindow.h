@@ -14,6 +14,9 @@ class MainWindow : public MainWindowInternal {
                         Qt::WindowFlags flags = Qt::WindowFlags());
     virtual ~MainWindow() override;
 
+   public slots:
+    void showApplicationWidget();
+
    private:
     MEMUTILZ_DECLARE_PRIVATE()
 };

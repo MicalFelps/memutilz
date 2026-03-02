@@ -1,22 +1,29 @@
 #pragma once
 
-#include <QWidget>
-#include <SARibbonApplicationWidget.h>
-
 namespace Ui {
-    class ApplicationWidget;
+class ApplicationWidget;
 }
 
-struct ApplicationWidgetPrivate;
+#include <QFrame>
+class QShowEvent;
+class QKeyEvent;
+class MainWindow;
 
-class ApplicationWidget : public SARibbonApplicationWidget {
+class ApplicationWidget : public QFrame {
     Q_OBJECT
 
-public:
-    explicit ApplicationWidget(SARibbonMainWindow* parent = nullptr);
-    ~ApplicationWidget();
-private:
-    ApplicationWidgetPrivate* d;
+   public:
+    explicit ApplicationWidget(MainWindow* parent);
+    virtual ~ApplicationWidget() override;
+
+   protected:
+    virtual void resizeToParent(const QSize& parentSize);
+
+   protected:
+    virtual bool eventFilter(QObject* obj, QEvent* e) override;
+    virtual void showEvent(QShowEvent* e) override;
+    virtual void keyPressEvent(QKeyEvent* e) override;
+
+   private:
     Ui::ApplicationWidget* ui;
-    friend struct ApplicationWidgetPrivate;
 };

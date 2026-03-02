@@ -1,28 +1,54 @@
 #include "ApplicationWidget.h"
 #include "ui_ApplicationWidget.h"
+#include "../Main/MainWindow.h"
 
-struct ApplicationWidgetPrivate {
-	ApplicationWidget* _this;
+ApplicationWidget::ApplicationWidget(MainWindow* parent)
+    : QFrame(parent), ui{new Ui::ApplicationWidget} {
+    setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
+    ui->setupUi(this);
 
-	void setupUi();
+    parent->installEventFilter(this);
+    if (parent) {
+        setGeometry(0, 0, parent->width(), parent->height());
+    } else {
+        setGeometry(0, 0, 300, 300);
+    }
+}
+ApplicationWidget::~ApplicationWidget() { delete ui; }
 
-	ApplicationWidgetPrivate(ApplicationWidget* _public) : _this{ _public } {}
-};
-
-void ApplicationWidgetPrivate::setupUi() {
-	return;
+void ApplicationWidget::resizeToParent(const QSize& parentSize) {
+    setGeometry(0, 0, parentSize.width(), parentSize.height());
 }
 
-// -----------------------------------------------------------------
-
-ApplicationWidget::ApplicationWidget(SARibbonMainWindow* parent)
-	: SARibbonApplicationWidget(parent)
-	, d{ new ApplicationWidgetPrivate(this) }
-	, ui(new Ui::ApplicationWidget)
-{
-	ui->setupUi(this);
+bool ApplicationWidget::eventFilter(QObject* obj, QEvent* ev) {
+    if (obj && ev && (obj == parent())) {
+        switch (ev->type()) {
+            case QEvent::Resize: {
+                // Follow the parent window's size changes
+                resizeToParent(static_cast<QResizeEvent*>(ev)->size());
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return QFrame::eventFilter(obj, ev);
 }
-
-ApplicationWidget::~ApplicationWidget() {
-	delete d;
+void ApplicationWidget::showEvent(QShowEvent* event) {
+    QWidget* par = parentWidget();
+    if (par) {
+        resizeToParent(par->size());
+    }
+    raise();
+    setFocus();  // Request focus when the window is shown
+    QFrame::showEvent(event);
+}
+void ApplicationWidget::keyPressEvent(QKeyEvent* ev) {
+    if (ev) {
+        if (ev->key() == Qt::Key_Escape) {
+            hide();
+            ev->accept();
+        }
+    }
+    return QFrame::keyPressEvent(ev);
 }

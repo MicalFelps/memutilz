@@ -122,10 +122,5 @@ void RibbonBar::Impl::createCategoryView() {
 RibbonBar::RibbonBar(QWidget* parent)
     : SARibbonBar(parent), d{std::make_unique<RibbonBar::Impl>(this)} {
     d->setupUi();
-
-    connect(applicationButton(), &QAbstractButton::clicked, this, [](bool c) {
-        Q_UNUSED(c);
-        qDebug() << "ApplicationButton clicked!";
-    });
 }
 RibbonBar::~RibbonBar() {}
