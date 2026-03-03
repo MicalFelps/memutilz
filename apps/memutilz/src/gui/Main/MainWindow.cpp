@@ -66,10 +66,10 @@ void MainWindow::Impl::setupDockWidgets() {
     auto widget2 = new DummyWidget();
     dock2->setWidget(widget2);
 
-    dockManager->setLimit(Id::Dock::DUMMY, 2);
-    dockManager->addDockWidget(dock1, Id::Dock::DUMMY,
+    dockManager->setLimit(Constants::DOCK_DUMMY, 2);
+    dockManager->addDockWidget(dock1, Constants::DOCK_DUMMY,
                                KDDockWidgets::Location_OnLeft);
-    dockManager->addDockWidget(dock2, Id::Dock::DUMMY,
+    dockManager->addDockWidget(dock2, Constants::DOCK_DUMMY,
                                KDDockWidgets::Location_OnRight);
 }
 void MainWindow::Impl::setupStatusBar() {

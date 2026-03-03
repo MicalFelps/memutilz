@@ -1,7 +1,4 @@
 #include "ApplicationWidget.h"
-#include "../Constants/Ids.h"
-
-using namespace Memutilz;
 
 ApplicationWidget::ApplicationWidget(MainWindow* parent)
     : ApplicationWidgetInternal(parent)
@@ -14,36 +11,25 @@ ApplicationWidget::ApplicationWidget(MainWindow* parent)
 ApplicationWidget::~ApplicationWidget() {}
 
 void ApplicationWidget::initUI() {
-
     _layout->addWidget(_sidebar);
     _layout->addWidget(_stack);
 
     _layout->setContentsMargins(10, 10, 10, 10);
     _layout->setSpacing(10);
 
-    createSidebarButtons();
-}
-
-void ApplicationWidget::createSidebarButtons() {
-    struct ButtonInfo {
-        Utils::Id id;
-        QString iconPath;
-        QString text;
+    SidebarToolButton* buttons[] = {
+        new SidebarToolButton("Window-1", QIcon(":/icons/file.svg"), "Window-1", _sidebar),
+        new SidebarToolButton("Window-2", QIcon(":/icons/file.svg"), "Window-2", _sidebar),
+        new SidebarToolButton("Window-3", QIcon(":/icons/file.svg"), "Window-3", _sidebar),
+        new SidebarToolButton("Window-4", QIcon(":/icons/file.svg"), "Window-4", _sidebar),
+        new SidebarToolButton("Window-5", QIcon(":/icons/file.svg"), "Window-5", _sidebar),
     };
 
-    ButtonInfo items[] = {
-        {Id::Buttons::SIDEBAR_1, ":/icons/file.svg", "Window-1"},
-        {Id::Buttons::SIDEBAR_2, ":/icons/file.svg", "Window-2"},
-        {Id::Buttons::SIDEBAR_3, ":/icons/file.svg", "Window-3"},
-        {Id::Buttons::SIDEBAR_4, ":/icons/file.svg", "Window-4"},
-        {Id::Buttons::SIDEBAR_5, ":/icons/file.svg", "Window-5"}
-    };
-
-    for (const auto& item : items) {
-        SidebarToolButton* btn = new SidebarToolButton(item.id, QIcon(item.iconPath), item.text, this);
-        if (item.id == Id::Buttons::SIDEBAR_2)
-            btn->click();
-        _mappings[item.id] = btn;
-        _sidebar->addButton(btn);
+    for (auto* b : buttons) {
+        _mappings[b] = nullptr;
+        _sidebar->addButton(b);
+        if (b->id() == "Window-2") {
+            _sidebar->select(b);
+        }
     }
 }

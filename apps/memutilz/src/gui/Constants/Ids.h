@@ -1,21 +1,26 @@
 #pragma once
 
+#include <Utils/Id.h>
+
+/**
+ * Holds all semantic identifiers used by the main app.
+ *
+ * Prefixes used (naming convention):
+ *	C_				-> Contexts (focus)
+ *  CMD_			-> Commands / Action with shortcuts
+ *	TAB_			-> RibbonBar Tabs 
+ *	PANEL_			-> Panels (Groups)
+ *  VIEW_			-> Semantic Widget Type
+ *	SETTING_		-> Settings categories / pages
+ * 
+ * Hierarchy is indicated by dots in the string, for example
+ *	"Module.Category.Item" or "Feature.SubFeature.Action"
+ */
+
 namespace Memutilz {
-namespace Id {
+namespace Constants {
 
-// TODO: 0 - Change to WidgetType
-namespace Dock {
-inline constexpr char DUMMY[] = "Core.Dock.Dummy";
-}
-namespace Context {}
-// namespace Other{}
-namespace Buttons {
-	inline constexpr char SIDEBAR_1[] = "ApplicationWidget.Sidebar.Button.1";
-	inline constexpr char SIDEBAR_2[] = "ApplicationWidget.Sidebar.Button.2";
-	inline constexpr char SIDEBAR_3[] = "ApplicationWidget.Sidebar.Button.3";
-	inline constexpr char SIDEBAR_4[] = "ApplicationWidget.Sidebar.Button.4";
-	inline constexpr char SIDEBAR_5[] = "ApplicationWidget.Sidebar.Button.5";
-}
+const Utils::Id DOCK_DUMMY = Utils::Id("DUMMY");
 
-}  // namespace Id
+}  // namespace Constants
 }  // namespace Memutilz

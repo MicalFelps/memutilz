@@ -1,10 +1,8 @@
 #pragma once
 
 #include <QFrame>
-#include <QVBoxLayout>
 #include <QButtonGroup>
-
-#include <Utils/Id.h>
+#include <QVBoxLayout>
 
 #include "SidebarToolButton.h"
 
@@ -14,13 +12,14 @@ public:
     explicit Sidebar(QWidget* parent);
     virtual ~Sidebar() override;
 
-    void addButton(SidebarToolButton* btn);
+    SidebarToolButton* button(QString id) const;
+    void addButton(SidebarToolButton* btn, std::optional<int> pos = std::nullopt);
 
 public slots:
-    void select(Utils::Id id);
+    void select(SidebarToolButton* btn);
 
 signals:
-    void selectionChanged(Utils::Id id);
+    void selectionChanged(SidebarToolButton* selected);
 
 private:
     QButtonGroup* _group{ nullptr };

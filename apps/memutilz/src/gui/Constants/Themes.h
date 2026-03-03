@@ -2,7 +2,7 @@
 #include "../../Globals.h"
 
 namespace Memutilz {
-namespace Theme {
+namespace Themes {
 MEMUTILZ_DEFINE_THEME(dark, p.setColor(QPalette::Window, QColor("#0b0b0b"));
                       p.setColor(QPalette::WindowText, QColor("#bbbbbb"));
                       p.setColor(QPalette::Base, QColor("#121212"));

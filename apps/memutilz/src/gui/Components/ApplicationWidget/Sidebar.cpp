@@ -1,4 +1,3 @@
-#include <Utils/Id.h>
 #include "Sidebar.h"
 
 Sidebar::Sidebar(QWidget* parent) 
@@ -11,24 +10,41 @@ Sidebar::Sidebar(QWidget* parent)
 
 	connect(_group, &QButtonGroup::buttonClicked,
 		this, [this](QAbstractButton* button) {
-			auto* btn = qobject_cast<SidebarToolButton*>(button);
-			if (btn && btn != _selected) {
-				emit selectionChanged(btn->id());
-				_selected = btn;
+			auto* b = qobject_cast<SidebarToolButton*>(button);
+
+			if (b && b != _selected) {
+				emit selectionChanged(b);
+				_selected = b;
 			}
 		});
 }
 Sidebar::~Sidebar() {}
 
-void Sidebar::addButton(SidebarToolButton* btn) {
-	_group->addButton(btn);
-	_layout->insertWidget(_layout->count() - 1, btn);
+SidebarToolButton* Sidebar::button(QString id) const {
+	const auto buttons = _group->buttons();
+
+	for (auto* b : buttons)
+		if (static_cast<SidebarToolButton*>(b)->id() == id)
+			return static_cast<SidebarToolButton*>(b);
+	return nullptr;
 }
-void Sidebar::select(Utils::Id id) {
-	const auto& buttons = _group->buttons();
-	for (const auto btn : buttons) {
-		if (qobject_cast<SidebarToolButton*>(btn)->id() == id) {
-			btn->click();
+void Sidebar::addButton(SidebarToolButton* btn, std::optional<int> pos) {
+	const auto buttons = _group->buttons();
+
+	for (auto* b : buttons)
+		if (static_cast<SidebarToolButton*>(b)->id() == btn->id())
+			return;
+	
+	int count = _layout->count() - 1; // strech
+	int index = pos.has_value() ? qMin(*pos, count) : count;
+
+	_group->addButton(btn);
+	_layout->insertWidget(index, btn);
+}
+void Sidebar::select(SidebarToolButton* btn) {
+	for (const auto b : _group->buttons()) {
+		if (static_cast<SidebarToolButton*>(b) == btn) {
+			btn->setChecked(true);
 		}
 	}
 }

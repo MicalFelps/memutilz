@@ -26,9 +26,9 @@ void loadFonts() {
 }
 void loadThemes() {
     ThemeRegistry::getOrRegister(
-        "dark", ThemeInfo{ThemeType::dark, Memutilz::Theme::dark()});
+        "dark", ThemeInfo{ThemeType::dark, Memutilz::Themes::dark()});
     ThemeRegistry::getOrRegister(
-        "debug", ThemeInfo{ ThemeType::dark, Memutilz::Theme::debug() });
+        "debug", ThemeInfo{ ThemeType::dark, Memutilz::Themes::debug() });
 }
 
 std::optional<ThemeInfo> ThemeRegistry::getOrRegister(

@@ -13,11 +13,9 @@ class ApplicationWidget : public ApplicationWidgetInternal {
 
    private:
     void initUI();
-    void createSidebarButtons();
 
     QHBoxLayout* _layout;
     Sidebar* _sidebar;
     StackedWidget* _stack;
-
-    QHash<Utils::Id, QWidget*> _mappings;
+    QHash<SidebarToolButton*, QWidget*> _mappings;
 };

@@ -1,20 +1,24 @@
 #pragma once
 
 #include <QToolButton>
-#include <Utils/Id.h>
 
 class SidebarToolButton : public QToolButton {
     Q_OBJECT
 public:
-    explicit SidebarToolButton(Utils::Id id, QWidget* parent = nullptr);
-    explicit SidebarToolButton(Utils::Id id, const QIcon& icon, const QString& text, QWidget* parent = nullptr);
+    explicit SidebarToolButton(QString id, const QIcon& icon, const QString& text, QWidget* parent = nullptr);
 
-    QColor accentColor() const { return _accentColor; }
-    void setAccentColor(const QColor& color) { _accentColor = color; update(); }
+    const QString& id() { return m_id; }
 
-    Utils::Id id() const { return m_id; }
+    bool operator==(const QString& id) const { return id == m_id; }
+    bool operator!=(const QString& id) const { return id != m_id; }
+    bool operator==(const SidebarToolButton& other) const { return m_id == other.m_id; }
+    bool operator!=(const SidebarToolButton& other) const { return m_id != other.m_id; }
 
+    friend size_t qHash(const SidebarToolButton& btn, size_t seed = 0) noexcept {
+        return QT_PREPEND_NAMESPACE(qHash)(btn.m_id, seed);
+    }
 private:
-    Utils::Id m_id;
-    QColor _accentColor{ "#FFFFFF" };
+    explicit SidebarToolButton(QString id, QWidget* parent = nullptr);
+
+    QString m_id;
 };
