@@ -15,18 +15,12 @@ target_sources(agent
         ${AGENT_SOURCES}
 )
 
-# Include directories
 target_include_directories(agent
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/hdr
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_precompile_headers(agent
-    PRIVATE hdr/pch.h
-)
-
-target_include_directories(MemutilzLib
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PRIVATE src/pch.h
 )
 
 target_link_libraries(agent PRIVATE
