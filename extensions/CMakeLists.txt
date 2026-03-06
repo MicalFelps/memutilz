@@ -1,0 +1,6 @@
+if(MEMUTILZ_BUILD_ADAPTERS)
+    add_subdirectory(adapters)
+endif()
+if(MEMUTILZ_BUILD_PLUGINS)
+    add_subdirectory(plugins)
+endif()

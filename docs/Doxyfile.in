@@ -24,8 +24,8 @@ SEARCHENGINE           = YES
 
 INPUT                  = @DOXY_INPUT@
 RECURSIVE              = YES
-FILE_PATTERNS          = *.h *.hpp *.cpp *.cxx
-EXCLUDE_PATTERNS       = */ext/* */tests/* */build/* */cmake/*
+FILE_PATTERNS          = *.h *.hpp *.c *.cpp *.cxx
+EXCLUDE_PATTERNS       = */3rdParty/* */tests/* */build/* */cmake/*
 
 # What to Document
 
@@ -34,7 +34,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_STATIC         = YES
 HIDE_UNDOC_MEMBERS     = YES
 HIDE_UNDOC_CLASSES     = YES
-EXTRACT_ANON_NSPACES   = NO
+EXTRACT_ANON_NSPACES   = YES
 
 # Preprocessing
 
@@ -57,6 +57,6 @@ PREDEFINED             = \
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 
-# Quiet mdoe
+# Quiet mode
 
-QUIET				   = YES
+QUIET                  = YES

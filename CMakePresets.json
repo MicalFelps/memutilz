@@ -8,8 +8,7 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
-        "BUILD_SHARED_LIBS": true,
-        "MEMUTILZ_WARNINGS_AS_ERRORS": true
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
@@ -21,7 +20,8 @@
         "SANITIZE_ADDRESS": "ON",
         "SANITIZE_MEMORY": "OFF",
         "SANITIZE_THREAD": "OFF",
-        "SANITIZE_UNDEFINED": "ON"
+        "SANITIZE_UNDEFINED": "ON",
+        "MEMUTILZ_WARNINGS_AS_ERRORS": true
       },
       "condition": {
         "type": "equals",
@@ -47,7 +47,11 @@
       "generator": "Ninja",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "SANITIZE_UNDEFINED": "ON",
+        "MEMUTILZ_WARNINGS_AS_ERRORS": true
       },
       "condition": {
         "type": "equals",
@@ -74,11 +78,5 @@
     { "name": "linux-release", "configurePreset": "linux-release" },
     { "name": "windows-debug", "configurePreset": "windows-debug" },
     { "name": "windows-release", "configurePreset": "windows-release" }
-  ],
-  "testPresets": [
-    { "name": "linux-debug", "configurePreset": "linux-debug", "output": { "outputOnFailure": true } },
-    { "name": "linux-release", "configurePreset": "linux-release", "output": { "outputOnFailure": true } },
-    { "name": "windows-debug", "configurePreset": "windows-debug", "output": { "outputOnFailure": true } },
-    { "name": "windows-release", "configurePreset": "windows-release", "output": { "outputOnFailure": true } }
   ]
 }

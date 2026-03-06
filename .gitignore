@@ -5,11 +5,8 @@
 
 CMakeUserPresets.json
 
-.vs/
 build/
 install/
-docs/memutilz/.obsidian
-tmp/
 
 # User-specific files
 *.rsuser

@@ -1,23 +1,29 @@
-include(${CMAKE_SOURCE_DIR}/cmake/DoxygenUtils.cmake)
+find_package(Doxygen QUIET)
+if(NOT DOXYGEN_FOUND)
+    message(STATUS "Doxygen not found — skipping docs")
+    return()
+endif()
 
-add_doxygen_for_libraries(
-    SOURCE_DIRS
-        "${CMAKE_SOURCE_DIR}/src/lib/src"
-    TITLE       "Main Libraries"
-    BRIEF       "Core utilities for GUI"
-    MAINPAGE    "memutilz_lib.md"
-    DOXYFILE_TEMPLATE "${CMAKE_SOURCE_DIR}/docs/Doxyfile.in"
-    OUTPUT_BASE_DIR "${CMAKE_BINARY_DIR}/docs"
+include(DoxygenHelpers)
+
+# Optionally specify MAINPAGE
+
+add_doxygen_for_component(
+    NAME                "memutilz"
+    SOURCE_DIR          "${PROJECT_SOURCE_DIR}/src/"
+    TITLE               "Memutilz"
+    BRIEF               "Unified UI for Various Debuggers"
+    DOXYFILE_TEMPLATE   "${CMAKE_SOURCE_DIR}/docs/Doxyfile.in"
+    OUTPUT_DIR          "${CMAKE_BINARY_DIR}/docs"
 )
 
-add_doxygen_for_application(
-    NAME        "memutilz"
-    SOURCE_DIR  "${PROJECT_SOURCE_DIR}/apps/memutilz/src"
-    TITLE       "Memutilz"
-    BRIEF       "Main GUI Application"
-    MAINPAGE    "memutilz.md"
-    DOXYFILE_TEMPLATE "${CMAKE_SOURCE_DIR}/docs/Doxyfile.in"
-    OUTPUT_BASE_DIR "${CMAKE_BINARY_DIR}/docs"
+add_doxygen_for_component(
+    NAME                "extensions"
+    SOURCE_DIR          "${PROJECT_SOURCE_DIR}/extensions/"
+    TITLE               "Extensions"
+    BRIEF               "Plugins and Debugger Adapters"
+    DOXYFILE_TEMPLATE   "${CMAKE_SOURCE_DIR}/docs/Doxyfile.in"
+    OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs"
 )
 
-finalize_doxygen_targets()
+add_doxygen_for_all()
